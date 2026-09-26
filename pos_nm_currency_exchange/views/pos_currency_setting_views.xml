@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_nm_currency_setting_tree_exchange" model="ir.ui.view">
+        <field name="name">pos.nm.currency.setting.list.exchange</field>
+        <field name="model">pos.nm.currency.setting</field>
+        <field name="inherit_id" ref="pos_nm_multicurrencies.view_pos_nm_currency_setting_tree"/>
+        <field name="arch" type="xml">
+            <field name="max_difference" position="after">
+                <field name="company_currency_id" column_invisible="True"/>
+                <field name="exchange_commission_percent" optional="show"/>
+                <field name="exchange_commission_fixed" optional="show"/>
+                <field name="exchange_commission_min" optional="hide"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_currency_setting_form_exchange" model="ir.ui.view">
+        <field name="name">pos.nm.currency.setting.form.exchange</field>
+        <field name="model">pos.nm.currency.setting</field>
+        <field name="inherit_id" ref="pos_nm_multicurrencies.view_pos_nm_currency_setting_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='max_difference']/.." position="after">
+                <group string="Currency Exchange">
+                    <field name="company_currency_id" invisible="1"/>
+                    <field name="exchange_commission_percent"/>
+                    <field name="exchange_commission_fixed"/>
+                    <field name="exchange_commission_min"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

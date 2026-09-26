@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="ir.ui.view" id="res_config_view_form_inherit_exchange">
+        <field name="name">res.config.settings.nm_currency_exchange.form.view</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="pos_nm_multicurrencies.res_config_view_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='pos_nm_multicurrency_section']" position="after">
+                <block title="Currency Exchange" id="pos_nm_exchange_section">
+                    <setting id="nm_exchange_enabled"
+                             string="Currency Exchange"
+                             help="Exchange counter in the menu of the register: the customer brings notes in one cash currency of the Point of Sale and leaves with another, minus a commission">
+                        <field name="pos_nm_exchange_enabled"/>
+                        <div class="content-group mt16" invisible="not pos_nm_exchange_enabled">
+                            <div class="row mt8">
+                                <label string="Commission account" for="pos_nm_exchange_income_account_id" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_income_account_id" class="col-lg-6" options="{'no_create': True}"/>
+                            </div>
+                            <div class="row mt8">
+                                <label string="Customer required above" for="pos_nm_exchange_customer_threshold" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_customer_threshold" class="col-lg-3"/>
+                            </div>
+                        </div>
+                        <div class="text-muted mt8" invisible="not pos_nm_exchange_enabled">
+                            The commissions are set per currency in Cash Currencies (percentage, fixed part, minimum).
+                            The notes handed back follow the change rate and the change rounding of their currency.
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

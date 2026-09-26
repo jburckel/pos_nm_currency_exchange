@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <!-- Exchange receipt handed to the customer, printed from the register
+            (same layout as the cash move receipt). -->
+        <template id="pos_exchange_receipt">
+            <html id="pos-receipt">
+                <head>
+                    <meta charset="UTF-8"></meta>
+                    <t t-call="point_of_sale.pos_order_receipt_style" />
+                </head>
+                <body>
+                    <div class="pos-receipt">
+                        <div class="w-100 text-center mb-3" name="logo">
+                            <img t-if="image.get('logo')" t-att-src="image['logo']" style="max-height: 75px" />
+                        </div>
+                        <div class="text-center text-large">CURRENCY EXCHANGE</div>
+                        <div class="text-center">
+                            <span t-out="extra_data['name']" /> - <span t-out="extra_data['date']" />
+                        </div>
+                        <div class="text-center" t-if="extra_data.get('cashier_name')">
+                            Served by <span t-out="extra_data['cashier_name']" />
+                        </div>
+                        <div class="text-center" t-if="extra_data.get('partner_name')">
+                            Customer: <span t-out="extra_data['partner_name']" />
+                        </div>
+                        <table class="w-100 text-large mt-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-start" t-out="extra_data['label_in']"/>
+                                    <td class="text-end font-monospace" t-out="extra_data['amount_in']" />
+                                </tr>
+                                <tr class="text-bold">
+                                    <td class="text-start" t-out="extra_data['label_out']"/>
+                                    <td class="text-end font-monospace" t-out="extra_data['amount_out']" />
+                                </tr>
+                                <tr>
+                                    <td class="text-start">Rate</td>
+                                    <td class="text-end font-monospace" t-out="extra_data['rate_label']" />
+                                </tr>
+                                <tr>
+                                    <td class="text-start">Commission</td>
+                                    <td class="text-end font-monospace" t-out="extra_data['commission']" />
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div t-if="extra_data.get('note')" class="text-center mt-2" t-out="extra_data['note']"/>
+                        <t t-call="point_of_sale.company_info_receipt"/>
+                    </div>
+                </body>
+            </html>
+        </template>
+    </data>
+</odoo>

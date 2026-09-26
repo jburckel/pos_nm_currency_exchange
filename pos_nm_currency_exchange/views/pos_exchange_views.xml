@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_nm_exchange_list" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.list</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="arch" type="xml">
+            <list string="Currency Exchanges" create="false" edit="false" default_order="date desc">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="config_id" optional="show"/>
+                <field name="session_id" optional="hide"/>
+                <field name="cashier_name" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="currency_in_id" string="Received"/>
+                <field name="amount_in" string=" "/>
+                <field name="currency_out_id" string="Handed Back"/>
+                <field name="amount_out" string=" "/>
+                <field name="rate" optional="hide"/>
+                <field name="value_in" sum="Received Value" optional="hide"/>
+                <field name="commission" sum="Commission"/>
+                <field name="company_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_exchange_form" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.form</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="arch" type="xml">
+            <form string="Currency Exchange" create="false" edit="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_statement_lines" type="object" class="oe_stat_button" icon="payments"
+                                string="Statement Lines"/>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group string="Operation">
+                            <field name="date"/>
+                            <field name="session_id"/>
+                            <field name="config_id"/>
+                            <field name="cashier_name"/>
+                            <field name="partner_id"/>
+                            <field name="note"/>
+                        </group>
+                        <group string="Amounts">
+                            <field name="company_currency_id" invisible="1"/>
+                            <field name="currency_in_id"/>
+                            <field name="amount_in"/>
+                            <field name="value_in"/>
+                            <field name="currency_out_id"/>
+                            <field name="amount_out"/>
+                            <field name="value_out"/>
+                            <field name="rate"/>
+                            <field name="commission"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_exchange_pivot" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.pivot</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="arch" type="xml">
+            <pivot string="Currency Exchanges">
+                <field name="date" type="row" interval="day"/>
+                <field name="currency_in_id" type="col"/>
+                <field name="commission" type="measure"/>
+                <field name="value_in" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_exchange_search" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.search</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="arch" type="xml">
+            <search string="Currency Exchanges">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="cashier_name"/>
+                <field name="session_id"/>
+                <filter string="Today" name="today"
+                        domain="[('date', '&gt;=', 'today'), ('date', '&lt;', 'tomorrow')]"/>
+                <filter string="With Customer" name="with_customer" domain="[('partner_id', '!=', False)]"/>
+                <group>
+                    <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
+                    <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
+                    <filter string="Cashier" name="group_by_cashier" domain="[]" context="{'group_by': 'cashier_name'}"/>
+                    <filter string="Received Currency" name="group_by_currency_in" domain="[]" context="{'group_by': 'currency_in_id'}"/>
+                    <filter string="Handed Currency" name="group_by_currency_out" domain="[]" context="{'group_by': 'currency_out_id'}"/>
+                    <filter string="Date" name="group_by_date" domain="[]" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_exchange" model="ir.actions.act_window">
+        <field name="name">Currency Exchanges</field>
+        <field name="res_model">pos.nm.exchange</field>
+        <field name="view_mode">list,form,pivot</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No exchange operation yet
+            </p>
+            <p>
+                Exchange operations are recorded from the menu of the register (Currency Exchange): the notes
+                received, the notes handed back, the rate and the commission of every operation.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_pos_nm_exchange"
+        name="Currency Exchanges"
+        parent="point_of_sale.menu_point_of_sale"
+        sequence="55"
+        action="action_pos_nm_exchange"
+        groups="point_of_sale.group_pos_manager"/>
+</odoo>

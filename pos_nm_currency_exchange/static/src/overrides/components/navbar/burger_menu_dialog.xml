@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.BurgerMenuDialog" t-inherit="point_of_sale.BurgerMenuDialog" t-inherit-mode="extension">
+        <xpath expr="//t[@dataIcon=&quot;'refresh'&quot;]" position="before">
+            <t t-if="this.pos.nmShowExchangeButton"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'attach_money'"
+               onClick="() => this.pos.nmCurrencyExchange()"
+               btnLabel.translate="Currency Exchange"
+            />
+        </xpath>
+    </t>
+</templates>

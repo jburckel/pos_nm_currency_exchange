@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_session_form_exchange" model="ir.ui.view">
+        <field name="name">pos.session.form.exchange</field>
+        <field name="model">pos.session</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_nm_view_exchanges" type="object" class="oe_stat_button"
+                        icon="attach_money" invisible="not nm_exchange_count">
+                    <div class="o_stat_info">
+                        <span class="o_stat_value"><field name="nm_exchange_commission" widget="monetary"/></span>
+                        <span class="o_stat_text">Exchange Commissions</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Sales Details report: the exchange operations after the payments. -->
+    <template id="report_saledetails_exchange" inherit_id="point_of_sale.pos_session_sales_details">
+        <xpath expr="//div[@id='payments']" position="after">
+            <div t-if="nm_exchange" id="nm_exchange" style="page-break-inside: avoid;">
+                <h6 class="bg-secondary p-1 fw-bold w-100">Currency Exchange</h6>
+                <table class="table table-sm table-borderless w-100">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Session</th>
+                            <th class="text-end">Received</th>
+                            <th class="text-end">Handed Back</th>
+                            <th class="text-end">Commission</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="nm_exchange['operations']" t-as="operation">
+                            <td class="ps-2"><span t-out="operation['name']"/></td>
+                            <td><span t-out="operation['session']"/></td>
+                            <td class="text-end"><span t-out="operation['amount_in']"/></td>
+                            <td class="text-end"><span t-out="operation['amount_out']"/></td>
+                            <td class="text-end">
+                                <span t-if="currency['position']">
+                                    <span t-out="operation['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/><span t-out="currency['symbol']"/>
+                                </span>
+                                <span t-else="">
+                                    <span t-out="currency['symbol']"/><span t-out="operation['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="fw-bold border-top">
+                            <td class="ps-2" colspan="4"><span t-out="nm_exchange['count_label']"/></td>
+                            <td class="text-end">
+                                <span t-if="currency['position']">
+                                    <span t-out="nm_exchange['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/><span t-out="currency['symbol']"/>
+                                </span>
+                                <span t-else="">
+                                    <span t-out="currency['symbol']"/><span t-out="nm_exchange['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </xpath>
+    </template>
+</odoo>

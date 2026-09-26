@@ -11,8 +11,9 @@ Odoo 20 module: a currency exchange counter inside the Point of Sale, built on
 - [`pos_nm_currency_exchange/doc/`](pos_nm_currency_exchange/doc/) — the user guide
   (RST, rendered to PDF under `static/description/`)
 - [`pos_nm_currency_exchange/CHANGELOG.md`](pos_nm_currency_exchange/CHANGELOG.md)
-- [`tools/`](tools/) — build tooling (not shipped)
-- [`docs/`](docs/) — maintainer notes
+- [`tools/`](tools/) — build tooling (not shipped): documentation PDFs and the
+  screenshot scripts of the store page
+- [`docs/`](docs/) — maintainer notes (design, screenshot recipe)
 
 ## Branches
 
@@ -21,11 +22,13 @@ Odoo 20 module: a currency exchange counter inside the Point of Sale, built on
 
 ## Status
 
-Skeleton. Planned for the first version: buy and sell operation from the
-register menu, commission per currency (fixed or in percent, with a minimum),
-exchange receipt, entries on the cash journal in both currencies visible in
-the closing control, the Currency Position report and the session report,
-identification of the customer above a threshold.
+Version 20.0.1.0.0: exchange operation from the register menu between any two
+cash currencies of the point of sale, commission per currency (percentage,
+fixed part, minimum), exchange receipt, two statement lines on the cash journal
+of the session visible in the closing control, the Currency Position report
+and the session report, identification of the customer above a threshold,
+list and pivot of the operations. See
+[`pos_nm_currency_exchange/CHANGELOG.md`](pos_nm_currency_exchange/CHANGELOG.md).
 
 ## Tooling
 
@@ -39,6 +42,12 @@ python tools/build_doc_pdf.py          # all languages
 Same chain as the parent module: docutils (RST to HTML, `tools/doc_pdf.css`
 embedded) then headless Chrome (HTML to PDF). Set `CHROME=<path>` when Chrome is
 not in the usual places.
+
+### Screenshots
+
+See [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md): a demo database with both
+modules, `tools/screenshots/shots_data.py` through `odoo-bin shell`, then
+`tools/screenshots/shots_capture.py` with Playwright.
 
 ### Tests
 

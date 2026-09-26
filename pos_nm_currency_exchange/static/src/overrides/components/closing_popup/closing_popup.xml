@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.ClosePosPopup" t-inherit="point_of_sale.ClosePosPopup" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('payment-methods-overview')]" position="inside">
+            <div t-if="this.nmExchangeSummary" class="w-100 mb-3 nm-exchange-closing">
+                <div class="d-flex align-items-center justify-content-between fs-3">
+                    <span>Currency Exchange</span>
+                    <span class="nm-exchange-closing-commission" t-out="this.pos.formatCurrency(this.nmExchangeSummary.commission)"/>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted border-start ps-2">
+                    <span>Operations</span>
+                    <span t-out="this.nmExchangeSummary.count"/>
+                </div>
+                <div t-foreach="this.nmExchangeSummary.operations" t-as="operation" t-key="operation.name"
+                     class="d-flex justify-content-between small text-muted border-start ps-4">
+                    <span><t t-out="operation.name"/>: <t t-out="operation.amount_in"/> &#8594; <t t-out="operation.amount_out"/><span t-if="operation.cashier_name" class="ms-1 fst-italic">(<t t-out="operation.cashier_name"/>)</span></span>
+                    <span t-out="this.pos.formatCurrency(operation.commission)"/>
+                </div>
+            </div>
+        </xpath>
+    </t>
+</templates>
