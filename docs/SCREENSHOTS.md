@@ -32,8 +32,26 @@ is under `tools/screenshots/`.
      Exchange, USD to EUR, 100 typed, popup captured as `.modal-content`, Confirm,
      then the receipt shown from `#receipt-iframe-container`, then burger menu >
      Close Register for the closing popup.
-4. **Assembly**: files copied to `static/description/screenshot_exchange_<subject>.png`,
-   referenced in `index.html` and in the `images` key of the manifest.
+4. **Assembly**: `python tools/screenshots/shots_assemble.py <raw captures dir>` writes
+   `static/description/screenshot_exchange_<subject>.png`: the popups and the receipt
+   are placed on a neutral background of the ratio of their row (the two images of a
+   row must share their ratio, or the headings under them are not aligned), the list
+   and pivot keep only the top of the screen. Never run it on `static/description`
+   itself. The files are referenced in `index.html` and in the `images` key of the
+   manifest, after `banner.png`.
+
+## Banner and icon
+
+`tools/branding/build_branding.py` renders `banner.png` (1440 x 600) and `icon.png`
+(512 x 512) with headless Chrome, in the style of `pos_nm_multicurrencies` (blue
+gradient, faded currency symbols, white Open Sans text). The first image of the
+manifest is the banner of the store page.
+
+## Store page layout
+
+The Odoo Apps Store frames `oe_screenshot` images with a capped height and drops the
+`gap` of flex containers: `index.html` uses Bootstrap rows (`row`, `col-md-6`, padded
+columns), frames drawn with inline styles, and images at `width: 100%`.
 
 ## Files
 

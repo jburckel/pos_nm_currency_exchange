@@ -61,6 +61,7 @@ Requirements
         ],
     },
     "images": [
+        "static/description/banner.png",
         "static/description/screenshot_exchange_popup.png",
         "static/description/screenshot_exchange_receipt.png",
         "static/description/screenshot_exchange_closing.png",
