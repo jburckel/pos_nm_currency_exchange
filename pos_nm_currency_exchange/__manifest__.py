@@ -70,4 +70,6 @@ Requirements
         "static/description/screenshot_exchange_sale_details.png",
         "static/description/screenshot_exchange_settings.png",
     ],
+    "price": 59.00,
+    "currency": "EUR",
 }
