@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.1.0.1] - 2026-09-28
+
+Requires `pos_nm_multicurrencies` 20.0.2.0.1.
+
+### Fixed
+- **Currencies without decimals (XPF, JPY...)**: the amount received typed
+  in the exchange popup was read back wrong once formatted with its
+  thousands separator (25,000 XPF became 25 XPF): the operation, its
+  commission and its receipt were recorded for 25 XPF.
+- **Rate of the popup and the receipt**: given in the direction where it is
+  at least 1, with 2 to 4 decimals whatever the currencies: 0.0084 USD for
+  1 XPF read "1 XPF = $ 0.01", it now reads "1 USD = 119.05 XPF".
+
 ## [20.0.1.0.0] - 2026-09-26
 
 First version, on `pos_nm_multicurrencies` 20.0.2.0.0.

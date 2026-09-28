@@ -33,7 +33,7 @@ Requirements
 * Point of Sale (point_of_sale)
 * POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0
     """,
-    "version": "20.0.1.0.0",
+    "version": "20.0.1.0.1",
     "category": "Sales/Point of Sale",
     "author": "Natimai Solutions",
     "website": "https://www.natimai.solutions",

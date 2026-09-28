@@ -2,6 +2,7 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
+from odoo.tools.misc import formatLang
 
 
 class PosNmExchange(models.Model):
@@ -69,6 +70,30 @@ class PosNmExchange(models.Model):
                 if setting:
                     return setting
         return config.env['pos.nm.currency.setting']
+
+    @api.model
+    def _nm_rate_label(self, currency_in, currency_out, rate):
+        """Rate of an operation for the popup and the receipt: "1 USD = 119.33 XPF".
+
+        Given in the direction where it is at least 1: a rate of 0.0084 USD for
+        1 XPF, rounded to the 2 decimals of the dollar, would read "$ 0.01".
+        2 to 4 decimals whatever the currency (a rate of the yen or of the CFP
+        franc has decimals too), without trailing zeros.
+        """
+        if not rate:
+            return '-'
+        base, quoted, value = currency_in, currency_out, rate
+        if rate < 1.0:
+            base, quoted, value = currency_out, currency_in, 1.0 / rate
+        digits = 4 if value < 10 else 2
+        while digits > 2 and round(value, digits - 1) == round(value, digits):
+            digits -= 1
+        number = formatLang(self.env, value, digits=digits)
+        if quoted.position == 'before':
+            amount = f"{quoted.symbol}\N{NO-BREAK SPACE}{number}"
+        else:
+            amount = f"{number}\N{NO-BREAK SPACE}{quoted.symbol}"
+        return _('1 %(in)s = %(out)s', **{'in': base.name, 'out': amount})
 
     @api.model
     def _nm_quote(self, config, currency_in, amount_in, currency_out):
@@ -140,10 +165,7 @@ class PosNmExchange(models.Model):
             'amount_out_formatted': currency_out.format(quote['amount_out']),
             'commission_formatted': config.currency_id.format(quote['commission']),
             'value_in_formatted': config.currency_id.format(quote['value_in']),
-            'rate_label': _('1 %(in)s = %(out)s', **{
-                'in': currency_in.name,
-                'out': currency_out.format(quote['rate']) if quote['rate'] else '-',
-            }),
+            'rate_label': self._nm_rate_label(currency_in, currency_out, quote['rate']),
         })
         return quote
 
@@ -249,7 +271,10 @@ class PosNmExchange(models.Model):
             'amount_out': self.currency_out_id.format(self.amount_out),
             'value_in': company_currency.format(self.value_in),
             'commission': company_currency.format(self.commission),
-            'rate_label': _('1 %(in)s = %(out)s', **{'in': self.currency_in_id.name, 'out': self.currency_out_id.format(self.rate)}),
+            # From the amounts: the stored rate keeps 6 decimals only.
+            'rate_label': self._nm_rate_label(
+                self.currency_in_id, self.currency_out_id,
+                (self.amount_out / self.amount_in) if self.amount_in else 0.0),
             'note': self.note or '',
         }
 

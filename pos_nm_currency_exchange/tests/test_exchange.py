@@ -113,6 +113,28 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(quote['value_out'], 96.67)
         self.setting.write({'rate_mode': 'odoo', 'fixed_rate': 0.0, 'fixed_change_rate': 0.0})
 
+    def test_rate_label(self):
+        """The rate is shown in the direction where it is at least 1, with 2 to
+        4 decimals whatever the currencies: 0.0084 USD for 1 XPF is not
+        "$ 0.01" but "1 USD = 119.05 XPF"."""
+        Exchange = self.env['pos.nm.exchange']
+        xpf = self.env.ref('base.XPF')
+        label = Exchange._nm_rate_label(xpf, self.main, 1 / 119.05)
+        self.assertIn('1 %s = ' % self.main.name, label)
+        self.assertIn('119.05', label)
+        self.assertIn(xpf.symbol, label)
+        # 2.13 EUR for 1: kept as is, without trailing zeros.
+        label = Exchange._nm_rate_label(self.main, self.fx, 2.13)
+        self.assertIn('1 %s = ' % self.main.name, label)
+        self.assertIn('2.13', label)
+        self.assertNotIn('2.130', label)
+        # 97 for 220 EUR: 1 main = 2.268 EUR (3 decimals are enough).
+        label = Exchange._nm_rate_label(self.fx, self.main, 97.0 / 220.0)
+        self.assertIn('1 %s = ' % self.main.name, label)
+        self.assertIn('2.268', label)
+        self.assertNotIn('2.2680', label)
+        self.assertEqual(Exchange._nm_rate_label(self.fx, self.main, 0.0), '-')
+
     def test_get_quote_rpc(self):
         quote = self.env['pos.nm.exchange'].get_quote(self.pos_config.id, self.main.id, 100.0, self.fx.id)
         self.assertEqual(quote['amount_out'], 213.0)

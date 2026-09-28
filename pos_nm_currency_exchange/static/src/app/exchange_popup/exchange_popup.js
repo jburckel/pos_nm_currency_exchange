@@ -4,10 +4,13 @@ import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 import { formatCurrency } from "@web/core/currency";
-import { parseFloat } from "@web/views/fields/parsers";
 import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
 import { PartnerList } from "@point_of_sale/app/screens/partner_list/partner_list";
-import { getForeignCashCurrencies } from "@pos_nm_multicurrencies/overrides/utils/change_currency";
+import {
+    formatAmountInput,
+    getForeignCashCurrencies,
+    parseAmountInput,
+} from "@pos_nm_multicurrencies/overrides/utils/change_currency";
 
 /**
  * Currency exchange counter: the customer hands notes in one cash currency
@@ -54,7 +57,7 @@ export class CurrencyExchangePopup extends Component {
         return this.currencies.find((currency) => currency.id === this.state.currencyOutId);
     }
     get amountIn() {
-        return this.pos.isValidFloat(this.state.amountIn) ? parseFloat(this.state.amountIn) : 0;
+        return this.pos.isValidFloat(this.state.amountIn) ? parseAmountInput(this.state.amountIn) : 0;
     }
     get isValid() {
         return (
@@ -95,7 +98,7 @@ export class CurrencyExchangePopup extends Component {
     }
     onAmountBlur() {
         if (this.pos.isValidFloat(this.state.amountIn)) {
-            this.state.amountIn = formatCurrency(this.amountIn, this.currencyIn.id, { noSymbol: true });
+            this.state.amountIn = formatAmountInput(this.amountIn, this.currencyIn.id);
         }
     }
     swap() {
