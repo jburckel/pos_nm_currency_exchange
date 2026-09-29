@@ -2,6 +2,9 @@
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+from odoo.addons.pos_nm_multicurrencies.models.pos_currency_setting import (
+    PosNmCurrencySetting as PosNmCurrencySettingBase,
+)
 
 
 class PosNmCurrencySetting(models.Model):
@@ -27,8 +30,10 @@ class PosNmCurrencySetting(models.Model):
              'currency of the point of sale.',
     )
 
-    _NM_LOGGED_FIELDS = ('rate_mode', 'fixed_rate', 'fixed_change_rate', 'margin_percent',
-                         'exchange_commission_percent', 'exchange_commission_fixed', 'exchange_commission_min')
+    # Logged in the chatter like the rates: the fields of the parent module
+    # plus the commissions.
+    _NM_LOGGED_FIELDS = PosNmCurrencySettingBase._NM_LOGGED_FIELDS + (
+        'exchange_commission_percent', 'exchange_commission_fixed', 'exchange_commission_min')
 
     @api.constrains('exchange_commission_percent', 'exchange_commission_fixed', 'exchange_commission_min')
     def _check_exchange_commission(self):

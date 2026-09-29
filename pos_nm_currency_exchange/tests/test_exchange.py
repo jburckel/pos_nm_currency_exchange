@@ -80,6 +80,11 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.setting.exchange_commission_percent = 2.5
         self.assertEqual(len(self.setting.message_ids), before + 1)
         self.setting.exchange_commission_percent = 2.0
+        # The fields logged by the parent module still are.
+        before = len(self.setting.message_ids)
+        self.setting.change_rest_mode = 'main'
+        self.assertEqual(len(self.setting.message_ids), before + 1)
+        self.setting.change_rest_mode = 'rounding'
 
     def test_quote_main_to_foreign(self):
         """100 main received: commission 3, 97 to hand back = 213.4 EUR at

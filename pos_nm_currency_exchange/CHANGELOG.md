@@ -17,6 +17,10 @@ Requires `pos_nm_multicurrencies` 20.0.2.1.0.
   Payment Rounding, else of its Change Rounding (1,106 XPF with 5 XPF
   coins). The operation stays possible.
 
+### Fixed
+- The changes of the *Remainder of the Change* of a currency are logged in
+  the chatter with this module installed, like the other settings.
+
 ## [20.0.1.0.1] - 2026-09-28
 
 Requires `pos_nm_multicurrencies` 20.0.2.0.1.
