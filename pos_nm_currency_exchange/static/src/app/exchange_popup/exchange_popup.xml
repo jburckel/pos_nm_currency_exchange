@@ -45,6 +45,7 @@
                     <div class="d-flex justify-content-between"><span>Value of the notes received</span><span t-out="this.state.quote.value_in_formatted"/></div>
                     <div class="d-flex justify-content-between"><span>Commission</span><span class="nm-exchange-commission" t-out="this.state.quote.commission_formatted"/></div>
                 </div>
+                <div t-if="this.coinStepWarning" class="alert alert-warning py-2 mb-0 nm-exchange-step-warning" role="alert" t-out="this.coinStepWarning"/>
                 <div t-if="this.state.error" class="alert alert-danger py-2 mb-0 nm-exchange-error" role="alert" t-out="this.state.error"/>
                 <div class="d-flex gap-2 align-items-center">
                     <button class="btn btn-secondary btn-lg nm-exchange-customer" type="button" t-on-click="this.selectCustomer"

@@ -37,9 +37,22 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                 trigger: ".modal .nm-currency-exchange select.nm-exchange-currency-in",
             },
             {
+                content: "type an amount the EUR notes cannot make up (1 EUR coins)",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
+                run: "edit 50.5",
+            },
+            {
+                content: "a warning says the amount cannot be made up with the coins",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-step-warning",
+            },
+            {
                 content: "type the amount received",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
                 run: "edit 50",
+            },
+            {
+                content: "no warning for 50",
+                trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-step-warning))",
             },
             {
                 content: "the amount handed back is quoted: 56.32",

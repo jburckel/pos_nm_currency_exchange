@@ -8,7 +8,9 @@ import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
 import { PartnerList } from "@point_of_sale/app/screens/partner_list/partner_list";
 import {
     formatAmountInput,
+    getCoinStepWarning,
     getForeignCashCurrencies,
+    getPaymentStep,
     parseAmountInput,
 } from "@pos_nm_multicurrencies/overrides/utils/change_currency";
 
@@ -58,6 +60,18 @@ export class CurrencyExchangePopup extends Component {
     }
     get amountIn() {
         return this.pos.isValidFloat(this.state.amountIn) ? parseAmountInput(this.state.amountIn) : 0;
+    }
+    /**
+     * The amount received cannot be made up with the coins and notes of its
+     * currency (not a multiple of its Payment Rounding, else of its Change
+     * Rounding): a warning, the operation stays possible.
+     */
+    get coinStepWarning() {
+        const currency = this.currencyIn;
+        if (!currency || currency.id === this.pos.config.currency_id.id) {
+            return "";
+        }
+        return getCoinStepWarning(this.amountIn, currency, getPaymentStep(currency));
     }
     get isValid() {
         return (

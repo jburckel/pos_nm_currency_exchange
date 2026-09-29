@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [20.0.1.1.0] - 2026-09-29
+
+Requires `pos_nm_multicurrencies` 20.0.2.1.0.
+
+### Added
+- **Warning on amounts the coins cannot make up**: the exchange popup warns
+  when the amount received in a foreign currency is not a multiple of its
+  Payment Rounding, else of its Change Rounding (1,106 XPF with 5 XPF
+  coins). The operation stays possible.
+
 ## [20.0.1.0.1] - 2026-09-28
 
 Requires `pos_nm_multicurrencies` 20.0.2.0.1.

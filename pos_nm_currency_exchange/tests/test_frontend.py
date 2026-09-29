@@ -23,6 +23,8 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
             'config_id': self.main_pos_config.id,
             'currency_id': foreign_currency.id,
             'exchange_commission_percent': 2.0,
+            # 1 EUR coins: 50.5 EUR received shows a warning in the popup.
+            'change_rounding': 1.0,
         })
 
         self.main_pos_config.with_user(self.pos_user).open_ui()
