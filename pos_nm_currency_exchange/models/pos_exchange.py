@@ -89,7 +89,7 @@ class PosNmExchange(models.Model):
         ondelete='restrict', check_company=True,
         help='Statement line taking back the notes handed to the customer.')
     uuid = fields.Char(
-        string='Register Identifier', readonly=True, copy=False, index='btree_not_null',
+        string='Register Identifier', readonly=True, copy=False,
         help='Identifier of the operation sent by the register: an operation confirmed again after '
              'a lost connection is recorded only once.')
 
@@ -224,14 +224,19 @@ class PosNmExchange(models.Model):
 
     @api.model
     def _nm_payment_step(self, config, currency):
-        """Smallest coin or note of ``currency`` taken from the customer: the
-        payment rounding of a foreign currency, the cash rounding of the
-        point of sale for its own currency, else the rounding of the
-        currency."""
+        """Smallest coin or note of ``currency`` taken from the customer, as
+        the register checks it (getPaymentStep of POS Multi-Currency Cash):
+        the payment rounding of a foreign currency, else its change rounding
+        when the remainder of the change is kept as rounding; the cash
+        rounding of the point of sale for its own currency; at least the
+        rounding of the currency."""
         if currency == config.currency_id:
             step = config.rounding_method.rounding if config.cash_rounding else 0.0
         else:
-            step = config._nm_get_currency_setting(currency).payment_rounding
+            setting = config._nm_get_currency_setting(currency)
+            step = setting.payment_rounding
+            if not step and setting.change_rest_mode == 'rounding':
+                step = setting.change_rounding
         return max(step, currency.rounding)
 
     @api.model

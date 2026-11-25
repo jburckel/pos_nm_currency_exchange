@@ -847,6 +847,14 @@ class TestPosCurrencyExchange(TestPosAccounting):
             'profit_account_id': self.profit_account.id, 'loss_account_id': self.loss_account.id})
         self.pos_config.write({'cash_rounding': True, 'rounding_method': rounding.id})
         self._assert_reverse(self.main, self.fx, 177.0, 100.4)
+        # Without payment rounding, a foreign currency received is rounded up
+        # to its change rounding (1 EUR coins), as the register warns: 96
+        # main need notes worth 99, 217.80 EUR, so 218.
+        self._assert_reverse(self.fx, self.main, 96.0, 218.0)
+        # The remainder of the change handed back in the POS currency: the
+        # change rounding is no coin the customer must bring.
+        self.setting.change_rest_mode = 'main'
+        self._assert_reverse(self.fx, self.main, 96.0, 217.79)
         # A foreign currency received is rounded up to its payment rounding:
         # 97 main need notes worth 100, 220 EUR at the cash rate 2.2.
         self.setting.payment_rounding = 5.0
