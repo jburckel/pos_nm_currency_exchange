@@ -16,6 +16,8 @@ import {
     parseAmountInput,
 } from "@pos_nm_multicurrencies/overrides/utils/change_currency";
 
+const { DateTime } = luxon;
+
 /**
  * Currency exchange counter: the customer hands notes in one cash currency
  * of the point of sale and receives notes in another. The amounts come
@@ -27,6 +29,12 @@ import {
  * "handed back" field instead; the server then computes the amount to
  * receive (get_reverse_quote) and the operation is quoted and recorded from
  * that amount received, as any other.
+ *
+ * Identification: the quote says whether a customer and an identity
+ * document are required (the operation alone, or with the operations of the
+ * customer over the linked operations period). The document of the customer
+ * selected is loaded to be confirmed or completed, and sent with the
+ * operation, which keeps a copy of it.
  */
 export class CurrencyExchangePopup extends Component {
     static template = "pos_nm_currency_exchange.CurrencyExchangePopup";
@@ -52,6 +60,8 @@ export class CurrencyExchangePopup extends Component {
             reverse: false,
             note: "",
             partner: null,
+            document: this.emptyDocument(),
+            documentTypes: [],
             quote: null,
             loading: false,
             error: "",
@@ -62,6 +72,9 @@ export class CurrencyExchangePopup extends Component {
         // Sent with the operation: confirmed again after a lost response,
         // the operation is not recorded twice.
         this.uuid = uuidv4();
+        this.countries = this.pos.models["res.country"]
+            .getAll()
+            .sort((a, b) => a.name.localeCompare(b.name));
         onWillUnmount(() => clearTimeout(this.quoteTimer));
     }
 
@@ -107,7 +120,13 @@ export class CurrencyExchangePopup extends Component {
         return (
             !!this.state.quote &&
             !this.state.loading &&
-            this.state.quote.key === this.quoteKey(this.state.currencyInId, this.state.currencyOutId, this.amountIn)
+            this.state.quote.key ===
+                this.quoteKey(
+                    this.state.currencyInId,
+                    this.state.currencyOutId,
+                    this.amountIn,
+                    this.state.partner?.id
+                )
         );
     }
     get isValid() {
@@ -115,8 +134,40 @@ export class CurrencyExchangePopup extends Component {
             this.amountIn > 0 &&
             this.isQuoteCurrent &&
             !this.errorMessage &&
-            (!this.state.quote.customer_required || !!this.state.partner)
+            (!this.state.quote.customer_required || !!this.state.partner) &&
+            !this.documentError
         );
+    }
+    get documentRequired() {
+        return !!this.state.quote?.document_required && !!this.state.partner;
+    }
+    /**
+     * Why the identity document cannot be accepted, as the server checks
+     * it, else an empty string.
+     */
+    get documentError() {
+        if (!this.documentRequired) {
+            return "";
+        }
+        const { type, number, expiry } = this.state.document;
+        if (!type || !number.trim()) {
+            return _t("Enter the type and the number of the identity document of the customer.");
+        }
+        if (!expiry) {
+            return _t("Enter the expiry date of the identity document of the customer.");
+        }
+        if (expiry < DateTime.now().toISODate()) {
+            return _t("The identity document of the customer expired on %s: it cannot be accepted.", expiry);
+        }
+        return "";
+    }
+    /**
+     * The operations of the customer over the linked operations period
+     * count in the identification thresholds.
+     */
+    get hasLinkedOperations() {
+        const quote = this.state.quote;
+        return !!quote && quote.linked_value !== quote.value_in;
     }
     /**
      * The error of the last request, or the refusal of the drawer of the
@@ -131,12 +182,21 @@ export class CurrencyExchangePopup extends Component {
     get customerRequired() {
         return !!this.state.quote?.customer_required && !this.state.partner;
     }
+    get customerRequiredMessage() {
+        return this.state.quote?.document_required
+            ? _t("A customer with an identity document must be identified for this amount.")
+            : _t("A customer must be identified for this amount.");
+    }
+
+    emptyDocument() {
+        return { type: "", number: "", country_id: false, expiry: "", nationality_id: false, birthdate: "" };
+    }
 
     format(amount, currency) {
         return formatCurrency(amount, currency.id);
     }
-    quoteKey(currencyInId, currencyOutId, amountIn) {
-        return `${currencyInId}|${currencyOutId}|${amountIn}`;
+    quoteKey(currencyInId, currencyOutId, amountIn, partnerId) {
+        return `${currencyInId}|${currencyOutId}|${amountIn}|${partnerId || ""}`;
     }
 
     onCurrencyInChange(ev) {
@@ -207,6 +267,7 @@ export class CurrencyExchangePopup extends Component {
     async fetchQuote() {
         const sequence = this.quoteSequence;
         const { currencyInId, currencyOutId, reverse } = this.state;
+        const partnerId = this.state.partner?.id || false;
         let amountIn = this.amountIn;
         try {
             const quote = reverse
@@ -215,12 +276,14 @@ export class CurrencyExchangePopup extends Component {
                       currencyInId,
                       currencyOutId,
                       this.amountOut,
+                      partnerId,
                   ])
                 : await this.pos.data.call("pos.nm.exchange", "get_quote", [
                       this.pos.config.id,
                       currencyInId,
                       amountIn,
                       currencyOutId,
+                      partnerId,
                   ]);
             if (sequence === this.quoteSequence) {
                 if (reverse) {
@@ -228,7 +291,10 @@ export class CurrencyExchangePopup extends Component {
                     amountIn = this.amountIn;
                 }
                 // The inputs of the quote: Confirm only for these.
-                this.state.quote = { ...quote, key: this.quoteKey(currencyInId, currencyOutId, amountIn) };
+                this.state.quote = {
+                    ...quote,
+                    key: this.quoteKey(currencyInId, currencyOutId, amountIn, partnerId),
+                };
             }
         } catch (error) {
             if (sequence === this.quoteSequence) {
@@ -247,10 +313,39 @@ export class CurrencyExchangePopup extends Component {
         });
         if (partner) {
             this.state.partner = partner;
+            this.state.document = this.emptyDocument();
+            // The operations of the customer may require the document.
+            this.scheduleQuote();
+            await this.loadDocument(partner);
         }
     }
     clearCustomer() {
         this.state.partner = null;
+        this.state.document = this.emptyDocument();
+        this.scheduleQuote();
+    }
+    /**
+     * Identity document recorded on the customer, to confirm or complete.
+     */
+    async loadDocument(partner) {
+        try {
+            const { document, types } = await this.pos.data.call("pos.nm.exchange", "get_customer_document", [
+                partner.id,
+            ]);
+            if (this.state.partner?.id === partner.id) {
+                this.state.documentTypes = types;
+                this.state.document = {
+                    ...this.emptyDocument(),
+                    ...Object.fromEntries(Object.entries(document).filter(([, value]) => value)),
+                };
+            }
+        } catch (error) {
+            this.state.error = error?.data?.message || error?.message || _t("The identity document could not be loaded.");
+        }
+    }
+    onDocumentInput(key, ev) {
+        const value = ev.target.value;
+        this.state.document[key] = ["country_id", "nationality_id"].includes(key) ? parseInt(value) || false : value;
     }
 
     async confirm() {
@@ -279,7 +374,11 @@ export class CurrencyExchangePopup extends Component {
                         // Refused by the server when the quote changed since.
                         this.state.quote.amount_out,
                     ],
-                    { uuid: this.uuid }
+                    {
+                        uuid: this.uuid,
+                        // Saved on the customer, frozen on the operation.
+                        document: this.documentRequired ? this.state.document : undefined,
+                    }
                 );
             } finally {
                 this.ui.unblock();

@@ -1,10 +1,25 @@
 # -*- coding: utf-8 -*-
 
+from datetime import timedelta
+
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 from odoo.fields import Domain
 from odoo.tools import float_round
 from odoo.tools.misc import formatLang
+
+from .res_partner import ID_DOCUMENT_TYPES
+
+# Identity document sent by the register: field of the operation, field of
+# the partner, key sent by the register.
+ID_DOCUMENT_FIELDS = [
+    ('id_document_type', 'nm_id_document_type', 'type'),
+    ('id_document_number', 'nm_id_document_number', 'number'),
+    ('id_document_country_id', 'nm_id_document_country_id', 'country_id'),
+    ('id_document_expiry', 'nm_id_document_expiry', 'expiry'),
+    ('id_nationality_id', 'nm_nationality_id', 'nationality_id'),
+    ('id_birthdate', 'nm_birthdate', 'birthdate'),
+]
 
 
 class PosNmExchange(models.Model):
@@ -43,6 +58,28 @@ class PosNmExchange(models.Model):
                                help='Cashier of the operation: the employee logged in at the register when '
                                     'the Employees module is used at the point of sale, else the user.')
     partner_id = fields.Many2one('res.partner', string='Customer', readonly=True, check_company=True)
+    customer_name = fields.Char(
+        string='Customer Name', readonly=True,
+        help='Name of the customer when the operation was recorded: later changes of the contact do not '
+             'change it.')
+    linked_value = fields.Monetary(
+        string='Value with Linked Operations', currency_field='company_currency_id', readonly=True,
+        help='Value compared to the identification thresholds: the received value plus the operations '
+             'of the customer over the linked operations period of the point of sale.')
+    # Frozen copy of the identity document shown by the customer: later
+    # changes of the contact do not change the register.
+    id_document_type = fields.Selection(
+        ID_DOCUMENT_TYPES, string='Identity Document', readonly=True, groups='point_of_sale.group_pos_manager',
+        help='Identity document shown by the customer, as recorded with the operation.')
+    id_document_number = fields.Char(
+        string='Document Number', readonly=True, groups='point_of_sale.group_pos_manager')
+    id_document_country_id = fields.Many2one(
+        'res.country', string='Issuing Country', readonly=True, groups='point_of_sale.group_pos_manager')
+    id_document_expiry = fields.Date(
+        string='Document Expiry Date', readonly=True, groups='point_of_sale.group_pos_manager')
+    id_nationality_id = fields.Many2one(
+        'res.country', string='Nationality', readonly=True, groups='point_of_sale.group_pos_manager')
+    id_birthdate = fields.Date(string='Date of Birth', readonly=True, groups='point_of_sale.group_pos_manager')
 
     currency_in_id = fields.Many2one('res.currency', string='Received Currency', required=True, readonly=True)
     amount_in = fields.Monetary(string='Received', currency_field='currency_in_id', readonly=True,
@@ -218,9 +255,120 @@ class PosNmExchange(models.Model):
             'rate_margin': self._nm_rate_margin(
                 config, currency_in, amount_in, value_in, currency_out, amount_out, value_out),
             'rate': (amount_out / amount_in) if amount_in else 0.0,
-            'customer_required': bool(config.nm_exchange_customer_threshold)
-            and company_currency.compare_amounts(value_in, config.nm_exchange_customer_threshold) > 0,
         }
+
+    @api.model
+    def _nm_linked_value(self, config, value_in, partner):
+        """Value compared to the identification thresholds: ``value_in``
+        plus the operations done by ``partner`` over the linked operations
+        period, at every point of sale of the company, in the currency of
+        ``config``."""
+        if not partner or config.nm_exchange_linked_days <= 0:
+            return value_in
+        since = fields.Datetime.now() - timedelta(days=config.nm_exchange_linked_days)
+        groups = self.sudo()._read_group([
+            ('partner_id', '=', partner.id),
+            ('company_id', '=', config.company_id.id),
+            ('state', '=', 'done'),
+            ('date', '>=', since),
+        ], ['config_id'], ['value_in:sum'])
+        today = fields.Date.context_today(self)
+        linked = sum(
+            other.currency_id._convert(value, config.currency_id, config.company_id, today)
+            for other, value in groups)
+        return config.currency_id.round(value_in + linked)
+
+    @api.model
+    def _nm_identification(self, config, value_in, partner):
+        """What the operation needs to identify its customer.
+
+        :return: dict: ``linked_value`` (see _nm_linked_value),
+            ``customer_required`` and ``document_required``
+        """
+        currency = config.currency_id
+        linked_value = self._nm_linked_value(config, value_in, partner)
+
+        def above(threshold):
+            return bool(threshold) and currency.compare_amounts(linked_value, threshold) > 0
+
+        document_required = above(config.nm_exchange_document_threshold)
+        return {
+            'linked_value': linked_value,
+            'customer_required': (config.nm_exchange_customer_always or document_required
+                                  or above(config.nm_exchange_customer_threshold)),
+            'document_required': document_required,
+        }
+
+    @api.model
+    def _nm_identification_error(self, config, identification, partner, document):
+        """Refusal of an operation whose customer is not identified as
+        required, else an empty string.
+
+        :param document: identity document of the operation (values of its
+            fields, see _nm_document_values)
+        """
+        currency = config.currency_id
+        linked = identification['linked_value']
+        days = config.nm_exchange_linked_days
+        if identification['document_required']:
+            threshold = currency.format(config.nm_exchange_document_threshold)
+            if not partner:
+                return _("A customer with an identity document must be identified for an exchange operation "
+                         "above %s.", threshold)
+            if not document.get('id_document_type') and not document.get('id_document_number'):
+                if days > 0:
+                    return _(
+                        "The identity document of the customer is required: with the operations of the last "
+                        "%(days)s days, %(amount)s were exchanged, above %(threshold)s.",
+                        days=days, amount=currency.format(linked), threshold=threshold)
+                return _("The identity document of the customer is required for an exchange operation above "
+                         "%s.", threshold)
+            return self._nm_document_error(document)
+        if identification['customer_required'] and not partner:
+            if config.nm_exchange_customer_always:
+                return _("A customer must be identified for every exchange operation at this Point of Sale.")
+            return _("A customer must be identified for an exchange operation above %s.",
+                     currency.format(config.nm_exchange_customer_threshold))
+        return ''
+
+    @api.model
+    def _nm_document_error(self, document):
+        """Refusal of an identity document (values of the operation
+        fields), else an empty string."""
+        if not document.get('id_document_type') or not document.get('id_document_number'):
+            return _("Enter the type and the number of the identity document of the customer.")
+        expiry = document.get('id_document_expiry')
+        if not expiry:
+            return _("Enter the expiry date of the identity document of the customer.")
+        if expiry < fields.Date.context_today(self):
+            return _("The identity document of the customer expired on %s: it cannot be accepted.",
+                     fields.Date.to_string(expiry))
+        return ''
+
+    @api.model
+    def _nm_document_values(self, partner, document=None):
+        """Identity document of the operation: the one typed or confirmed
+        at the register (``document``, keys of ID_DOCUMENT_FIELDS), else the
+        one of ``partner``. Values of the fields of the operation."""
+        if document is None:
+            partner = partner.sudo()
+            return {
+                field: partner[partner_field].id if partner_field.endswith('_id') else partner[partner_field]
+                for field, partner_field, _key in ID_DOCUMENT_FIELDS}
+        countries = self.env['res.country']
+        values = {}
+        for field, _partner_field, key in ID_DOCUMENT_FIELDS:
+            value = document.get(key) or False
+            if field.endswith('_id'):
+                value = value and countries.browse(int(value)).exists().id
+            elif field in ('id_document_expiry', 'id_birthdate'):
+                value = value and fields.Date.to_date(value)
+            elif isinstance(value, str):
+                value = value.strip()
+            values[field] = value or False
+        if values['id_document_type'] not in dict(ID_DOCUMENT_TYPES):
+            values['id_document_type'] = False
+        return values
 
     @api.model
     def _nm_payment_step(self, config, currency):
@@ -321,15 +469,22 @@ class PosNmExchange(models.Model):
         return config, currency_in, currency_out
 
     @api.model
-    def get_quote(self, config_id, currency_in_id, amount_in, currency_out_id):
-        """Register: amounts of the operation for the popup, and the drawer
-        of the currency handed back in the open session, checked as when
-        the operation is recorded."""
+    def _nm_partner(self, partner_id):
+        return self.env['res.partner'].browse(int(partner_id)).exists() if partner_id else self.env['res.partner']
+
+    @api.model
+    def get_quote(self, config_id, currency_in_id, amount_in, currency_out_id, partner_id=None):
+        """Register: amounts of the operation for the popup, the drawer of
+        the currency handed back in the open session, and the identification
+        of the customer (``partner_id``, the customer selected), checked as
+        when the operation is recorded."""
         config, currency_in, currency_out = self._nm_quote_records(config_id, currency_in_id, currency_out_id)
         self._nm_check_operation(config, currency_in, amount_in, currency_out)
         quote = self._nm_quote(config, currency_in, float(amount_in), currency_out)
         self._nm_check_quote(quote, currency_out)
+        quote.update(self._nm_identification(config, quote['value_in'], self._nm_partner(partner_id)))
         quote.update({
+            'linked_value_formatted': config.currency_id.format(quote['linked_value']),
             'amount_in_formatted': currency_in.format(quote['amount_in']),
             'amount_out_formatted': currency_out.format(quote['amount_out']),
             'commission_formatted': config.currency_id.format(quote['commission']),
@@ -348,7 +503,7 @@ class PosNmExchange(models.Model):
         return quote
 
     @api.model
-    def get_reverse_quote(self, config_id, currency_in_id, currency_out_id, amount_out):
+    def get_reverse_quote(self, config_id, currency_in_id, currency_out_id, amount_out, partner_id=None):
         """Register: the customer asks for ``amount_out``; quote of the
         smallest amount received, rounded up to the coins and notes of its
         currency, handing back at least that much. The operation is then
@@ -359,7 +514,25 @@ class PosNmExchange(models.Model):
         if currency_out.compare_amounts(amount_out, 0.0) <= 0:
             raise UserError(_("The amount handed back must be positive."))
         amount_in = self._nm_reverse_amount_in(config, currency_in, currency_out, amount_out)
-        return self.get_quote(config.id, currency_in.id, amount_in, currency_out.id)
+        return self.get_quote(config.id, currency_in.id, amount_in, currency_out.id, partner_id)
+
+    @api.model
+    def get_customer_document(self, partner_id):
+        """Register: identity document of the customer selected, to confirm
+        or complete it in the popup. Read with sudo: the POS users do not
+        read these fields of the contacts otherwise."""
+        if not self.env.user.has_group('point_of_sale.group_pos_user'):
+            raise AccessError(_("You don't have the access rights to use the exchange counter."))
+        partner = self._nm_partner(partner_id)
+        partner.check_access('read')
+        values = self._nm_document_values(partner)
+        return {
+            'document': {
+                key: (fields.Date.to_string(values[field]) if field in ('id_document_expiry', 'id_birthdate')
+                      else values[field]) or False
+                for field, _partner_field, key in ID_DOCUMENT_FIELDS},
+            'types': self._fields['id_document_type']._description_selection(self.env),
+        }
 
     # ------------------------------------------------------------------
     # Operation
@@ -388,7 +561,7 @@ class PosNmExchange(models.Model):
 
     @api.model
     def create_from_ui(self, session_id, currency_in_id, amount_in, currency_out_id, partner_id=None,
-                       note=None, employee_id=None, amount_out=None, uuid=None):
+                       note=None, employee_id=None, amount_out=None, uuid=None, document=None):
         """Register: record the operation and post its two statement lines.
 
         The POS users can only read the operations: the operation is created
@@ -401,6 +574,10 @@ class PosNmExchange(models.Model):
         :param uuid: identifier of the operation generated by the register:
             when it was already recorded (the response was lost and the
             cashier confirms again), nothing is recorded twice
+        :param document: identity document of the customer typed or
+            confirmed at the register (keys of ID_DOCUMENT_FIELDS), when
+            required: saved on the customer and frozen on the operation;
+            without it, the document of the customer is used
         :return: the data of the exchange receipt
         """
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
@@ -433,17 +610,26 @@ class PosNmExchange(models.Model):
                 "The quote changed: %(amount)s is now handed back instead of %(quoted)s. Check the amount "
                 "again before confirming.",
                 amount=currency_out.format(quote['amount_out']), quoted=currency_out.format(float(amount_out))))
-        partner = self.env['res.partner'].browse(int(partner_id)).exists() if partner_id else self.env['res.partner']
-        if quote['customer_required'] and not partner:
-            raise UserError(_(
-                "A customer must be identified for an exchange operation above %s.",
-                config.currency_id.format(config.nm_exchange_customer_threshold)))
+        partner = self._nm_partner(partner_id)
+        identification = self._nm_identification(config, quote['value_in'], partner)
+        document_values = {}
+        if identification['document_required'] and partner:
+            document_values = self._nm_document_values(partner, document)
+        error = self._nm_identification_error(config, identification, partner, document_values)
+        if error:
+            raise UserError(error)
+        if document is not None and document_values:
+            partner.sudo().write({
+                partner_field: document_values[field] for field, partner_field, _key in ID_DOCUMENT_FIELDS})
         self._nm_check_drawer(session, currency_out, quote['amount_out'])
         employee, cashier_name, operator = self._nm_operator(config, employee_id)
 
         exchange = self.sudo().create({
             'session_id': session.id,
             'partner_id': partner.id,
+            'customer_name': partner.name or False,
+            'linked_value': identification['linked_value'],
+            **document_values,
             'user_id': self.env.uid,
             'cashier_name': cashier_name,
             'currency_in_id': currency_in.id,
@@ -550,7 +736,8 @@ class PosNmExchange(models.Model):
             'name': self.name,
             'date': fields.Datetime.context_timestamp(self, self.date).strftime('%Y-%m-%d %H:%M'),
             'cashier_name': self.cashier_name or '',
-            'partner_name': self.partner_id.name or '',
+            'partner_name': self.customer_name or '',
+            'id_document': self._nm_masked_document(),
             'currency_in': self.currency_in_id.name,
             'currency_out': self.currency_out_id.name,
             'label_in': _('Received (%s)', self.currency_in_id.name),
@@ -562,6 +749,17 @@ class PosNmExchange(models.Model):
             'rate_label': self.rate_label,
             'note': self.note or '',
         }
+
+    def _nm_masked_document(self):
+        """Identity document as printed on the receipt: its type and the
+        last 4 characters of its number only."""
+        self.ensure_one()
+        exchange = self.sudo()
+        if not exchange.id_document_type:
+            return ''
+        label = dict(exchange._fields['id_document_type']._description_selection(self.env))[exchange.id_document_type]
+        number = (exchange.id_document_number or '')[-4:]
+        return f"{label} ****{number}" if number else label
 
     def action_view_statement_lines(self):
         self.ensure_one()

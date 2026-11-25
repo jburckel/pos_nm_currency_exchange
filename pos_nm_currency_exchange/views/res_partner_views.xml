@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_inherit_nm_exchange" model="ir.ui.view">
+        <field name="name">res.partner.form.nm_currency_exchange</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Identity Document" name="nm_id_document" groups="point_of_sale.group_pos_manager">
+                    <group>
+                        <group>
+                            <field name="nm_id_document_type"/>
+                            <field name="nm_id_document_number"/>
+                            <field name="nm_id_document_country_id" options="{'no_create': True}"/>
+                            <field name="nm_id_document_expiry"/>
+                        </group>
+                        <group>
+                            <field name="nm_nationality_id" options="{'no_create': True}"/>
+                            <field name="nm_birthdate"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        Shown by the customer at the currency exchange counter. Every exchange operation keeps its own copy
+                        of the document: changing it here does not change the operations already recorded.
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

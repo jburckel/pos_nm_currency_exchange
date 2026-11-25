@@ -50,6 +50,7 @@ Requirements
         "views/pos_currency_setting_views.xml",
         "views/pos_session_views.xml",
         "views/res_config_settings.xml",
+        "views/res_partner_views.xml",
         "receipt/pos_exchange_receipt.xml",
     ],
     "assets": {

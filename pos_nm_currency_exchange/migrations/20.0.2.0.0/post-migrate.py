@@ -11,7 +11,10 @@ def migrate(cr, version):
     - the rate of the operations keeps 12 decimals: recompute it from the
       amounts;
     - the rate margin of the operations recorded before: computed at the
-      rate of Odoo of the day of each operation.
+      rate of Odoo of the day of each operation;
+    - the operations keep the name of their customer, and the value
+      compared to the identification thresholds (no linked operations
+      before).
     """
     if not version:
         return
@@ -20,6 +23,12 @@ def migrate(cr, version):
     if sequence and sequence.implementation != 'no_gap':
         sequence.implementation = 'no_gap'
     cr.execute("UPDATE pos_nm_exchange SET rate = amount_out / amount_in WHERE amount_in <> 0")
+    cr.execute("""
+        UPDATE pos_nm_exchange exchange SET customer_name = partner.name
+          FROM res_partner partner
+         WHERE partner.id = exchange.partner_id AND exchange.customer_name IS NULL
+    """)
+    cr.execute("UPDATE pos_nm_exchange SET linked_value = value_in WHERE linked_value IS NULL")
     cr.execute("SELECT id FROM pos_nm_exchange WHERE rate_margin IS NULL")
     Exchange = env['pos.nm.exchange']
     for exchange in Exchange.browse([row[0] for row in cr.fetchall()]):

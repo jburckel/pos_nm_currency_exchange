@@ -60,6 +60,8 @@
                             <field name="cashier_name"/>
                             <field name="user_id"/>
                             <field name="partner_id"/>
+                            <field name="customer_name" invisible="not partner_id"/>
+                            <field name="linked_value" invisible="linked_value == value_in"/>
                             <field name="note"/>
                         </group>
                         <group string="Amounts">
@@ -73,6 +75,19 @@
                             <field name="rate_label"/>
                             <field name="commission"/>
                             <field name="rate_margin"/>
+                        </group>
+                    </group>
+                    <group string="Identity Document" name="id_document" invisible="not id_document_type"
+                           groups="point_of_sale.group_pos_manager">
+                        <group>
+                            <field name="id_document_type"/>
+                            <field name="id_document_number"/>
+                            <field name="id_document_country_id"/>
+                            <field name="id_document_expiry"/>
+                        </group>
+                        <group>
+                            <field name="id_nationality_id"/>
+                            <field name="id_birthdate"/>
                         </group>
                     </group>
                 </sheet>

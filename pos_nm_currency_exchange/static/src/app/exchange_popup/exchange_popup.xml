@@ -46,6 +46,9 @@
                     <div class="d-flex justify-content-between"><span>Rate</span><span class="nm-exchange-rate" t-out="this.state.quote.rate_label"/></div>
                     <div class="d-flex justify-content-between"><span>Value of the notes received</span><span t-out="this.state.quote.value_in_formatted"/></div>
                     <div class="d-flex justify-content-between"><span>Commission</span><span class="nm-exchange-commission" t-out="this.state.quote.commission_formatted"/></div>
+                    <div t-if="this.hasLinkedOperations" class="d-flex justify-content-between nm-exchange-linked">
+                        <span>With the linked operations of the customer</span><span t-out="this.state.quote.linked_value_formatted"/>
+                    </div>
                     <div t-if="this.state.quote.drawer_balance_formatted" class="d-flex justify-content-between nm-exchange-drawer"
                          t-att-class="{'text-danger': this.state.quote.drawer_error}">
                         <span>In the drawer</span><span t-out="this.state.quote.drawer_balance_formatted"/>
@@ -63,7 +66,51 @@
                         <t t-out="this.customerLabel"/>
                     </button>
                     <button t-if="this.state.partner" class="btn btn-link" type="button" t-on-click="this.clearCustomer">Clear</button>
-                    <span t-if="this.customerRequired" class="text-danger small nm-exchange-customer-required">A customer must be identified for this amount.</span>
+                    <span t-if="this.customerRequired" class="text-danger small nm-exchange-customer-required" t-out="this.customerRequiredMessage"/>
+                </div>
+                <div t-if="this.documentRequired" class="d-flex flex-column gap-2 nm-exchange-document">
+                    <div class="fw-bold">Identity document of the customer</div>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-5">
+                            <select class="form-select nm-exchange-document-type" t-on-change="(ev) => this.onDocumentInput('type', ev)">
+                                <option value="" t-att-selected="!this.state.document.type">Document type</option>
+                                <option t-foreach="this.state.documentTypes" t-as="documentType" t-key="documentType[0]"
+                                        t-att-value="documentType[0]" t-att-selected="documentType[0] === this.state.document.type"
+                                        t-out="documentType[1]"/>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-7">
+                            <input type="text" class="form-control nm-exchange-document-number" placeholder="Document number"
+                                   t-att-value="this.state.document.number" t-on-input="(ev) => this.onDocumentInput('number', ev)"/>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-0">Issuing country</label>
+                            <select class="form-select nm-exchange-document-country" t-on-change="(ev) => this.onDocumentInput('country_id', ev)">
+                                <option value=""/>
+                                <option t-foreach="this.countries" t-as="country" t-key="country.id" t-att-value="country.id"
+                                        t-att-selected="country.id === this.state.document.country_id" t-out="country.name"/>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-0">Expiry date</label>
+                            <input type="date" class="form-control nm-exchange-document-expiry"
+                                   t-att-value="this.state.document.expiry" t-on-change="(ev) => this.onDocumentInput('expiry', ev)"/>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-0">Nationality</label>
+                            <select class="form-select nm-exchange-document-nationality" t-on-change="(ev) => this.onDocumentInput('nationality_id', ev)">
+                                <option value=""/>
+                                <option t-foreach="this.countries" t-as="country" t-key="country.id" t-att-value="country.id"
+                                        t-att-selected="country.id === this.state.document.nationality_id" t-out="country.name"/>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-0">Date of birth</label>
+                            <input type="date" class="form-control nm-exchange-document-birthdate"
+                                   t-att-value="this.state.document.birthdate" t-on-change="(ev) => this.onDocumentInput('birthdate', ev)"/>
+                        </div>
+                    </div>
+                    <div t-if="this.documentError" class="text-danger small nm-exchange-document-error" t-out="this.documentError"/>
                 </div>
                 <input type="text" class="form-control nm-exchange-note" placeholder="Note (optional)"
                        t-att-value="this.state.note" t-on-input="(ev) => this.state.note = ev.target.value"/>

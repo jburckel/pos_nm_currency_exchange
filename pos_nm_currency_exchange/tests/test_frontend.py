@@ -83,3 +83,35 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
         # Nothing recorded from the refused EUR operation.
         self.assertEqual(len(session.nm_exchange_ids), 2)
         self.assertTrue(first.uuid and second.uuid and first.uuid != second.uuid)
+
+    def test_pos_currency_exchange_document_tour(self):
+        """Identity document required above 20: the expired document of the
+        customer is refused in the popup, the corrected one is saved on the
+        customer and frozen on the operation."""
+        foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
+        commission_account = self.env['account.account'].create({
+            'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})
+        self.main_pos_config.write({
+            'nm_exchange_enabled': True,
+            'nm_exchange_income_account_id': commission_account.id,
+            'nm_exchange_document_threshold': 20.0,
+        })
+        self.env['pos.nm.currency.setting'].create({
+            'config_id': self.main_pos_config.id, 'currency_id': foreign_currency.id})
+        customer = self.env['res.partner'].search([('name', '=', 'Partner Test 1')], limit=1)
+        customer.write({
+            'nm_id_document_type': 'passport',
+            'nm_id_document_number': 'X1234567',
+            'nm_id_document_expiry': '2020-01-31',
+        })
+
+        self.main_pos_config.with_user(self.pos_user).open_ui()
+        session = self.main_pos_config.current_session_id
+        TestPosMulticurrencyUi._start_tour(self, 'PosCurrencyExchangeDocumentTour')
+
+        exchange = session.nm_exchange_ids
+        self.assertEqual(len(exchange), 1)
+        self.assertEqual(exchange.partner_id, customer)
+        self.assertEqual(exchange.id_document_number, 'X1234567')
+        self.assertEqual(str(exchange.id_document_expiry), '2099-12-31')
+        self.assertEqual(str(customer.nm_id_document_expiry), '2099-12-31')

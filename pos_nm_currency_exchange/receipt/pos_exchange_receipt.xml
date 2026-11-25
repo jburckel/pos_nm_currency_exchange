@@ -24,6 +24,9 @@
                         <div class="text-center" t-if="extra_data.get('partner_name')">
                             Customer: <span t-out="extra_data['partner_name']" />
                         </div>
+                        <div class="text-center" t-if="extra_data.get('id_document')">
+                            <span t-out="extra_data['id_document']" />
+                        </div>
                         <table class="w-100 text-large mt-3">
                             <tbody>
                                 <tr>

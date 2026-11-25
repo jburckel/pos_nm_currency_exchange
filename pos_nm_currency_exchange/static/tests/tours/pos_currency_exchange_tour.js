@@ -2,6 +2,7 @@
 
 import * as Chrome from "@point_of_sale/../tests/pos/tours/utils/chrome_util";
 import * as Dialog from "@point_of_sale/../tests/generic_helpers/dialog_util";
+import * as PartnerList from "@point_of_sale/../tests/pos/tours/utils/partner_list_util";
 import * as ProductScreen from "@point_of_sale/../tests/pos/tours/utils/product_screen_util";
 import { registry } from "@web/core/registry";
 
@@ -246,5 +247,97 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeReverseTour", {
                 trigger: "body:not(:has(.modal .nm-currency-exchange))",
             },
             ProductScreen.isShown(),
+        ].flat(),
+});
+
+/**
+ * Identity document above 20: 50 EUR received (worth 57.47). The customer
+ * is required, then its document, prefilled from the contact, is refused
+ * as expired until a valid expiry date is typed.
+ */
+registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
+    steps: () =>
+        [
+            {
+                content: "fill the counted amount of the main currency at opening",
+                trigger:
+                    ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) .cash-input-sub-section input",
+                run: "edit 100",
+            },
+            {
+                content: "wait for the debounced input of the main currency",
+                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(100)",
+                run: () => new Promise((resolve) => setTimeout(resolve, 500)),
+            },
+            Dialog.confirm("Open Register"),
+            ProductScreen.isShown(),
+            stubPrinting(),
+            Chrome.clickMenuOption("Currency Exchange"),
+            {
+                content: "type the amount received",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
+                run: "edit 50",
+            },
+            {
+                content: "a customer with an identity document is required",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-customer.btn-outline-danger",
+            },
+            {
+                content: "the requirement is explained",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-customer-required:contains('identity document')",
+            },
+            {
+                content: "Confirm is disabled without customer",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm[disabled]",
+            },
+            {
+                content: "select the customer",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-customer",
+                run: "click",
+            },
+            PartnerList.clickPartner("Partner Test 1"),
+            {
+                content: "the document of the customer is prefilled",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-number:value(X1234567)",
+            },
+            {
+                content: "the expired document is refused",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-document-error:contains('expired')",
+            },
+            {
+                content: "Confirm is disabled with an expired document",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm[disabled]",
+            },
+            {
+                content: "type a valid expiry date",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-expiry",
+                run: function () {
+                    this.anchor.value = "2099-12-31";
+                    this.anchor.dispatchEvent(new Event("change"));
+                },
+            },
+            {
+                content: "the document is accepted",
+                trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-document-error))",
+            },
+            {
+                content: "confirm the operation",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the operation is recorded and the popup closed",
+                trigger: "body:not(:has(.modal .nm-currency-exchange))",
+            },
+            {
+                content: "the receipt shows the type and the end of the number only",
+                trigger: ".pos",
+                run: () => {
+                    const html = posmodel.nmTourReceiptHtml || "";
+                    if (!html.includes("****4567") || html.includes("X1234567")) {
+                        throw new Error("Identity document not masked on the receipt: " + html.slice(0, 400));
+                    }
+                },
+            },
         ].flat(),
 });

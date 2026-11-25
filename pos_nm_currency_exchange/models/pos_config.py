@@ -28,7 +28,27 @@ class PosConfig(models.Model):
         string='Exchange Customer Required Above',
         currency_field='currency_id',
         help='Value of an exchange operation, in the currency of the point of sale, above which '
-             'the customer must be identified. 0: never required.',
+             'the customer must be identified. 0: never required. With a linked operations '
+             'period, the value of the operations of the customer over that period is added.',
+    )
+    nm_exchange_customer_always = fields.Boolean(
+        string='Exchange Customer Required for Every Operation',
+        help='Every exchange operation names its customer, so that the operations of the same '
+             'customer are added up over the linked operations period.',
+    )
+    nm_exchange_linked_days = fields.Integer(
+        string='Exchange Linked Operations Period',
+        help='Number of days over which the operations of a customer are linked: the value '
+             'compared to the identification thresholds is the operation plus the operations of '
+             'the customer over these days, at every point of sale of the company. 0: each '
+             'operation alone.',
+    )
+    nm_exchange_document_threshold = fields.Monetary(
+        string='Exchange Identity Document Required Above',
+        currency_field='currency_id',
+        help='Value, in the currency of the point of sale, above which the identity document of '
+             'the customer is recorded on the operation (with the linked operations when a period '
+             'is set). 0: never required.',
     )
     nm_exchange_count = fields.Integer(string='Exchanges', compute='_compute_nm_exchange_count')
 
@@ -38,11 +58,13 @@ class PosConfig(models.Model):
         for config in self:
             config.nm_exchange_count = counts.get(config, 0)
 
-    @api.constrains('nm_exchange_customer_threshold')
+    @api.constrains('nm_exchange_customer_threshold', 'nm_exchange_document_threshold', 'nm_exchange_linked_days')
     def _check_nm_exchange_customer_threshold(self):
         for config in self:
-            if config.nm_exchange_customer_threshold < 0:
+            if config.nm_exchange_customer_threshold < 0 or config.nm_exchange_document_threshold < 0:
                 raise ValidationError(_("The identification threshold cannot be negative."))
+            if config.nm_exchange_linked_days < 0:
+                raise ValidationError(_("The linked operations period cannot be negative."))
 
     @api.constrains('nm_exchange_income_account_id')
     def _check_nm_exchange_income_account(self):

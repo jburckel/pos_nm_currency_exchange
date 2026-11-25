@@ -24,3 +24,15 @@ class ResConfigSettings(models.TransientModel):
         related='pos_config_id.nm_exchange_customer_threshold',
         readonly=False,
     )
+    pos_nm_exchange_customer_always = fields.Boolean(
+        related='pos_config_id.nm_exchange_customer_always',
+        readonly=False,
+    )
+    pos_nm_exchange_linked_days = fields.Integer(
+        related='pos_config_id.nm_exchange_linked_days',
+        readonly=False,
+    )
+    pos_nm_exchange_document_threshold = fields.Monetary(
+        related='pos_config_id.nm_exchange_document_threshold',
+        readonly=False,
+    )

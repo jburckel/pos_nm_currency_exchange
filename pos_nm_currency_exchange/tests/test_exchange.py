@@ -133,7 +133,6 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(quote['commission'], 3.2)
         self.assertEqual(quote['rate_margin'], 8.8)
         self.assertAlmostEqual(quote['rate'], 1.76, places=6)
-        self.assertFalse(quote['customer_required'])
 
     def test_quote_foreign_to_main(self):
         """220 EUR received at the cash rate 2.2: worth 100, commission 3,
@@ -367,8 +366,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
             Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)
         # Customer required above the threshold.
         self.pos_config.nm_exchange_customer_threshold = 30.0
-        quote = self._quote(self.main, 40.0, self.fx)
-        self.assertTrue(quote['customer_required'])
+        identification = Exchange._nm_identification(self.pos_config, 40.0, self.env['res.partner'])
+        self.assertTrue(identification['customer_required'])
+        self.assertFalse(identification['document_required'])
         with self.assertRaises(UserError):
             Exchange.create_from_ui(session.id, self.main.id, 40.0, self.fx.id)
         receipt = Exchange.create_from_ui(session.id, self.main.id, 40.0, self.fx.id, self.partner_id)
@@ -998,3 +998,135 @@ class TestPosCurrencyExchange(TestPosAccounting):
         # Nothing to show for a session without operation.
         self._close(session, main=100.0, fx=324.0)
         self.assertNotIn('nm_exchange_summary', self._open(fx=324.0).get_closing_control_data())
+
+    # ------------------------------------------------------------------
+    # Identification of the customer
+    # ------------------------------------------------------------------
+
+    def _document(self, **values):
+        return {'type': 'passport', 'number': 'AB1234567', 'country_id': self.env.ref('base.fr').id,
+                'expiry': str(fields.Date.today() + timedelta(days=365)), 'nationality_id': self.env.ref('base.fr').id,
+                'birthdate': '1980-05-17', **values}
+
+    def test_linked_operations(self):
+        """Identity document above 1000 with the operations of the customer
+        over 7 days: two operations of 900 reach 1800, the second one needs
+        the document; another customer, or an operation older than the
+        period, does not count."""
+        self.pos_config.write({'nm_exchange_document_threshold': 1000.0, 'nm_exchange_linked_days': 7})
+        session = self._open(fx=10000.0)
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        customer = self.env['res.partner'].create({'name': 'NM Linked Customer'})
+        other = self.env['res.partner'].create({'name': 'NM Other Customer'})
+        first = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 900.0, self.fx.id, customer.id)['id'])
+        self.assertEqual(first.linked_value, 900.0)
+        self.assertFalse(first.sudo().id_document_type)
+
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 900.0, self.fx.id, customer.id)
+        self.assertTrue(quote['document_required'])
+        self.assertTrue(quote['customer_required'])
+        self.assertEqual(quote['linked_value'], 1800.0)
+        self.assertFalse(Exchange.get_quote(self.pos_config.id, self.main.id, 900.0, self.fx.id, other.id)[
+            'document_required'])
+        # Without customer: the operation alone, 900, needs nothing.
+        self.assertFalse(Exchange.get_quote(self.pos_config.id, self.main.id, 900.0, self.fx.id)['document_required'])
+        with self.assertRaisesRegex(UserError, r'last 7 days.*1,800\.00'):
+            Exchange.create_from_ui(session.id, self.main.id, 900.0, self.fx.id, customer.id)
+        # Above the threshold alone: a customer is required.
+        with self.assertRaisesRegex(UserError, 'A customer with an identity document'):
+            Exchange.create_from_ui(session.id, self.main.id, 1100.0, self.fx.id)
+
+        # Outside the period, the first operation no longer counts.
+        first.sudo().write({'date': fields.Datetime.now() - timedelta(days=8)})
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 900.0, self.fx.id, customer.id)
+        self.assertEqual(Exchange.browse(receipt['id']).linked_value, 900.0)
+        self.assertFalse(receipt['id_document'])
+        # A cancelled operation does not count either.
+        Exchange.browse(receipt['id']).with_user(self.env.user).action_cancel()
+        self.assertEqual(Exchange._nm_linked_value(self.pos_config, 900.0, customer), 900.0)
+
+    def test_identity_document(self):
+        """The document typed at the register is checked, saved on the
+        customer and frozen on the operation; the receipt shows its type and
+        the end of its number only."""
+        self.pos_config.write({'nm_exchange_document_threshold': 50.0})
+        session = self._open(fx=10000.0)
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        customer = self.env['res.partner'].create({'name': 'NM Document Customer'})
+        with self.assertRaisesRegex(UserError, 'identity document of the customer is required'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)
+        expired = self._document(expiry=str(fields.Date.today() - timedelta(days=1)))
+        with self.assertRaisesRegex(UserError, 'expired'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id, document=expired)
+        with self.assertRaisesRegex(UserError, 'expiry date'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
+                                    document=self._document(expiry=''))
+        # Nothing saved from the refused documents.
+        self.assertFalse(customer.nm_id_document_number)
+
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
+                                          document=self._document())
+        self.assertEqual(receipt['id_document'], 'Passport ****4567')
+        self.assertNotIn('AB1234567', str(receipt))
+        exchange = Exchange.browse(receipt['id']).with_user(self.env.user)
+        self.assertEqual(customer.nm_id_document_number, 'AB1234567')
+        self.assertEqual(customer.nm_birthdate, fields.Date.to_date('1980-05-17'))
+        self.assertEqual(exchange.id_document_type, 'passport')
+        self.assertEqual(exchange.id_document_number, 'AB1234567')
+        self.assertEqual(exchange.id_document_country_id, self.env.ref('base.fr'))
+        self.assertEqual(exchange.id_nationality_id, self.env.ref('base.fr'))
+        self.assertEqual(exchange.customer_name, 'NM Document Customer')
+
+        # The register prefills the document of the customer.
+        loaded = Exchange.get_customer_document(customer.id)
+        self.assertEqual(loaded['document']['number'], 'AB1234567')
+        self.assertEqual(loaded['document']['birthdate'], '1980-05-17')
+        self.assertIn('passport', dict(loaded['types']))
+        # Without a document sent, the one of the customer is used.
+        second = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)
+        self.assertEqual(second['id_document'], 'Passport ****4567')
+
+        # Later changes of the customer do not change the operation.
+        customer.write({'name': 'NM Renamed', 'nm_id_document_number': 'ZZ0000000',
+                        'nm_id_document_type': 'id_card'})
+        exchange.invalidate_recordset()
+        self.assertEqual(exchange.id_document_number, 'AB1234567')
+        self.assertEqual(exchange.id_document_type, 'passport')
+        self.assertEqual(exchange.customer_name, 'NM Document Customer')
+        self.assertEqual(exchange._nm_receipt_data()['partner_name'], 'NM Document Customer')
+        # An expired document of the customer is refused too.
+        customer.nm_id_document_expiry = fields.Date.today() - timedelta(days=1)
+        with self.assertRaisesRegex(UserError, 'expired'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)
+
+    def test_customer_always(self):
+        self.pos_config.nm_exchange_customer_always = True
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        self.assertTrue(Exchange.get_quote(self.pos_config.id, self.main.id, 10.0, self.fx.id)['customer_required'])
+        with self.assertRaisesRegex(UserError, 'every exchange operation'):
+            Exchange.create_from_ui(session.id, self.main.id, 10.0, self.fx.id)
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 10.0, self.fx.id, self.partner_id)
+        self.assertEqual(Exchange.browse(receipt['id']).partner_id.id, self.partner_id)
+        with self.assertRaises(ValidationError):
+            self.pos_config.nm_exchange_linked_days = -1
+        with self.assertRaises(ValidationError):
+            self.pos_config.nm_exchange_document_threshold = -1
+
+    def test_identity_fields_access(self):
+        """The POS users do not read the identity documents of the contacts
+        or of the operations, except through the register."""
+        customer = self.env['res.partner'].create({
+            'name': 'NM Private Customer', 'nm_id_document_type': 'passport', 'nm_id_document_number': 'SECRET99'})
+        Partner = self.env['res.partner'].with_user(self.pos_user)
+        with self.assertRaises(AccessError):
+            Partner.search_read([('id', '=', customer.id)], ['name', 'nm_id_document_number'])
+        record = Partner.search_read([('id', '=', customer.id)])[0]
+        self.assertNotIn('nm_id_document_number', record)
+        self.assertNotIn('SECRET99', str(record))
+        with self.assertRaises(AccessError):
+            Partner.browse(customer.id).write({'nm_id_document_number': 'FORGED'})
+        with self.assertRaises(AccessError):
+            self.env['pos.nm.exchange'].with_user(self.pos_user).search_read([], ['id_document_number'])
+        self.assertEqual(self.env['pos.nm.exchange'].with_user(self.pos_user).get_customer_document(
+            customer.id)['document']['number'], 'SECRET99')
