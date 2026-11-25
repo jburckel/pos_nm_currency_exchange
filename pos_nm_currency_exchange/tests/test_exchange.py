@@ -715,6 +715,34 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertIn('1 %s = ' % self.main.name, exchange.rate_label)
         self.assertIn('25,252.53', exchange.rate_label)
 
+    def test_rate_margin_realized_at_revaluation(self):
+        """The rate margin of the operations is what the revaluation of the
+        drawer posts at closing: a gain, never a loss.
+
+        500 EUR at opening, booked at the rate of Odoo: 250. 100 main buy 176
+        EUR booked 96.80 (rate margin 8.80), 220 EUR are bought for 97 main,
+        booked 100 (rate margin 10). The drawer holds 544 EUR worth 272,
+        booked 250 - 96.80 + 100 = 253.20: revaluation +18.80."""
+        gain = self.env['account.account'].create({
+            'name': 'EX Exchange Gain', 'code': '999054', 'account_type': 'income_other'})
+        loss = self.env['account.account'].create({
+            'name': 'EX Exchange Loss', 'code': '999055', 'account_type': 'expense'})
+        self.company.write({
+            'income_currency_exchange_account_id': gain.id, 'expense_currency_exchange_account_id': loss.id})
+        self.pos_config.nm_revaluation_enabled = True
+        session = self._open(fx=500.0, main=200.0)
+        Exchange = self.env['pos.nm.exchange']
+        exchanges = Exchange.browse([
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'],
+            Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'],
+        ])
+        self.assertEqual(exchanges.mapped('rate_margin'), [8.8, 10.0])
+        self._close(session, main=203.0, fx=544.0)
+        detail = session.currency_detail_ids.filtered(lambda d: d.currency_id == self.fx)
+        self.assertEqual(detail.difference_amount, 0.0)
+        self.assertEqual(detail.revaluation_amount, 18.8)
+        self.assertIn(gain, detail.revaluation_line_id.move_id.line_ids.account_id)
+
     def test_quote_changed(self):
         """The register sends the amount it showed: refused when the quote
         changed in the meantime."""
