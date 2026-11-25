@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from odoo.exceptions import UserError, ValidationError
-from odoo.tests import tagged
+from unittest.mock import patch
+
+from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.tests import new_test_user, tagged
 from odoo.addons.point_of_sale.tests.test_pos_accounting import TestPosAccounting
 
 
@@ -42,6 +44,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
             'exchange_commission_min': 3.0,
         })
         cls.partner_id = cls.env.user.partner_id.id
+        cls.pos_user = new_test_user(
+            cls.env, login='nm_exchange_cashier', name='NM Cashier', groups='point_of_sale.group_pos_user',
+            company_id=cls.company.id)
 
     def _refresh_journal(self):
         self.cash_journal.invalidate_recordset(['current_statement_balance', 'has_statement_lines'])
@@ -157,18 +162,20 @@ class TestPosCurrencyExchange(TestPosAccounting):
     def test_exchange_operation(self):
         session = self._open(fx=500.0)
         Exchange = self.env['pos.nm.exchange']
-        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, False, 'Marie', 'tourist')
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, False, 'tourist')
         exchange = Exchange.browse(receipt['id'])
         self.assertTrue(exchange.name.startswith('EXC/'))
+        self.assertEqual(exchange.state, 'done')
         self.assertEqual(exchange.session_id, session)
         self.assertEqual(exchange.config_id, self.pos_config)
-        self.assertEqual(exchange.cashier_name, 'Marie')
+        self.assertEqual(exchange.user_id, self.env.user)
+        self.assertEqual(exchange.cashier_name, self.env.user.name)
         self.assertEqual(exchange.note, 'tourist')
         self.assertEqual(exchange.amount_in, 100.0)
         self.assertEqual(exchange.amount_out, 213.0)
         self.assertEqual(exchange.commission, 3.18)
         self.assertIn('213', receipt['amount_out'])
-        self.assertIn('Marie', receipt['cashier_name'])
+        self.assertEqual(receipt['cashier_name'], self.env.user.name)
 
         line_in = exchange.statement_line_in_id
         line_out = exchange.statement_line_out_id
@@ -266,3 +273,212 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self._close(session, main=40.0, fx=balance)
         with self.assertRaises(UserError):
             Exchange.create_from_ui(session.id, self.main.id, 10.0, self.fx.id)
+
+    # ------------------------------------------------------------------
+    # Access rights and integrity
+    # ------------------------------------------------------------------
+
+    def test_access_rights(self):
+        """A cashier records operations through the register only: the
+        server decides the cashier, and the statement lines carry the
+        cashier, not the customer."""
+        session = self._open(fx=500.0)
+        customer = self.env['res.partner'].create({'name': 'NM Customer'})
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 100.0, self.fx.id)
+        self.assertEqual(quote['amount_out'], 213.0)
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)
+        exchange = Exchange.browse(receipt['id'])
+        self.assertEqual(exchange.user_id, self.pos_user)
+        self.assertEqual(exchange.cashier_name, 'NM Cashier')
+        self.assertEqual(exchange.partner_id, customer)
+        lines = exchange.sudo().statement_line_in_id | exchange.sudo().statement_line_out_id
+        self.assertEqual(lines.partner_id, self.pos_user.partner_id)
+        self.assertEqual(lines.create_uid, self.pos_user)
+        # The foreign leg shows the cashier in the closing control.
+        data = session.get_closing_control_data()
+        fx_data = next(d for d in data['multicurrency_details'] if d['currency_id'] == self.fx.id)
+        self.assertIn('NM Cashier', [m['cashier_name'] for m in fx_data['moves']])
+        # Read only through the ORM.
+        with self.assertRaises(AccessError):
+            Exchange.create({
+                'session_id': session.id, 'currency_in_id': self.main.id, 'currency_out_id': self.fx.id,
+                'amount_in': 1.0, 'commission': 5000.0})
+        with self.assertRaises(AccessError):
+            exchange.write({'note': 'edited'})
+        with self.assertRaises(AccessError):
+            exchange.unlink()
+        with self.assertRaises(AccessError):
+            exchange.action_cancel()
+        # The manager may edit the note only, and delete nothing.
+        exchange = exchange.with_user(self.env.user)
+        exchange.note = 'checked'
+        self.assertEqual(exchange.note, 'checked')
+        with self.assertRaises(UserError):
+            exchange.write({'commission': 0.0})
+        with self.assertRaises(UserError):
+            exchange.unlink()
+        # A user without the Point of Sale cannot use the counter.
+        stranger = new_test_user(self.env, login='nm_exchange_stranger', groups='base.group_user')
+        with self.assertRaises(AccessError):
+            self.env['pos.nm.exchange'].with_user(stranger).get_quote(
+                self.pos_config.id, self.main.id, 100.0, self.fx.id)
+        with self.assertRaises(AccessError):
+            self.env['pos.nm.exchange'].with_user(stranger).create_from_ui(
+                session.id, self.main.id, 100.0, self.fx.id)
+
+    def test_multi_company(self):
+        session = self._open(fx=500.0)
+        receipt = self.env['pos.nm.exchange'].create_from_ui(session.id, self.main.id, 100.0, self.fx.id)
+        exchange = self.env['pos.nm.exchange'].browse(receipt['id'])
+        self.assertEqual(exchange.company_id, self.company)
+        other_company = self.env['res.company'].create({'name': 'NM Other Company'})
+        other_manager = new_test_user(
+            self.env, login='nm_exchange_other_manager', groups='point_of_sale.group_pos_manager',
+            company_id=other_company.id, company_ids=[(6, 0, other_company.ids)])
+        Exchange = self.env['pos.nm.exchange'].with_user(other_manager)
+        self.assertFalse(Exchange.search([('id', '=', exchange.id)]))
+        with self.assertRaises(AccessError):
+            exchange.with_user(other_manager).read(['name', 'partner_id', 'commission'])
+        # The commission account belongs to the company of the point of sale.
+        other_account = self.env['account.account'].create({
+            'name': 'NM Other Commissions', 'code': '999055', 'account_type': 'income_other',
+            'company_ids': [(6, 0, other_company.ids)]})
+        with self.assertRaises(UserError):
+            self.pos_config.nm_exchange_income_account_id = other_account
+        # And it is an income account.
+        with self.assertRaises(ValidationError):
+            self.pos_config.nm_exchange_income_account_id = self.loss_account
+
+    def test_exchange_leg_not_deletable(self):
+        session = self._open(fx=500.0)
+        receipt = self.env['pos.nm.exchange'].create_from_ui(session.id, self.main.id, 100.0, self.fx.id)
+        exchange = self.env['pos.nm.exchange'].browse(receipt['id'])
+        for line in (exchange.statement_line_in_id, exchange.statement_line_out_id):
+            with self.assertRaises(UserError):
+                session.delete_cash_in_out(line.id, self.partner_id)
+            with self.assertRaises(UserError):
+                line.unlink()
+        self.assertTrue(exchange.statement_line_in_id.exists() and exchange.statement_line_out_id.exists())
+        detail = session.currency_detail_ids.filtered(lambda d: d.currency_id == self.fx)
+        self.assertEqual(detail.cash_moves_amount, -213.0)
+        # Other cash moves still can be deleted.
+        session.try_cash_in_out('in', 10.0, 'float', self.partner_id)
+        move = session.sudo().bank_statement_line_ids.sorted('id')[-1]
+        session.delete_cash_in_out(move.id, self.partner_id)
+        self.assertFalse(move.exists())
+
+    def _commission_balance(self):
+        self.env.flush_all()
+        lines = self.env['account.move.line'].search([('account_id', '=', self.commission_account.id)])
+        return self.main.round(sum(lines.mapped('balance')))
+
+    def test_cancel_exchange(self):
+        """A manager cancels an operation while its session is open: two
+        opposite lines bring the drawers and the commission account back to
+        their state before the operation."""
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        commission_before = self._commission_balance()
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)
+        exchange = Exchange.browse(receipt['id'])
+        kept = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'])
+        self.assertAlmostEqual(self._commission_balance(), commission_before - 3.18 - 3.0, places=2)
+        # Not by a cashier.
+        with self.assertRaises(AccessError):
+            exchange.with_user(self.pos_user).action_cancel()
+
+        exchange.action_cancel()
+        self.assertEqual(exchange.state, 'cancelled')
+        self.assertEqual(exchange.cancel_user_id, self.env.user)
+        self.assertTrue(exchange.cancel_date)
+        for line, reversal in ((exchange.statement_line_in_id, exchange.statement_line_cancel_in_id),
+                               (exchange.statement_line_out_id, exchange.statement_line_cancel_out_id)):
+            self.assertEqual(reversal.amount, -line.amount)
+            self.assertEqual(reversal.amount_currency, -line.amount_currency)
+            self.assertEqual(reversal.foreign_currency_id, line.foreign_currency_id)
+            self.assertEqual(reversal.pos_session_id, session)
+            self.assertIn(self.commission_account, reversal.move_id.line_ids.account_id)
+        self.assertAlmostEqual(self._commission_balance(), commission_before - 3.0, places=2)
+        # Drawers: only the operation kept is left (220 EUR in, 97 out).
+        self.assertEqual(self.pos_config._nm_currency_balance(self.fx), 720.0)
+        detail = session.currency_detail_ids.filtered(lambda d: d.currency_id == self.fx)
+        self.assertEqual(detail.cash_moves_amount, 220.0)
+        self._refresh_journal()
+        data = session.get_closing_control_data()
+        self.assertEqual(data['default_cash_details']['amount'], -97.0)
+        summary = data['nm_exchange_summary']
+        self.assertEqual(summary['count'], 1)
+        self.assertEqual(summary['cancelled_count'], 1)
+        self.assertEqual(summary['commission'], 3.0)
+        self.assertEqual([op['name'] for op in summary['operations']], [kept.name])
+        self.assertEqual(session.nm_exchange_count, 1)
+        self.assertEqual(session.nm_exchange_commission, 3.0)
+        self.assertEqual(self.pos_config.nm_exchange_count, 1)
+        # Once only, and the reversal lines are protected too.
+        with self.assertRaises(UserError):
+            exchange.action_cancel()
+        with self.assertRaises(UserError):
+            exchange.statement_line_cancel_out_id.unlink()
+
+        self._close(session, main=-97.0, fx=720.0)
+        self.assertEqual(detail.difference_amount, 0.0)
+        report = self.env['report.point_of_sale.report_saledetails'].get_sale_details(session_ids=session.ids)
+        self.assertEqual(report['nm_exchange']['count'], 1)
+        self.assertEqual(report['nm_exchange']['cancelled_count'], 1)
+        self.assertEqual(report['nm_exchange']['commission'], 3.0)
+        # Not once the session is closed.
+        with self.assertRaisesRegex(UserError, 'closed session'):
+            kept.action_cancel()
+        self.assertEqual(kept.state, 'done')
+
+    def test_cancel_needs_the_notes(self):
+        """The notes received must still be in the drawer to be handed back."""
+        session = self._open(fx=0.0)
+        Exchange = self.env['pos.nm.exchange']
+        exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'])
+        session.nm_try_cash_in_out_currency('out', 200.0, 'bank deposit', self.partner_id, self.fx.id)
+        with self.assertRaises(UserError):
+            exchange.action_cancel()
+        self.assertEqual(exchange.state, 'done')
+
+    def test_gapless_reference(self):
+        """An operation refused after its number was drawn gives the number
+        back: the register of operations has no hole."""
+        sequence = self.env.ref('pos_nm_currency_exchange.seq_pos_nm_exchange')
+        self.assertEqual(sequence.implementation, 'no_gap')
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        first = Exchange.create_from_ui(session.id, self.main.id, 10.0, self.fx.id)['name']
+        # Refused before the number: not enough notes in the drawer.
+        with self.assertRaises(UserError):
+            Exchange.create_from_ui(session.id, self.main.id, 1000.0, self.fx.id)
+        # Refused after the number, while posting the lines.
+        with patch.object(self.registry['pos.nm.exchange'], '_nm_post_line', side_effect=UserError('refused')), \
+                self.assertRaises(UserError):
+            Exchange.create_from_ui(session.id, self.main.id, 10.0, self.fx.id)
+        second = Exchange.create_from_ui(session.id, self.main.id, 10.0, self.fx.id)['name']
+        self.assertEqual(int(second.rsplit('/', 1)[1]), int(first.rsplit('/', 1)[1]) + 1)
+        self.assertEqual(Exchange.search_count([('session_id', '=', session.id)]), 2)
+
+    def test_pos_hr_employee(self):
+        """With the Employees module, the employee logged in at the register
+        is the cashier of the operation and of its statement lines."""
+        if 'hr.employee' not in self.env:
+            self.skipTest("pos_hr is not installed")
+        cashier = self.env['hr.employee'].sudo().create({'name': 'NM Employee', 'company_id': self.company.id})
+        stranger = self.env['hr.employee'].sudo().create({'name': 'NM Stranger', 'company_id': self.company.id})
+        self.pos_config.write({'module_pos_hr': True, 'cashier_employee_ids': [(6, 0, cashier.ids)]})
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        with self.assertRaises(UserError):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, employee_id=stranger.id)
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, employee_id=cashier.id)
+        exchange = Exchange.browse(receipt['id'])
+        self.assertEqual(exchange.cashier_name, 'NM Employee')
+        self.assertEqual(exchange.user_id, self.env.user)
+        lines = exchange.statement_line_in_id | exchange.statement_line_out_id
+        self.assertEqual(lines.employee_id, cashier)
+        self.assertEqual(lines.partner_id, cashier.work_contact_id)
+        moves = session.get_cash_in_out_list()
+        self.assertIn('NM Employee', [m['cashier_name'] for m in moves if m['id'] == exchange.statement_line_in_id.id])

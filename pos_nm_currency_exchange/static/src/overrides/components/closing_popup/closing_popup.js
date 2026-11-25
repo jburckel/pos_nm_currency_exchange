@@ -3,11 +3,11 @@ import { ClosePosPopup } from "@point_of_sale/app/components/popups/closing_popu
 
 /**
  * Closing control: the exchange operations of the session and the total of
- * their commissions, after the drawers.
+ * their commissions, after the drawers, and the number of cancelled ones.
  */
 patch(ClosePosPopup.prototype, {
     get nmExchangeSummary() {
         const summary = this.pos.nmExchangeSummary;
-        return summary && summary.count ? summary : null;
+        return summary && (summary.count || summary.cancelled_count) ? summary : null;
     },
 });

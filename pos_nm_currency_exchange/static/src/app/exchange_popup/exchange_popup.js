@@ -179,8 +179,10 @@ export class CurrencyExchangePopup extends Component {
                 this.amountIn,
                 this.state.currencyOutId,
                 this.state.partner ? this.state.partner.id : false,
-                this.pos.accessRight?.cashier?.name || "",
                 this.state.note.trim() || false,
+                // The cashier is decided by the server: the user, and with
+                // pos_hr the employee logged in, checked there.
+                (this.pos.config.module_pos_hr && this.pos.accessRight.loggedCashier?.id) || false,
             ]);
             await this.pos.logEmployeeMessage(
                 _t("Currency exchange %(name)s: %(received)s for %(handed)s", {

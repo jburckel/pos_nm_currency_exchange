@@ -3,6 +3,10 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
+# Also set on the field of the settings: a related field does not copy the
+# domain of its target.
+EXCHANGE_INCOME_ACCOUNT_DOMAIN = [('account_type', 'in', ('income', 'income_other'))]
+
 
 class PosConfig(models.Model):
     _inherit = 'pos.config'
@@ -17,7 +21,7 @@ class PosConfig(models.Model):
         'account.account',
         string='Exchange Commission Account',
         check_company=True,
-        domain="[('account_type', 'in', ('income', 'income_other')), ('deprecated', '=', False)]",
+        domain=EXCHANGE_INCOME_ACCOUNT_DOMAIN,
         help='Income account receiving the commissions of the exchange operations.',
     )
     nm_exchange_customer_threshold = fields.Monetary(
@@ -30,7 +34,7 @@ class PosConfig(models.Model):
 
     def _compute_nm_exchange_count(self):
         counts = dict(self.env['pos.nm.exchange']._read_group(
-            [('config_id', 'in', self.ids)], ['config_id'], ['__count']))
+            [('config_id', 'in', self.ids), ('state', '=', 'done')], ['config_id'], ['__count']))
         for config in self:
             config.nm_exchange_count = counts.get(config, 0)
 
@@ -39,6 +43,13 @@ class PosConfig(models.Model):
         for config in self:
             if config.nm_exchange_customer_threshold < 0:
                 raise ValidationError(_("The identification threshold cannot be negative."))
+
+    @api.constrains('nm_exchange_income_account_id')
+    def _check_nm_exchange_income_account(self):
+        for config in self:
+            account = config.nm_exchange_income_account_id
+            if account and account.account_type not in ('income', 'income_other'):
+                raise ValidationError(_("The exchange commission account must be an income account."))
 
     def _nm_exchange_currencies(self):
         """Currencies of the exchange counter: the currency of the point of

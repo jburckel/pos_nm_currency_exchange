@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from . import account_bank_statement_line
 from . import ir_ui_view
 from . import pos_config
 from . import pos_currency_setting

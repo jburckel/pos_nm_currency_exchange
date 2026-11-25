@@ -2,6 +2,8 @@
 
 from odoo import fields, models
 
+from .pos_config import EXCHANGE_INCOME_ACCOUNT_DOMAIN
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
@@ -14,6 +16,7 @@ class ResConfigSettings(models.TransientModel):
     pos_nm_exchange_income_account_id = fields.Many2one(
         string='Exchange Commission Account',
         related='pos_config_id.nm_exchange_income_account_id',
+        domain=EXCHANGE_INCOME_ACCOUNT_DOMAIN,
         readonly=False,
     )
     pos_nm_exchange_customer_threshold = fields.Monetary(

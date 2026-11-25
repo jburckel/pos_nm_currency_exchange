@@ -16,6 +16,10 @@
                     <span><t t-out="operation.name"/>: <t t-out="operation.amount_in"/> &#8594; <t t-out="operation.amount_out"/><span t-if="operation.cashier_name" class="ms-1 fst-italic">(<t t-out="operation.cashier_name"/>)</span></span>
                     <span t-out="this.pos.formatCurrency(operation.commission)"/>
                 </div>
+                <div t-if="this.nmExchangeSummary.cancelled_count" class="d-flex align-items-center justify-content-between text-muted border-start ps-2 nm-exchange-closing-cancelled">
+                    <span>Cancelled operations</span>
+                    <span t-out="this.nmExchangeSummary.cancelled_count"/>
+                </div>
             </div>
         </xpath>
     </t>

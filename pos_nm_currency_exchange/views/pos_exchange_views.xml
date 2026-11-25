@@ -4,12 +4,14 @@
         <field name="name">pos.nm.exchange.list</field>
         <field name="model">pos.nm.exchange</field>
         <field name="arch" type="xml">
-            <list string="Currency Exchanges" create="false" edit="false" default_order="date desc">
+            <list string="Currency Exchanges" create="false" edit="false" delete="false" default_order="date desc"
+                  decoration-muted="state == 'cancelled'">
                 <field name="name"/>
                 <field name="date"/>
                 <field name="config_id" optional="show"/>
                 <field name="session_id" optional="hide"/>
                 <field name="cashier_name" optional="show"/>
+                <field name="user_id" optional="hide"/>
                 <field name="partner_id" optional="show"/>
                 <field name="currency_in_id" string="Received"/>
                 <field name="amount_in" string=" "/>
@@ -18,6 +20,8 @@
                 <field name="rate" optional="hide"/>
                 <field name="value_in" sum="Received Value" optional="hide"/>
                 <field name="commission" sum="Commission"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-danger="state == 'cancelled'" optional="show"/>
                 <field name="company_currency_id" column_invisible="True"/>
             </list>
         </field>
@@ -27,7 +31,13 @@
         <field name="name">pos.nm.exchange.form</field>
         <field name="model">pos.nm.exchange</field>
         <field name="arch" type="xml">
-            <form string="Currency Exchange" create="false" edit="false">
+            <form string="Currency Exchange" create="false" delete="false">
+                <header>
+                    <button name="action_cancel" type="object" string="Cancel Operation"
+                            invisible="state != 'done'" groups="point_of_sale.group_pos_manager"
+                            confirm="Cancel this operation? Two opposite lines hand the notes received back to the customer and take back the notes handed back, while the session is open."/>
+                    <field name="state" widget="statusbar"/>
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_statement_lines" type="object" class="oe_stat_button" icon="payments"
@@ -36,12 +46,18 @@
                     <div class="oe_title">
                         <h1><field name="name"/></h1>
                     </div>
+                    <div class="alert alert-warning" role="alert" invisible="state != 'cancelled'">
+                        Cancelled on <field name="cancel_date" class="oe_inline"/>
+                        by <field name="cancel_user_id" class="oe_inline"/>:
+                        reversed by two opposite statement lines, not counted in the commissions.
+                    </div>
                     <group>
                         <group string="Operation">
                             <field name="date"/>
                             <field name="session_id"/>
                             <field name="config_id"/>
                             <field name="cashier_name"/>
+                            <field name="user_id"/>
                             <field name="partner_id"/>
                             <field name="note"/>
                         </group>
@@ -68,6 +84,7 @@
         <field name="arch" type="xml">
             <pivot string="Currency Exchanges">
                 <field name="date" type="row" interval="day"/>
+                <field name="state" type="col"/>
                 <field name="currency_in_id" type="col"/>
                 <field name="commission" type="measure"/>
                 <field name="value_in" type="measure"/>
@@ -83,14 +100,19 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="cashier_name"/>
+                <field name="user_id"/>
                 <field name="session_id"/>
                 <filter string="Today" name="today"
                         domain="[('date', '&gt;=', 'today'), ('date', '&lt;', 'tomorrow')]"/>
                 <filter string="With Customer" name="with_customer" domain="[('partner_id', '!=', False)]"/>
+                <separator/>
+                <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <group>
                     <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
                     <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
                     <filter string="Cashier" name="group_by_cashier" domain="[]" context="{'group_by': 'cashier_name'}"/>
+                    <filter string="Status" name="group_by_state" domain="[]" context="{'group_by': 'state'}"/>
                     <filter string="Received Currency" name="group_by_currency_in" domain="[]" context="{'group_by': 'currency_in_id'}"/>
                     <filter string="Handed Currency" name="group_by_currency_out" domain="[]" context="{'group_by': 'currency_out_id'}"/>
                     <filter string="Date" name="group_by_date" domain="[]" context="{'group_by': 'date:day'}"/>
@@ -103,6 +125,7 @@
         <field name="name">Currency Exchanges</field>
         <field name="res_model">pos.nm.exchange</field>
         <field name="view_mode">list,form,pivot</field>
+        <field name="context">{'search_default_done': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_empty_folder">
                 No exchange operation yet

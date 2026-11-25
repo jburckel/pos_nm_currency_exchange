@@ -40,6 +40,9 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
         self.assertAlmostEqual(exchange.commission, 1.15, places=2)
         self.assertAlmostEqual(exchange.amount_out, 56.32, places=2)
         self.assertEqual(exchange.note, 'Tour')
+        # Recorded by the server for the logged-in cashier.
+        self.assertEqual(exchange.user_id, self.pos_user)
+        self.assertEqual(exchange.cashier_name, self.pos_user.name)
         # 100 counted at opening plus the 50 received.
         self.assertAlmostEqual(self.main_pos_config._nm_currency_balance(foreign_currency), 150.0, places=2)
         data = session.get_closing_control_data()

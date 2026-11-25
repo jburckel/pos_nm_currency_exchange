@@ -11,11 +11,13 @@ class PosSession(models.Model):
     nm_exchange_commission = fields.Monetary(
         string='Exchange Commissions', currency_field='currency_id', compute='_compute_nm_exchange_count')
 
-    @api.depends('nm_exchange_ids.commission')
+    @api.depends('nm_exchange_ids.commission', 'nm_exchange_ids.state')
     def _compute_nm_exchange_count(self):
+        # Cancelled operations were reversed: they count for nothing.
         for session in self:
-            session.nm_exchange_count = len(session.nm_exchange_ids)
-            session.nm_exchange_commission = sum(session.nm_exchange_ids.mapped('commission'))
+            exchanges = session.nm_exchange_ids.filtered(lambda e: e.state == 'done')
+            session.nm_exchange_count = len(exchanges)
+            session.nm_exchange_commission = sum(exchanges.mapped('commission'))
 
     def action_nm_view_exchanges(self):
         self.ensure_one()
@@ -28,11 +30,13 @@ class PosSession(models.Model):
         }
 
     def _nm_exchange_summary(self):
-        """Operations of the session for the closing popup and the report."""
+        """Operations of the session for the closing popup and the report;
+        the cancelled ones are only counted apart."""
         self.ensure_one()
-        exchanges = self.nm_exchange_ids
+        exchanges = self.nm_exchange_ids.filtered(lambda e: e.state == 'done')
         return {
             'count': len(exchanges),
+            'cancelled_count': len(self.nm_exchange_ids) - len(exchanges),
             'commission': self.currency_id.round(sum(exchanges.mapped('commission'))),
             'operations': [{
                 'name': exchange.name,

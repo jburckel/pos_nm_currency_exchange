@@ -58,6 +58,9 @@
                                 </span>
                             </td>
                         </tr>
+                        <tr t-if="nm_exchange.get('cancelled_count')" class="text-muted">
+                            <td class="ps-2" colspan="5"><span t-out="nm_exchange['cancelled_label']"/></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
