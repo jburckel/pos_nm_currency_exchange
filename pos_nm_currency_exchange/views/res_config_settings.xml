@@ -43,7 +43,7 @@
                             </div>
                             <div class="mt8">
                                 <button name="action_nm_print_rate_board" type="object" string="Print Exchange Rates"
-                                        icon="oi-arrow-right" class="btn-link"/>
+                                        icon="east" class="btn-link"/>
                             </div>
                         </div>
                         <div class="text-muted mt8" invisible="not pos_nm_exchange_enabled">

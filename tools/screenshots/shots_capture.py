@@ -1,21 +1,25 @@
 """Screenshots of pos_nm_currency_exchange on the ``shots`` database.
 
-Usage: venv/bin/python shots_capture.py <config_id> <session_id> <eur_setting_id>
+Usage: venv/bin/python shots_capture.py <config_id> <session_id> <eur_setting_id> <cancelled_id>
 """
+import json
 import os
 import sys
 import time
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8069"
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shots")
 os.makedirs(OUT, exist_ok=True)
-CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+CHROME = os.environ.get("CHROME", "/usr/local/bin/chromium")
 
 config_id = int(sys.argv[1])
 session_id = int(sys.argv[2])
 eur_setting_id = int(sys.argv[3])
+cancelled_id = int(sys.argv[4])
 
 
 def shot(page, name, locator=None, full_page=False, clip=None):
@@ -72,7 +76,8 @@ with sync_playwright() as p:
     page.wait_for_selector(".o_form_view", timeout=30000)
     time.sleep(2.5)
     shot(page, "exchange_commissions", locator=page.locator(".o_form_view .o_form_sheet").first)
-    # Exchange operations list and pivot
+    # Exchange operations list and pivot, wider: every column at full width
+    page.set_viewport_size({"width": 1680, "height": 900})
     page.goto(BASE + "/odoo/action-pos_nm_currency_exchange.action_pos_nm_exchange")
     page.wait_for_selector(".o_list_view", timeout=30000)
     time.sleep(2.5)
@@ -81,11 +86,20 @@ with sync_playwright() as p:
     page.wait_for_selector(".o_pivot_view", timeout=30000)
     time.sleep(2.5)
     shot(page, "exchange_pivot")
-    # Session form with the stat button
-    page.goto(BASE + f"/odoo/action-point_of_sale.action_pos_session/{session_id}")
+    page.set_viewport_size({"width": 1440, "height": 900})
+    # Cancelled operation: status, warning banner and reversal lines
+    page.goto(BASE + f"/odoo/action-pos_nm_currency_exchange.action_pos_nm_exchange/{cancelled_id}")
     page.wait_for_selector(".o_form_view", timeout=30000)
-    time.sleep(3)
-    shot(page, "exchange_session")
+    time.sleep(2.5)
+    shot(page, "exchange_cancelled", locator=page.locator(".o_form_view .o_form_renderer").first)
+    # Exchange Register report of the month: every operation, identity documents
+    now = datetime.now(timezone.utc)
+    options = json.dumps({"date_start": now.strftime("%Y-%m-01 00:00:00"),
+                          "date_stop": (now + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"), "config_ids": []})
+    page.goto(BASE + "/report/html/pos_nm_currency_exchange.report_exchange_register?options=" + quote(options))
+    page.wait_for_selector(".page h2", timeout=30000)
+    time.sleep(2)
+    shot(page, "exchange_register", locator=page.locator(".page").last)
     # Sales details report: the exchange block
     page.goto(BASE + f"/report/html/point_of_sale.report_saledetails/{session_id}")
     page.wait_for_selector("body", timeout=30000)
@@ -145,11 +159,42 @@ with sync_playwright() as p:
     shot(page, "exchange_receipt", locator=page.locator("#receipt-iframe-container iframe"))
     page.evaluate("document.getElementById('receipt-iframe-container').setAttribute('style', 'display:none')")
     time.sleep(0.5)
+    # Rate board of the counter
+    open_menu_option(page, "Exchange Rates")
+    page.wait_for_selector(".modal .nm-exchange-rate-row", timeout=15000)
+    time.sleep(1.5)
+    shot(page, "exchange_rates", locator=page.locator(".modal-content:has(.nm-exchange-rate-row)").first)
+    page.keyboard.press("Escape")
+    time.sleep(1)
+    # Identity document: linked operations of the customer above the threshold
+    open_menu_option(page, "Currency Exchange")
+    page.wait_for_selector(".modal .nm-currency-exchange", timeout=15000)
+    time.sleep(1)
+    page.locator(".modal .nm-exchange-currency-in").select_option(label="EUR")
+    time.sleep(0.5)
+    page.locator(".modal .nm-exchange-currency-out").select_option(label="USD")
+    time.sleep(0.5)
+    page.locator(".modal .nm-exchange-amount-in").fill("300")
+    time.sleep(1.5)
+    page.locator(".modal .nm-exchange-customer").click()
+    page.locator(".modal .partner-list b", has_text="Olivia Bennett").first.click()
+    page.wait_for_selector(".modal .nm-exchange-document input.nm-exchange-document-number", timeout=15000)
+    time.sleep(1.5)
+    shot(page, "exchange_document", locator=page.locator(".modal-content.nm-currency-exchange").first)
+    page.locator(".modal .nm-exchange-discard").click()
+    time.sleep(1)
     # Closing popup with the exchange block
+    page.set_viewport_size({"width": 1440, "height": 1600})  # the whole popup, exchange block included
     open_menu_option(page, "Close Register")
     page.wait_for_selector(".close-pos-popup .nm-exchange-closing", timeout=20000)
     time.sleep(2)
-    shot(page, "exchange_closing", locator=page.locator(".modal-content:has(.close-pos-popup), .close-pos-popup").first)
+    # Down to the Currency Exchange block: the count fields under it are left out.
+    rect = page.evaluate("""() => {
+        const a = document.querySelector('.close-pos-popup').closest('.modal-content').getBoundingClientRect();
+        const b = document.querySelector('.close-pos-popup .nm-exchange-closing').getBoundingClientRect();
+        return {x: a.left, y: a.top, width: a.width, height: b.bottom + 16 - a.top};
+    }""")
+    shot(page, "exchange_closing", clip=rect)
     page.locator(".modal-footer button", has_text="Discard").first.click()
     time.sleep(1)
     browser.close()
