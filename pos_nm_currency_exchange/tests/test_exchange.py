@@ -1044,6 +1044,19 @@ class TestPosCurrencyExchange(TestPosAccounting):
         # A cancelled operation does not count either.
         Exchange.browse(receipt['id']).with_user(self.env.user).action_cancel()
         self.assertEqual(Exchange._nm_linked_value(self.pos_config, 900.0, customer), 900.0)
+        # An operation at another point of sale of the company counts, in
+        # the currency of this one: 11900 XPF are worth 100.
+        xpf = self.setup_other_currency('XPF', rates=[('1900-01-01', 119.0)])
+        journal = self.env['account.journal'].create({
+            'name': 'NM XPF Sales', 'code': 'NMXPF', 'type': 'general', 'currency_id': xpf.id})
+        xpf_config = self.env['pos.config'].create({
+            'name': 'NM XPF Shop', 'journal_id': journal.id, 'payment_method_ids': [(6, 0, [])]})
+        xpf_session = self.env['pos.session'].create({'config_id': xpf_config.id, 'user_id': self.env.uid})
+        self.env['pos.nm.exchange'].sudo().create({
+            'session_id': xpf_session.id, 'partner_id': customer.id, 'currency_in_id': self.fx.id,
+            'currency_out_id': xpf.id, 'amount_in': 100.0, 'amount_out': 11400.0, 'value_in': 11900.0,
+            'value_out': 11400.0, 'commission': 500.0, 'rate_margin': 0.0})
+        self.assertEqual(Exchange._nm_linked_value(self.pos_config, 900.0, customer), 1000.0)
 
     def test_identity_document(self):
         """The document typed at the register is checked, saved on the
@@ -1061,6 +1074,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
         with self.assertRaisesRegex(UserError, 'expiry date'):
             Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
                                     document=self._document(expiry=''))
+        with self.assertRaisesRegex(UserError, 'Invalid date'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
+                                    document=self._document(birthdate='17/05/1980'))
         # Nothing saved from the refused documents.
         self.assertFalse(customer.nm_id_document_number)
 
@@ -1076,6 +1092,8 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(exchange.id_document_country_id, self.env.ref('base.fr'))
         self.assertEqual(exchange.id_nationality_id, self.env.ref('base.fr'))
         self.assertEqual(exchange.customer_name, 'NM Document Customer')
+        # The personal data is not copied with the contact.
+        self.assertFalse(customer.copy().nm_id_document_number)
 
         # The register prefills the document of the customer.
         loaded = Exchange.get_customer_document(customer.id)

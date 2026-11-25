@@ -362,7 +362,10 @@ class PosNmExchange(models.Model):
             if field.endswith('_id'):
                 value = value and countries.browse(int(value)).exists().id
             elif field in ('id_document_expiry', 'id_birthdate'):
-                value = value and fields.Date.to_date(value)
+                try:
+                    value = value and fields.Date.to_date(value)
+                except ValueError:
+                    raise UserError(_("Invalid date in the identity document of the customer: %s", value)) from None
             elif isinstance(value, str):
                 value = value.strip()
             values[field] = value or False
@@ -470,7 +473,11 @@ class PosNmExchange(models.Model):
 
     @api.model
     def _nm_partner(self, partner_id):
-        return self.env['res.partner'].browse(int(partner_id)).exists() if partner_id else self.env['res.partner']
+        """Customer selected at the register, readable by the cashier: its
+        operations and its identity document are then read with sudo."""
+        partner = self.env['res.partner'].browse(int(partner_id)).exists() if partner_id else self.env['res.partner']
+        partner.check_access('read')
+        return partner
 
     @api.model
     def get_quote(self, config_id, currency_in_id, amount_in, currency_out_id, partner_id=None):
@@ -524,7 +531,6 @@ class PosNmExchange(models.Model):
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
             raise AccessError(_("You don't have the access rights to use the exchange counter."))
         partner = self._nm_partner(partner_id)
-        partner.check_access('read')
         values = self._nm_document_values(partner)
         return {
             'document': {
