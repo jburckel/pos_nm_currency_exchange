@@ -98,5 +98,14 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                     }
                 },
             },
+            Chrome.clickMenuOption("Close Register"),
+            {
+                content: "the closing popup shows the commission of the operation: 1.15",
+                trigger: ".modal .close-pos-popup .nm-exchange-closing-commission:contains(/1[.,]15/)",
+            },
+            {
+                content: "the closing popup shows the rate margin of the operation",
+                trigger: ".modal .close-pos-popup .nm-exchange-closing-rate-margin",
+            },
         ].flat(),
 });
