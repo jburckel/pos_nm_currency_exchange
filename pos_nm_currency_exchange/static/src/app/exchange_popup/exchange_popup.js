@@ -3,9 +3,11 @@ import { Component, useProps, proxy, t, onWillUnmount } from "@odoo/owl";
 import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
+import { ConnectionLostError } from "@web/core/network/rpc";
 import { formatCurrency } from "@web/core/currency";
 import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
 import { PartnerList } from "@point_of_sale/app/screens/partner_list/partner_list";
+import { uuidv4 } from "@point_of_sale/utils";
 import {
     formatAmountInput,
     getCoinStepWarning,
@@ -20,6 +22,11 @@ import {
  * from the server (get_quote): cash rates, commission and rounding of the
  * notes handed back are computed there, and the operation is recorded by
  * create_from_ui with its two statement lines.
+ *
+ * Reverse quote: the cashier may type the amount the customer wants in the
+ * "handed back" field instead; the server then computes the amount to
+ * receive (get_reverse_quote) and the operation is quoted and recorded from
+ * that amount received, as any other.
  */
 export class CurrencyExchangePopup extends Component {
     static template = "pos_nm_currency_exchange.CurrencyExchangePopup";
@@ -40,6 +47,9 @@ export class CurrencyExchangePopup extends Component {
             currencyInId: foreign ? foreign.id : this.pos.currency.id,
             currencyOutId: this.pos.currency.id,
             amountIn: "",
+            // Amount typed in the "handed back" field: reverse quote.
+            amountOut: "",
+            reverse: false,
             note: "",
             partner: null,
             quote: null,
@@ -49,6 +59,9 @@ export class CurrencyExchangePopup extends Component {
         });
         this.quoteTimer = null;
         this.quoteSequence = 0;
+        // Sent with the operation: confirmed again after a lost response,
+        // the operation is not recorded twice.
+        this.uuid = uuidv4();
         onWillUnmount(() => clearTimeout(this.quoteTimer));
     }
 
@@ -60,6 +73,19 @@ export class CurrencyExchangePopup extends Component {
     }
     get amountIn() {
         return this.pos.isValidFloat(this.state.amountIn) ? parseAmountInput(this.state.amountIn) : 0;
+    }
+    get amountOut() {
+        return this.pos.isValidFloat(this.state.amountOut) ? parseAmountInput(this.state.amountOut) : 0;
+    }
+    /**
+     * Value of the "handed back" field: the amount typed for a reverse
+     * quote, else the amount of the quote.
+     */
+    get amountOutValue() {
+        if (this.state.reverse) {
+            return this.state.amountOut;
+        }
+        return this.state.quote ? formatAmountInput(this.state.quote.amount_out, this.state.currencyOutId) : "";
     }
     /**
      * The amount received cannot be made up with the coins and notes of its
@@ -73,15 +99,31 @@ export class CurrencyExchangePopup extends Component {
         }
         return getCoinStepWarning(this.amountIn, currency, getPaymentStep(currency));
     }
+    /**
+     * The quote shown is the one of the currencies and the amount received
+     * in the popup: a quote still pending or of other inputs is not.
+     */
+    get isQuoteCurrent() {
+        return (
+            !!this.state.quote &&
+            !this.state.loading &&
+            this.state.quote.key === this.quoteKey(this.state.currencyInId, this.state.currencyOutId, this.amountIn)
+        );
+    }
     get isValid() {
         return (
             this.amountIn > 0 &&
-            this.state.currencyInId !== this.state.currencyOutId &&
-            !!this.state.quote &&
-            !this.state.loading &&
-            !this.state.error &&
+            this.isQuoteCurrent &&
+            !this.errorMessage &&
             (!this.state.quote.customer_required || !!this.state.partner)
         );
+    }
+    /**
+     * The error of the last request, or the refusal of the drawer of the
+     * currency handed back, shown before Confirm.
+     */
+    get errorMessage() {
+        return this.state.error || this.state.quote?.drawer_error || "";
     }
     get customerLabel() {
         return this.state.partner ? this.state.partner.name : _t("Customer");
@@ -92,6 +134,9 @@ export class CurrencyExchangePopup extends Component {
 
     format(amount, currency) {
         return formatCurrency(amount, currency.id);
+    }
+    quoteKey(currencyInId, currencyOutId, amountIn) {
+        return `${currencyInId}|${currencyOutId}|${amountIn}`;
     }
 
     onCurrencyInChange(ev) {
@@ -104,11 +149,31 @@ export class CurrencyExchangePopup extends Component {
     }
     onCurrencyOutChange(ev) {
         this.state.currencyOutId = parseInt(ev.target.value);
+        if (this.state.currencyInId === this.state.currencyOutId) {
+            const other = this.currencies.find((currency) => currency.id !== this.state.currencyOutId);
+            this.state.currencyInId = other ? other.id : this.state.currencyInId;
+        }
         this.scheduleQuote();
     }
     onAmountInput(ev) {
         this.state.amountIn = ev.target.value;
+        this.state.reverse = false;
         this.scheduleQuote();
+    }
+    onAmountOutInput(ev) {
+        this.state.amountOut = ev.target.value;
+        this.state.reverse = true;
+        this.scheduleQuote();
+    }
+    /**
+     * Reverse quote: once the field is left, it shows the amount actually
+     * handed back, at least the one typed (rounded up to the coins and
+     * notes).
+     */
+    onAmountOutBlur() {
+        if (this.state.reverse && this.isQuoteCurrent) {
+            this.state.amountOut = formatAmountInput(this.state.quote.amount_out, this.state.currencyOutId);
+        }
     }
     onAmountBlur() {
         if (this.pos.isValidFloat(this.state.amountIn)) {
@@ -124,25 +189,46 @@ export class CurrencyExchangePopup extends Component {
 
     scheduleQuote() {
         clearTimeout(this.quoteTimer);
+        // A response to an earlier request is dropped.
+        this.quoteSequence++;
         this.state.quote = null;
         this.state.error = "";
-        if (!(this.amountIn > 0) || this.state.currencyInId === this.state.currencyOutId) {
+        this.state.loading = false;
+        if (this.state.reverse) {
+            this.state.amountIn = "";
+        }
+        const amount = this.state.reverse ? this.amountOut : this.amountIn;
+        if (!(amount > 0) || this.state.currencyInId === this.state.currencyOutId) {
             return;
         }
         this.state.loading = true;
         this.quoteTimer = setTimeout(() => this.fetchQuote(), 300);
     }
     async fetchQuote() {
-        const sequence = ++this.quoteSequence;
+        const sequence = this.quoteSequence;
+        const { currencyInId, currencyOutId, reverse } = this.state;
+        let amountIn = this.amountIn;
         try {
-            const quote = await this.pos.data.call("pos.nm.exchange", "get_quote", [
-                this.pos.config.id,
-                this.state.currencyInId,
-                this.amountIn,
-                this.state.currencyOutId,
-            ]);
+            const quote = reverse
+                ? await this.pos.data.call("pos.nm.exchange", "get_reverse_quote", [
+                      this.pos.config.id,
+                      currencyInId,
+                      currencyOutId,
+                      this.amountOut,
+                  ])
+                : await this.pos.data.call("pos.nm.exchange", "get_quote", [
+                      this.pos.config.id,
+                      currencyInId,
+                      amountIn,
+                      currencyOutId,
+                  ]);
             if (sequence === this.quoteSequence) {
-                this.state.quote = quote;
+                if (reverse) {
+                    this.state.amountIn = formatAmountInput(quote.amount_in, currencyInId);
+                    amountIn = this.amountIn;
+                }
+                // The inputs of the quote: Confirm only for these.
+                this.state.quote = { ...quote, key: this.quoteKey(currencyInId, currencyOutId, amountIn) };
             }
         } catch (error) {
             if (sequence === this.quoteSequence) {
@@ -173,19 +259,31 @@ export class CurrencyExchangePopup extends Component {
         }
         this.state.saving = true;
         try {
-            const receipt = await this.pos.data.call("pos.nm.exchange", "create_from_ui", [
-                this.pos.session.id,
-                this.state.currencyInId,
-                this.amountIn,
-                this.state.currencyOutId,
-                this.state.partner ? this.state.partner.id : false,
-                this.state.note.trim() || false,
-                // The cashier is decided by the server: the user, and with
-                // pos_hr the employee logged in, checked there.
-                (this.pos.config.module_pos_hr && this.pos.accessRight.loggedCashier?.id) || false,
-                // Refused by the server when the quote changed since.
-                this.state.quote.amount_out,
-            ]);
+            // The popup cannot be closed (Discard, Escape) while recording.
+            this.ui.block();
+            let receipt;
+            try {
+                receipt = await this.pos.data.call(
+                    "pos.nm.exchange",
+                    "create_from_ui",
+                    [
+                        this.pos.session.id,
+                        this.state.currencyInId,
+                        this.amountIn,
+                        this.state.currencyOutId,
+                        this.state.partner ? this.state.partner.id : false,
+                        this.state.note.trim() || false,
+                        // The cashier is decided by the server: the user, and
+                        // with pos_hr the employee logged in, checked there.
+                        (this.pos.config.module_pos_hr && this.pos.accessRight.loggedCashier?.id) || false,
+                        // Refused by the server when the quote changed since.
+                        this.state.quote.amount_out,
+                    ],
+                    { uuid: this.uuid }
+                );
+            } finally {
+                this.ui.unblock();
+            }
             await this.pos.logEmployeeMessage(
                 _t("Currency exchange %(name)s: %(received)s for %(handed)s", {
                     name: receipt.name,
@@ -206,7 +304,14 @@ export class CurrencyExchangePopup extends Component {
             this.props.getPayload?.(receipt);
             this.props.close();
         } catch (error) {
-            this.state.error = error?.data?.message || error?.message || _t("The operation could not be recorded.");
+            if (error instanceof ConnectionLostError) {
+                this.state.error = _t(
+                    "The connection was lost: the operation may have been recorded. Confirm again once the connection is back: an operation already recorded is not recorded twice."
+                );
+            } else {
+                this.state.error =
+                    error?.data?.message || error?.message || _t("The operation could not be recorded.");
+            }
         } finally {
             this.state.saving = false;
         }
@@ -221,12 +326,20 @@ export class CurrencyExchangePopup extends Component {
             image: { logo: generator.config.receiptLogoUrl },
             extra_data: { ...generator.commonExtraData, ...receipt },
         };
+        // confirm() logged the operation as the drawer action.
         try {
-            await this.pos.openCashbox(_t("Currency exchange"));
+            await this.pos.openCashbox();
+        } catch {
+            this.notification.add(_t("The cash drawer could not be opened."), { type: "warning" });
+        }
+        try {
             const iframe = await printer.generateIframe("pos_nm_currency_exchange.pos_exchange_receipt", data);
             await printer.printWithFallback({ iframe, webFallback: true });
-        } catch (error) {
-            console.warn("Exchange receipt not printed", error);
+        } catch {
+            this.notification.add(
+                _t("The receipt of %(name)s could not be printed.", { name: receipt.name }),
+                { type: "warning" }
+            );
         }
     }
 }

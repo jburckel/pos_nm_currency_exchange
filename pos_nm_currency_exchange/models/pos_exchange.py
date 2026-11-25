@@ -88,6 +88,13 @@ class PosNmExchange(models.Model):
         'account.bank.statement.line', string='Handed Reversal Line', readonly=True, copy=False,
         ondelete='restrict', check_company=True,
         help='Statement line taking back the notes handed to the customer.')
+    uuid = fields.Char(
+        string='Register Identifier', readonly=True, copy=False, index='btree_not_null',
+        help='Identifier of the operation sent by the register: an operation confirmed again after '
+             'a lost connection is recorded only once.')
+
+    _uuid_unique = models.Constraint(
+        'unique (uuid)', 'An exchange operation with this register identifier already exists.')
 
     @api.depends('rate', 'currency_in_id', 'currency_out_id')
     def _compute_rate_label(self):
@@ -216,16 +223,61 @@ class PosNmExchange(models.Model):
         }
 
     @api.model
-    def _nm_check_operation(self, config, currency_in, amount_in, currency_out):
+    def _nm_payment_step(self, config, currency):
+        """Smallest coin or note of ``currency`` taken from the customer: the
+        payment rounding of a foreign currency, the cash rounding of the
+        point of sale for its own currency, else the rounding of the
+        currency."""
+        if currency == config.currency_id:
+            step = config.rounding_method.rounding if config.cash_rounding else 0.0
+        else:
+            step = config._nm_get_currency_setting(currency).payment_rounding
+        return max(step, currency.rounding)
+
+    @api.model
+    def _nm_reverse_amount_in(self, config, currency_in, currency_out, amount_out):
+        """Smallest amount received, a multiple of the payment step of
+        ``currency_in``, whose quote hands back at least ``amount_out``.
+
+        The amount handed back by the quote never decreases when the amount
+        received grows: double the amount until it is enough, then bisect.
+        """
+        step = self._nm_payment_step(config, currency_in)
+
+        def enough(units):
+            quote = self._nm_quote(config, currency_in, units * step, currency_out)
+            return currency_out.compare_amounts(quote['amount_out'], amount_out) >= 0
+
+        low, high = 0, 1
+        while not enough(high):
+            if high >= 2 ** 40:
+                raise UserError(_(
+                    "No amount received in %(currency)s hands back %(amount)s.",
+                    currency=currency_in.name, amount=currency_out.format(amount_out)))
+            low, high = high, high * 2
+        while high - low > 1:
+            middle = (low + high) // 2
+            if enough(middle):
+                high = middle
+            else:
+                low = middle
+        return currency_in.round(high * step)
+
+    @api.model
+    def _nm_check_currencies(self, config, currency_in, currency_out):
         currencies = config._nm_exchange_currencies()
         if currency_in not in currencies or currency_out not in currencies:
             raise UserError(_("This currency is not accepted at the exchange counter of this Point of Sale."))
         if currency_in == currency_out:
             raise UserError(_("The received and handed currencies must differ."))
-        if currency_in.compare_amounts(amount_in or 0.0, 0.0) <= 0:
-            raise UserError(_("The received amount must be positive."))
         if not config.nm_exchange_enabled:
             raise UserError(_("The currency exchange counter is disabled on this Point of Sale."))
+
+    @api.model
+    def _nm_check_operation(self, config, currency_in, amount_in, currency_out):
+        self._nm_check_currencies(config, currency_in, currency_out)
+        if currency_in.compare_amounts(amount_in or 0.0, 0.0) <= 0:
+            raise UserError(_("The received amount must be positive."))
 
     @api.model
     def _nm_check_quote(self, quote, currency_out):
@@ -234,18 +286,26 @@ class PosNmExchange(models.Model):
                               "deducted, no note can be handed back.", currency_out.name))
 
     @api.model
+    def _nm_drawer_error(self, currency, amount, available):
+        """Refusal when ``amount`` is more than the drawer of ``currency``
+        holds (``available``), else an empty string."""
+        if currency.compare_amounts(amount, available) > 0:
+            return _(
+                "The drawer of %(currency)s holds %(balance)s: %(amount)s cannot be handed back.",
+                currency=currency.name, balance=currency.format(available), amount=currency.format(amount))
+        return ''
+
+    @api.model
     def _nm_check_drawer(self, session, currency, amount):
         """Refuse to hand back more notes than the drawer of ``currency``
         holds, as counted by the closing control."""
-        available = session._nm_expected_cash(currency)
-        if currency.compare_amounts(amount, available) > 0:
-            raise UserError(_(
-                "The drawer of %(currency)s holds %(balance)s: %(amount)s cannot be handed back.",
-                currency=currency.name, balance=currency.format(available), amount=currency.format(amount)))
+        error = self._nm_drawer_error(currency, amount, session._nm_expected_cash(currency))
+        if error:
+            raise UserError(error)
 
     @api.model
-    def get_quote(self, config_id, currency_in_id, amount_in, currency_out_id):
-        """Register: amounts of the operation for the popup."""
+    def _nm_quote_records(self, config_id, currency_in_id, currency_out_id):
+        """Point of sale and currencies of a quote asked by the register."""
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
             raise AccessError(_("You don't have the access rights to use the exchange counter."))
         config = self.env['pos.config'].browse(int(config_id)).exists()
@@ -253,6 +313,14 @@ class PosNmExchange(models.Model):
         currency_out = self.env['res.currency'].browse(int(currency_out_id)).exists()
         if not config or not currency_in or not currency_out:
             raise UserError(_("Unknown point of sale or currency."))
+        return config, currency_in, currency_out
+
+    @api.model
+    def get_quote(self, config_id, currency_in_id, amount_in, currency_out_id):
+        """Register: amounts of the operation for the popup, and the drawer
+        of the currency handed back in the open session, checked as when
+        the operation is recorded."""
+        config, currency_in, currency_out = self._nm_quote_records(config_id, currency_in_id, currency_out_id)
         self._nm_check_operation(config, currency_in, amount_in, currency_out)
         quote = self._nm_quote(config, currency_in, float(amount_in), currency_out)
         self._nm_check_quote(quote, currency_out)
@@ -262,8 +330,31 @@ class PosNmExchange(models.Model):
             'commission_formatted': config.currency_id.format(quote['commission']),
             'value_in_formatted': config.currency_id.format(quote['value_in']),
             'rate_label': self._nm_rate_label(currency_in, currency_out, quote['rate']),
+            'drawer_balance_formatted': '',
+            'drawer_error': '',
         })
+        session = config.current_session_id
+        if session:
+            available = session._nm_expected_cash(currency_out)
+            quote.update({
+                'drawer_balance_formatted': currency_out.format(available),
+                'drawer_error': self._nm_drawer_error(currency_out, quote['amount_out'], available),
+            })
         return quote
+
+    @api.model
+    def get_reverse_quote(self, config_id, currency_in_id, currency_out_id, amount_out):
+        """Register: the customer asks for ``amount_out``; quote of the
+        smallest amount received, rounded up to the coins and notes of its
+        currency, handing back at least that much. The operation is then
+        recorded from this amount received, as any other."""
+        config, currency_in, currency_out = self._nm_quote_records(config_id, currency_in_id, currency_out_id)
+        self._nm_check_currencies(config, currency_in, currency_out)
+        amount_out = float(amount_out or 0.0)
+        if currency_out.compare_amounts(amount_out, 0.0) <= 0:
+            raise UserError(_("The amount handed back must be positive."))
+        amount_in = self._nm_reverse_amount_in(config, currency_in, currency_out, amount_out)
+        return self.get_quote(config.id, currency_in.id, amount_in, currency_out.id)
 
     # ------------------------------------------------------------------
     # Operation
@@ -292,7 +383,7 @@ class PosNmExchange(models.Model):
 
     @api.model
     def create_from_ui(self, session_id, currency_in_id, amount_in, currency_out_id, partner_id=None,
-                       note=None, employee_id=None, amount_out=None):
+                       note=None, employee_id=None, amount_out=None, uuid=None):
         """Register: record the operation and post its two statement lines.
 
         The POS users can only read the operations: the operation is created
@@ -302,10 +393,17 @@ class PosNmExchange(models.Model):
         :param amount_out: notes to hand back shown to the cashier by the
             quote: the operation is refused when the rates or the commission
             changed since
+        :param uuid: identifier of the operation generated by the register:
+            when it was already recorded (the response was lost and the
+            cashier confirms again), nothing is recorded twice
         :return: the data of the exchange receipt
         """
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
             raise AccessError(_("You don't have the access rights to use the exchange counter."))
+        if uuid:
+            recorded = self.sudo().search([('uuid', '=', uuid), ('session_id', '=', int(session_id))], limit=1)
+            if recorded:
+                return recorded._nm_receipt_data()
         session = self.env['pos.session'].browse(int(session_id)).exists()
         if not session or session.state not in ('opened', 'closing_control'):
             raise UserError(_("The session must be open to exchange currencies."))
@@ -346,6 +444,7 @@ class PosNmExchange(models.Model):
             'currency_in_id': currency_in.id,
             'currency_out_id': currency_out.id,
             'note': note or False,
+            'uuid': uuid or False,
             **{key: quote[key] for key in (
                 'amount_in', 'value_in', 'amount_out', 'value_out', 'commission', 'rate_margin', 'rate')},
         })

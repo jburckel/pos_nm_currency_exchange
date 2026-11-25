@@ -31,6 +31,8 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
         session = self.main_pos_config.current_session_id
         TestPosMulticurrencyUi._start_tour(self, 'PosCurrencyExchangeTour')
 
+        session.invalidate_recordset()
+        self.assertEqual(session.state, 'closed')
         exchange = session.nm_exchange_ids
         self.assertEqual(len(exchange), 1)
         self.assertEqual(exchange.currency_in_id, foreign_currency)
@@ -49,3 +51,35 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
         self.assertEqual(data['nm_exchange_summary']['count'], 1)
         # 100 counted in the main drawer at opening less the 56.32 handed back.
         self.assertAlmostEqual(data['default_cash_details']['amount'], 43.68, places=2)
+
+    def test_pos_currency_exchange_reverse_tour(self):
+        """XPF (no decimals, 119.33 for 1 main, 5 XPF coins) besides EUR, no
+        commission: 25000 XPF typed in the popup give 209.50; the customer
+        then wants 10000 XPF: 83.81 received (10001 XPF rounded down to 5)."""
+        foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
+        xpf = self.env.ref('base.XPF')
+        xpf.active = True
+        self.env['res.currency.rate'].create({
+            'name': '2024-01-01', 'currency_id': xpf.id, 'rate': 119.33, 'company_id': self.env.company.id})
+        cash_pm.currency_ids = [(4, xpf.id)]
+        self.env['pos.nm.currency.setting'].create({
+            'config_id': self.main_pos_config.id, 'currency_id': xpf.id, 'change_rounding': 5.0})
+        commission_account = self.env['account.account'].create({
+            'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})
+        self.main_pos_config.write({
+            'nm_exchange_enabled': True,
+            'nm_exchange_income_account_id': commission_account.id,
+        })
+
+        self.main_pos_config.with_user(self.pos_user).open_ui()
+        session = self.main_pos_config.current_session_id
+        TestPosMulticurrencyUi._start_tour(self, 'PosCurrencyExchangeReverseTour')
+
+        first, second = session.nm_exchange_ids.sorted('id')
+        self.assertEqual((first.currency_in_id, first.amount_in), (xpf, 25000.0))
+        self.assertEqual((first.currency_out_id, first.amount_out), (self.main_pos_config.currency_id, 209.5))
+        self.assertEqual((second.currency_in_id, second.amount_in), (self.main_pos_config.currency_id, 83.81))
+        self.assertEqual((second.currency_out_id, second.amount_out), (xpf, 10000.0))
+        # Nothing recorded from the refused EUR operation.
+        self.assertEqual(len(session.nm_exchange_ids), 2)
+        self.assertTrue(first.uuid and second.uuid and first.uuid != second.uuid)

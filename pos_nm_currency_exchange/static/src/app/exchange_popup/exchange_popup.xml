@@ -32,11 +32,13 @@
                                         t-att-value="currency.id" t-att-selected="currency.id === this.state.currencyOutId"
                                         t-out="currency.name"/>
                             </select>
-                            <span class="form-control form-control-lg text-end fw-bolder nm-exchange-amount-out">
-                                <t t-if="this.state.quote" t-out="this.state.quote.amount_out_formatted"/>
-                                <t t-elif="this.state.loading">...</t>
-                                <t t-else="">-</t>
-                            </span>
+                            <input type="text" class="form-control form-control-lg text-end fw-bolder nm-exchange-amount-out"
+                                   title="Type the amount the customer wants: the amount to receive is computed"
+                                   t-att-placeholder="this.state.loading ? '...' : '0.00'"
+                                   t-att-value="this.amountOutValue"
+                                   t-att-class="{'is-invalid': this.state.reverse and this.state.amountOut and !this.pos.isValidFloat(this.state.amountOut)}"
+                                   t-on-input="this.onAmountOutInput" t-on-blur="this.onAmountOutBlur"
+                                   t-on-focus="(ev) => ev.target.select()"/>
                         </div>
                     </div>
                 </div>
@@ -44,9 +46,16 @@
                     <div class="d-flex justify-content-between"><span>Rate</span><span class="nm-exchange-rate" t-out="this.state.quote.rate_label"/></div>
                     <div class="d-flex justify-content-between"><span>Value of the notes received</span><span t-out="this.state.quote.value_in_formatted"/></div>
                     <div class="d-flex justify-content-between"><span>Commission</span><span class="nm-exchange-commission" t-out="this.state.quote.commission_formatted"/></div>
+                    <div t-if="this.state.quote.drawer_balance_formatted" class="d-flex justify-content-between nm-exchange-drawer"
+                         t-att-class="{'text-danger': this.state.quote.drawer_error}">
+                        <span>In the drawer</span><span t-out="this.state.quote.drawer_balance_formatted"/>
+                    </div>
+                </div>
+                <div t-if="this.state.reverse and this.state.quote" class="small text-muted nm-exchange-reverse-hint">
+                    Amount to receive computed from the amount handed back.
                 </div>
                 <div t-if="this.coinStepWarning" class="alert alert-warning py-2 mb-0 nm-exchange-step-warning" role="alert" t-out="this.coinStepWarning"/>
-                <div t-if="this.state.error" class="alert alert-danger py-2 mb-0 nm-exchange-error" role="alert" t-out="this.state.error"/>
+                <div t-if="this.errorMessage" class="alert alert-danger py-2 mb-0 nm-exchange-error" role="alert" t-out="this.errorMessage"/>
                 <div class="d-flex gap-2 align-items-center">
                     <button class="btn btn-secondary btn-lg nm-exchange-customer" type="button" t-on-click="this.selectCustomer"
                             t-att-class="{'btn-outline-danger': this.customerRequired}">
@@ -61,7 +70,7 @@
             </div>
             <t t-set-slot="footer">
                 <button class="btn btn-primary btn-lg nm-exchange-confirm" t-att-disabled="!this.isValid or this.state.saving" t-on-click="this.confirm">Confirm</button>
-                <button class="btn btn-secondary btn-lg" t-on-click="() => this.props.close()">Discard</button>
+                <button class="btn btn-secondary btn-lg nm-exchange-discard" t-att-disabled="this.state.saving" t-on-click="() => this.props.close()">Discard</button>
             </t>
         </Dialog>
     </t>

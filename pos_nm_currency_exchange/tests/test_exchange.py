@@ -3,9 +3,12 @@
 from datetime import timedelta
 from unittest.mock import patch
 
+from psycopg2 import IntegrityError
+
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import new_test_user, tagged
+from odoo.tools import mute_logger
 from odoo.addons.point_of_sale.tests.test_pos_accounting import TestPosAccounting
 
 
@@ -765,6 +768,123 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertFalse(Exchange.search([('session_id', '=', session.id)]))
         receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, amount_out=184.0)
         self.assertEqual(Exchange.browse(receipt['id']).amount_out, 184.0)
+
+    def test_create_from_ui_uuid(self):
+        """Confirmed again with the same identifier (the response of the first
+        call was lost): the operation is recorded once and its receipt is
+        returned again."""
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, uuid='nm-uuid-1')
+        lines = session.bank_statement_line_ids
+        # Even when the cashier changed the amount before confirming again.
+        again = Exchange.create_from_ui(session.id, self.main.id, 50.0, self.fx.id, uuid='nm-uuid-1')
+        self.assertEqual(again, receipt)
+        self.assertEqual(len(session.nm_exchange_ids), 1)
+        self.assertEqual(session.nm_exchange_ids.uuid, 'nm-uuid-1')
+        self.assertEqual(session.bank_statement_line_ids, lines)
+        self.assertEqual(session._nm_expected_cash(self.fx), 324.0)
+        # Another identifier is another operation.
+        Exchange.create_from_ui(session.id, self.main.id, 50.0, self.fx.id, uuid='nm-uuid-2')
+        self.assertEqual(len(session.nm_exchange_ids), 2)
+        # The identifier is unique.
+        with self.assertRaises(IntegrityError), mute_logger('odoo.sql_db'), self.cr.savepoint():
+            self.env['pos.nm.exchange'].sudo().create({
+                'session_id': session.id, 'currency_in_id': self.main.id, 'currency_out_id': self.fx.id,
+                'uuid': 'nm-uuid-1'})
+
+    def test_register_data(self):
+        """The register knows whether the commission account is set: it
+        explains why the counter cannot be used instead of opening it."""
+        def account_set():
+            return self.pos_config._load_pos_data_read(self.pos_config, self.pos_config)[0]['_nm_exchange_account_set']
+        self.assertTrue(account_set())
+        self.pos_config.nm_exchange_income_account_id = False
+        self.assertFalse(account_set())
+
+    def test_get_quote_drawer(self):
+        """The quote shows the drawer of the currency handed back, and the
+        refusal of the drawer check before the operation is confirmed."""
+        Exchange = self.env['pos.nm.exchange']
+        # No open session: no drawer.
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 100.0, self.fx.id)
+        self.assertEqual((quote['drawer_balance_formatted'], quote['drawer_error']), ('', ''))
+        self._open(fx=100.0)
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 50.0, self.fx.id)
+        self.assertEqual(quote['drawer_balance_formatted'], self.fx.format(100.0))
+        self.assertFalse(quote['drawer_error'])
+        # 176 EUR cannot be handed back from 100.
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 100.0, self.fx.id)
+        self.assertIn('cannot be handed back', quote['drawer_error'])
+
+    def _assert_reverse(self, currency_in, currency_out, amount_out, amount_in):
+        """The reverse quote of ``amount_out`` is ``amount_in``: its quote hands
+        back at least ``amount_out``, one payment step less does not."""
+        Exchange = self.env['pos.nm.exchange']
+        result = Exchange._nm_reverse_amount_in(self.pos_config, currency_in, currency_out, amount_out)
+        self.assertEqual(result, amount_in)
+        step = Exchange._nm_payment_step(self.pos_config, currency_in)
+        self.assertGreaterEqual(self._quote(currency_in, result, currency_out)['amount_out'], amount_out)
+        self.assertLess(self._quote(currency_in, result - step, currency_out)['amount_out'], amount_out)
+
+    def test_reverse_quote(self):
+        """The customer asks for an amount: the smallest amount received,
+        rounded up to the coins and notes of its currency, whose quote hands
+        back at least that much."""
+        # 176 EUR are worth 96.80 at the sell rate: 99.80 with the minimum
+        # commission of 3.
+        self._assert_reverse(self.main, self.fx, 176.0, 99.8)
+        # 175.50 EUR cannot be handed back with 1 EUR notes: 176.
+        self._assert_reverse(self.main, self.fx, 175.5, 99.8)
+        # Small amount: the minimum commission. 10 EUR are worth 5.50.
+        self._assert_reverse(self.main, self.fx, 10.0, 8.5)
+        # Above 100 the commission is 2% + 1: 177 EUR are worth 97.35, so
+        # 100.36 are needed.
+        self._assert_reverse(self.main, self.fx, 177.0, 100.36)
+        # The POS currency received is rounded up to its cash rounding.
+        rounding = self.env['account.cash.rounding'].create({
+            'name': 'NM 0.05', 'rounding': 0.05, 'rounding_method': 'HALF-UP',
+            'profit_account_id': self.profit_account.id, 'loss_account_id': self.loss_account.id})
+        self.pos_config.write({'cash_rounding': True, 'rounding_method': rounding.id})
+        self._assert_reverse(self.main, self.fx, 177.0, 100.4)
+        # A foreign currency received is rounded up to its payment rounding:
+        # 97 main need notes worth 100, 220 EUR at the cash rate 2.2.
+        self.setting.payment_rounding = 5.0
+        self._assert_reverse(self.fx, self.main, 97.0, 220.0)
+        self._assert_reverse(self.fx, self.main, 96.0, 220.0)
+
+    def test_reverse_quote_zero_decimals(self):
+        """VND without decimals, 25,000 for 1 main, 1% commission, 1,000 VND
+        notes taken and handed back."""
+        vnd = self._add_cash_currency(
+            'VND', 25000.0, exchange_sell_margin_percent=2.0, change_rounding=1000.0, payment_rounding=1000.0,
+            exchange_commission_percent=1.0)
+        # 99 main: notes worth 100, 2,500,000 VND.
+        self._assert_reverse(vnd, self.main, 99.0, 2500000.0)
+        # 1,000,000 VND are worth 40.80 at the sell rate: 41.21 main less 1%.
+        self._assert_reverse(self.main, vnd, 1000000.0, 41.21)
+
+    def test_get_reverse_quote_rpc(self):
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        self._open(fx=500.0)
+        quote = Exchange.get_reverse_quote(self.pos_config.id, self.main.id, self.fx.id, 175.5)
+        # The quote of the amount received, recorded as any other.
+        self.assertEqual(quote['amount_in'], 99.8)
+        self.assertEqual(quote['amount_out'], 176.0)
+        self.assertEqual(quote['commission'], 3.0)
+        self.assertEqual(quote['drawer_balance_formatted'], self.fx.format(500.0))
+        with self.assertRaisesRegex(UserError, 'must be positive'):
+            Exchange.get_reverse_quote(self.pos_config.id, self.main.id, self.fx.id, 0.0)
+        with self.assertRaises(UserError):
+            Exchange.get_reverse_quote(self.pos_config.id, self.main.id, self.main.id, 100.0)
+        # No rate to sell the notes at: nothing is ever handed back.
+        with patch.object(type(self.pos_config), '_nm_exchange_sell_rate', lambda config, currency: 0.0), \
+                self.assertRaisesRegex(UserError, 'No amount received'):
+            Exchange.get_reverse_quote(self.pos_config.id, self.main.id, self.fx.id, 100.0)
+        stranger = new_test_user(self.env, login='nm_reverse_stranger', groups='base.group_user')
+        with self.assertRaises(AccessError):
+            self.env['pos.nm.exchange'].with_user(stranger).get_reverse_quote(
+                self.pos_config.id, self.main.id, self.fx.id, 100.0)
 
     # ------------------------------------------------------------------
     # Sales Details report and closing

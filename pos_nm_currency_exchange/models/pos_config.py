@@ -51,6 +51,13 @@ class PosConfig(models.Model):
             if account and account.account_type not in ('income', 'income_other'):
                 raise ValidationError(_("The exchange commission account must be an income account."))
 
+    def _load_pos_data_read(self, records, config):
+        read_records = super()._load_pos_data_read(records, config)
+        if read_records:
+            # The register tells the cashier why the counter cannot be used.
+            read_records[0]['_nm_exchange_account_set'] = bool(config.nm_exchange_income_account_id)
+        return read_records
+
     def _nm_exchange_currencies(self):
         """Currencies of the exchange counter: the currency of the point of
         sale and the foreign currencies of its cash payment method."""
