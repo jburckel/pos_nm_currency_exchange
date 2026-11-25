@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 01:26+0000\n"
-"PO-Revision-Date: 2026-09-26 01:26+0000\n"
+"POT-Creation-Date: 2026-11-25 21:59+0000\n"
+"PO-Revision-Date: 2026-11-25 21:59+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -31,54 +31,109 @@ msgid ""
 "Features\n"
 "--------\n"
 "* Exchange operation from the menu of the register, between any two cash\n"
-"  currencies of the point of sale (the notes received and the notes handed\n"
-"  back), at the cash rates of POS Multi-Currency Cash\n"
+"  currencies of the point of sale: type the amount received, or the amount\n"
+"  the customer wants handed back\n"
+"* Buy and sell rates: notes received at the cash rate of POS Multi-Currency\n"
+"  Cash, notes handed back at a sell rate with its own margin, always in\n"
+"  favour of the shop; rate margin of every operation at the rates of Odoo\n"
 "* Commission per currency: percentage, fixed part and minimum; the notes\n"
-"  handed back are rounded to the coins and notes of their currency, the\n"
-"  remainder stays in the commission\n"
-"* Exchange receipt printed for the customer\n"
+"  handed back are rounded down to the coins and notes of their currency\n"
+"  (cash rounding of the point of sale for its own currency), the remainder\n"
+"  stays in the commission\n"
+"* Drawer of the currency handed back checked before every operation\n"
+"* Exchange receipt with the header and footer of the point of sale and the\n"
+"  exchange licence number; reprint from the register, PDF and e-mail from\n"
+"  the back office\n"
+"* Rate board of the counter: on the register, printed on the receipt\n"
+"  printer or in PDF\n"
+"* Customer identification: thresholds, linked operations over a period,\n"
+"  identity document recorded on the operation\n"
+"* Cancellation of an operation by a manager while its session is open: two\n"
+"  opposite lines, drawers and commission account back to their state;\n"
+"  operations cannot be edited or deleted, references are gapless\n"
 "* Two lines on the cash journal of the session, in the currency of each\n"
 "  side, with the commission on a dedicated income account: the operations\n"
-"  appear in the closing control, the Currency Position report and the\n"
-"  session report\n"
-"* Identification of the customer above a threshold\n"
+"  appear in the closing control, the Currency Position report and the Sales\n"
+"  Details report\n"
 "* Operations listed per point of sale, session and cashier, with a pivot of\n"
-"  the commissions\n"
+"  the commissions and rate margins; exchange register exported to Excel or\n"
+"  printed in PDF for a period\n"
 "\n"
 "Requirements\n"
 "------------\n"
 "* Point of Sale (point_of_sale)\n"
-"* POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0\n"
+"* POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0.2.1.0 or later,\n"
+"  sold separately\n"
 msgstr ""
 "\n"
 "POS Geldwechsel\n"
 "===============\n"
 "\n"
-"Ein Wechselschalter im Odoo Kassensystem: Der Kunde bringt Scheine in einer\n"
+"Ein Wechselschalter in der Odoo-Kasse: Der Kunde bringt Scheine in einer\n"
 "Währung und erhält eine andere, ohne ein Produkt zu kaufen. Aufgebaut auf\n"
 "POS Multi-Currency Cash, das bereits die Schublade jeder Währung, ihre\n"
-"Bargeldkurse sowie Münzen und Scheine kontrolliert.\n"
+"Kassenkurse und ihre Münzen und Scheine verwaltet.\n"
 "\n"
 "Funktionen\n"
 "----------\n"
-"* Wechselvorgang aus dem Menü der Kasse, zwischen zwei Bargeldwährungen der\n"
-"  Kasse (die erhaltenen und die ausgezahlten Scheine), zu den Bargeldkursen\n"
-"  von POS Multi-Currency Cash\n"
+"* Wechselvorgang aus dem Menü der Kasse, zwischen zwei beliebigen\n"
+"  Bargeldwährungen der Kasse: Geben Sie den erhaltenen Betrag ein oder den\n"
+"  Betrag, den der Kunde ausgezahlt haben möchte\n"
+"* Ankaufs- und Verkaufskurse: erhaltene Scheine zum Kassenkurs von POS\n"
+"  Multi-Currency Cash, ausgezahlte Scheine zu einem Verkaufskurs mit eigener\n"
+"  Marge, immer zugunsten des Geschäfts; Kursmarge jedes Vorgangs zu den\n"
+"  Odoo-Kursen\n"
 "* Provision je Währung: Prozentsatz, fester Teil und Minimum; die\n"
 "  ausgezahlten Scheine werden auf die Münzen und Scheine ihrer Währung\n"
-"  gerundet, der Rest bleibt in der Provision\n"
-"* Wechselbeleg für den Kunden\n"
-"* Zwei Zeilen im Kassenjournal der Sitzung, in der Währung jeder Seite, mit\n"
-"  der Provision auf einem eigenen Ertragskonto: Die Vorgänge erscheinen in\n"
-"  der Abschlusskontrolle, im Bericht Währungsposition und im Sitzungsbericht\n"
-"* Erfassung des Kunden ab einer Schwelle\n"
-"* Vorgänge je Kasse, Sitzung und Kassierer, mit einer Pivot-Ansicht der\n"
-"  Provisionen\n"
+"  abgerundet (Bargeldrundung der Kasse für ihre eigene Währung), der Rest\n"
+"  bleibt in der Provision\n"
+"* Schublade der ausgezahlten Währung vor jedem Vorgang geprüft\n"
+"* Wechselbeleg mit Kopf- und Fußzeile der Kasse und der Wechsellizenznummer;\n"
+"  Nachdruck an der Kasse, PDF und E-Mail im Backoffice\n"
+"* Kurstafel des Schalters: an der Kasse, auf dem Bondrucker oder als PDF\n"
+"* Kundenidentifikation: Schwellen, verbundene Vorgänge über einen Zeitraum,\n"
+"  Ausweisdokument auf dem Vorgang erfasst\n"
+"* Stornierung eines Vorgangs durch einen Manager, solange seine Sitzung\n"
+"  geöffnet ist: zwei gegenläufige Zeilen, Schubladen und Provisionskonto\n"
+"  wieder im vorherigen Zustand; Vorgänge können weder bearbeitet noch\n"
+"  gelöscht werden, die Referenzen sind lückenlos\n"
+"* Zwei Zeilen im Bargeldjournal der Sitzung, in der Währung jeder Seite,\n"
+"  mit der Provision auf einem eigenen Ertragskonto: Die Vorgänge erscheinen\n"
+"  in der Abschlusskontrolle, im Bericht Währungsposition und im Bericht\n"
+"  Verkaufsdetails\n"
+"* Vorgänge je Kasse, Sitzung und Kassierer aufgelistet, mit einer\n"
+"  Pivot-Tabelle der Provisionen und Kursmargen; Wechselregister für einen\n"
+"  Zeitraum nach Excel exportiert oder als PDF gedruckt\n"
 "\n"
 "Voraussetzungen\n"
 "---------------\n"
 "* Kassensystem (point_of_sale)\n"
-"* POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0\n"
+"* POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0.2.1.0 oder neuer,\n"
+"  separat erhältlich\n"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "%(count)s cancelled operations: %(names)s"
+msgstr "%(count)s stornierte Vorgänge: %(names)s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "%(count)s operations in %(currency)s"
+msgstr "%(count)s Vorgänge in %(currency)s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "%(name)s cancelled: %(amount)s handed back"
+msgstr "%(name)s storniert: %(amount)s zurückgezahlt"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "%(name)s cancelled: %(amount)s received back"
+msgstr "%(name)s storniert: %(amount)s zurückerhalten"
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -105,15 +160,115 @@ msgid "%s operations"
 msgstr "%s Vorgänge"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.actions.report,print_report_name:pos_nm_currency_exchange.action_report_pos_nm_exchange
+msgid "'Exchange %s' % object.name.replace('/', '_')"
+msgstr "'Geldwechsel %s' % object.name.replace('/', '_')"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.actions.report,print_report_name:pos_nm_currency_exchange.action_report_exchange_rates
+msgid "'Exchange Rates %s' % object.name"
+msgstr "'Wechselkurse %s' % object.name"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+msgid ""
+",\n"
+"                                            min."
+msgstr ""
+",\n"
+"                                            min."
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid ""
+",\n"
+"                                        min."
+msgstr ""
+",\n"
+"                                        min."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+msgid ""
+",\n"
+"                            min."
+msgstr ""
+",\n"
+"                            min."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+msgid "- Licence No."
+msgstr "- Lizenz-Nr."
+
+#. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "1 %(in)s = %(out)s"
 msgstr "1 %(in)s = %(out)s"
 
 #. module: pos_nm_currency_exchange
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_session_form_exchange
-msgid "<span class=\"o_stat_text\">Exchange Commissions</span>"
-msgstr "<span class=\"o_stat_text\">Wechselprovisionen</span>"
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid ""
+":\n"
+"                        reversed by two opposite statement lines, not counted in the commissions."
+msgstr ""
+":\n"
+"                        durch zwei gegenläufige Kontoauszugszeilen storniert, nicht in den Provisionen gezählt."
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid ""
+"<br/>\n"
+"                        Points of sale:"
+msgstr ""
+"<br/>\n"
+"                        Kassen:"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid "<br/>Expires"
+msgstr "<br/>Gültig bis"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid "<br/>Licence No."
+msgstr "<br/>Lizenz-Nr."
+
+#. module: pos_nm_currency_exchange
+#: model:mail.template,body_html:pos_nm_currency_exchange.mail_template_pos_nm_exchange
+msgid ""
+"<div style=\"margin: 0px; padding: 0px;\">\n"
+"    <p style=\"margin: 0px; padding: 0px; font-size: 13px;\">\n"
+"        Hello,\n"
+"        <br><br>\n"
+"        Please find attached the receipt of your currency exchange\n"
+"        <span style=\"font-weight: bold;\" t-out=\"object.name or ''\">EXC/2026/00001</span>\n"
+"        of <t t-out=\"format_datetime(object.date) or ''\">01/01/2026 10:00:00</t>:\n"
+"        <t t-out=\"format_amount(object.amount_in, object.currency_in_id) or ''\">$ 100.00</t> received,\n"
+"        <t t-out=\"format_amount(object.amount_out, object.currency_out_id) or ''\">90.00 EUR</t> handed back.\n"
+"        <br><br>\n"
+"        Thank you for your visit.\n"
+"    </p>\n"
+"</div>\n"
+"            "
+msgstr ""
+"<div style=\"margin: 0px; padding: 0px;\">\n"
+"    <p style=\"margin: 0px; padding: 0px; font-size: 13px;\">\n"
+"        Guten Tag,\n"
+"        <br><br>\n"
+"        anbei finden Sie den Beleg Ihres Geldwechsels\n"
+"        <span style=\"font-weight: bold;\" t-out=\"object.name or ''\">EXC/2026/00001</span>\n"
+"        vom <t t-out=\"format_datetime(object.date) or ''\">01/01/2026 10:00:00</t>:\n"
+"        <t t-out=\"format_amount(object.amount_in, object.currency_in_id) or ''\">$ 100.00</t> erhalten,\n"
+"        <t t-out=\"format_amount(object.amount_out, object.currency_out_id) or ''\">90.00 EUR</t> ausgezahlt.\n"
+"        <br><br>\n"
+"        Vielen Dank für Ihren Besuch.\n"
+"    </p>\n"
+"</div>\n"
+"            "
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -122,10 +277,63 @@ msgid "A customer must be identified for an exchange operation above %s."
 msgstr "Für einen Wechselvorgang über %s muss ein Kunde erfasst werden."
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"A customer must be identified for every exchange operation at this Point of "
+"Sale."
+msgstr ""
+"An dieser Kasse muss für jeden Wechselvorgang ein Kunde erfasst werden."
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
 msgid "A customer must be identified for this amount."
 msgstr "Für diesen Betrag muss ein Kunde erfasst werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"A customer with an identity document must be identified for an exchange "
+"operation above %s."
+msgstr ""
+"Für einen Wechselvorgang über %s muss ein Kunde mit Ausweisdokument erfasst "
+"werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"A customer with an identity document must be identified for this amount."
+msgstr "Für diesen Betrag muss ein Kunde mit Ausweisdokument erfasst werden."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction
+msgid "Action Needed"
+msgstr "Aktion erforderlich"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/services/pos_store.js:0
+msgid ""
+"Add a foreign currency to the cash payment method of the Point of Sale to "
+"exchange currencies."
+msgstr ""
+"Fügen Sie der Barzahlungsmethode der Kasse eine Fremdwährung hinzu, um "
+"Währungen zu wechseln."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange_register.py:0
+msgid "All"
+msgstr "Alle"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Amount to receive computed from the amount handed back."
+msgstr "Zu erhaltender Betrag aus dem ausgezahlten Betrag berechnet."
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
@@ -133,15 +341,117 @@ msgid "Amounts"
 msgstr "Beträge"
 
 #. module: pos_nm_currency_exchange
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "An exchange operation cannot be deleted. Cancel it instead."
+msgstr ""
+"Ein Wechselvorgang kann nicht gelöscht werden. Stornieren Sie ihn "
+"stattdessen."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"An exchange operation cannot be edited, only its note. Cancel the operation "
+"instead."
+msgstr ""
+"Ein Wechselvorgang kann nicht bearbeitet werden, nur seine Notiz. Stornieren"
+" Sie stattdessen den Vorgang."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.constraint,message:pos_nm_currency_exchange.constraint_pos_nm_exchange_uuid_unique
+msgid "An exchange operation with this register identifier already exists."
+msgstr "Ein Wechselvorgang mit dieser Kassenkennung existiert bereits."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_attachment_count
+msgid "Attachment Count"
+msgstr "Anzahl Anhänge"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid "Balance"
+msgstr "Saldo"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model,name:pos_nm_currency_exchange.model_account_bank_statement_line
+msgid "Bank Transaction"
+msgstr "Banktransaktion"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
+msgid "CANCELLED"
+msgstr "STORNIERT"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
+msgid "COPY"
+msgstr "KOPIE"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
 msgid "CURRENCY EXCHANGE"
 msgstr "GELDWECHSEL"
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid "Cancel Operation"
+msgstr "Vorgang stornieren"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid ""
+"Cancel this operation? Two opposite lines hand the notes received back to "
+"the customer and take back the notes handed back, while the session is open."
+msgstr ""
+"Diesen Vorgang stornieren? Zwei gegenläufige Zeilen geben dem Kunden die "
+"erhaltenen Scheine zurück und nehmen die ausgezahlten Scheine zurück, "
+"solange die Sitzung geöffnet ist."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__state__cancelled
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Cancelled"
+msgstr "Storniert"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__cancel_user_id
+msgid "Cancelled By"
+msgstr "Storniert von"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__cancel_date
+msgid "Cancelled On"
+msgstr "Storniert am"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid "Cancelled on"
+msgstr "Storniert am"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/components/closing_popup/closing_popup.xml:0
+msgid "Cancelled operations"
+msgstr "Stornierte Vorgänge"
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__cashier_name
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "Cashier"
 msgstr "Kassierer"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__cashier_name
+msgid ""
+"Cashier of the operation: the employee logged in at the register when the "
+"Employees module is used at the point of sale, else the user."
+msgstr ""
+"Kassierer des Vorgangs: der an der Kasse angemeldete Mitarbeiter, wenn das "
+"Modul Mitarbeiter an der Kasse verwendet wird, sonst der Benutzer."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -151,11 +461,23 @@ msgstr "Löschen"
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+msgid "Close"
+msgstr "Schließen"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__commission
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_saledetails_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_list
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_list
 msgid "Commission"
 msgstr "Provision"
 
@@ -197,19 +519,42 @@ msgid "Confirm"
 msgstr "Bestätigen"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model,name:pos_nm_currency_exchange.model_res_partner
+msgid "Contact"
+msgstr "Kontakt"
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__create_uid
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__create_uid
 msgid "Created by"
 msgstr "Erstellt von"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__create_date
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__create_date
 msgid "Created on"
 msgstr "Erstellt am"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__operation_type__cross
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Cross exchange"
+msgstr "Kreuzwechsel"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid "Currency"
+msgstr "Währung"
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
 #: code:addons/pos_nm_currency_exchange/static/src/overrides/components/closing_popup/closing_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/components/navbar/burger_menu_dialog.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/services/pos_store.js:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__nm_exchange_enabled
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_enabled
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_saledetails_exchange
@@ -218,6 +563,11 @@ msgstr "Erstellt am"
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
 msgid "Currency Exchange"
 msgstr "Geldwechsel"
+
+#. module: pos_nm_currency_exchange
+#: model:mail.template,name:pos_nm_currency_exchange.mail_template_pos_nm_exchange
+msgid "Currency Exchange: Send Receipt"
+msgstr "Geldwechsel: Beleg senden"
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -233,10 +583,10 @@ msgid "Currency Exchanges"
 msgstr "Geldwechsel"
 
 #. module: pos_nm_currency_exchange
-#. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
-msgid "Currency exchange"
-msgstr "Geldwechsel"
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "Currency exchange %(name)s cancelled by %(user)s."
+msgstr "Geldwechsel %(name)s storniert von %(user)s."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -248,17 +598,26 @@ msgstr "Geldwechsel %(name)s: %(received)s gegen %(handed)s"
 #: model:ir.module.module,summary:base.module_pos_nm_currency_exchange
 msgid ""
 "Currency exchange counter at the Point of Sale: buy and sell foreign notes "
-"with a commission, on the drawers of POS Multi-Currency Cash"
+"with a commission, receipt, rate board and exchange register, on the drawers"
+" of POS Multi-Currency Cash"
 msgstr ""
 "Wechselschalter in der Kasse: Ankauf und Verkauf von Fremdwährungsscheinen "
-"mit Provision, aus den Schubladen von POS Multi-Currency Cash"
+"mit Provision, Beleg, Kurstafel und Wechselregister, aus den Schubladen von "
+"POS Multi-Currency Cash"
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__partner_id
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 msgid "Customer"
 msgstr "Kunde"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__customer_name
+msgid "Customer Name"
+msgstr "Kundenname"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
@@ -266,15 +625,36 @@ msgid "Customer required above"
 msgstr "Kunde erforderlich ab"
 
 #. module: pos_nm_currency_exchange
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
+msgid "Customer required for every operation"
+msgstr "Kunde für jeden Vorgang erforderlich"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
 msgid "Customer:"
 msgstr "Kunde:"
 
 #. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__date
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "Date"
 msgstr "Datum"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_birthdate
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_birthdate
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_birthdate
+msgid "Date of Birth"
+msgstr "Geburtsdatum"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Date of birth"
+msgstr "Geburtsdatum"
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -283,15 +663,108 @@ msgid "Discard"
 msgstr "Verwerfen"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_account_bank_statement_line__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_ir_ui_view__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__display_name
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_session__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_report_point_of_sale_report_saledetails__display_name
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_report_pos_nm_currency_exchange_report_exchange_register__display_name
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__display_name
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__display_name
 msgid "Display Name"
 msgstr "Anzeigename"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_expiry
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_id_document_expiry
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_id_document_expiry
+msgid "Document Expiry Date"
+msgstr "Ablaufdatum des Dokuments"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_number
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_id_document_number
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_id_document_number
+msgid "Document Number"
+msgstr "Dokumentnummer"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Document number"
+msgstr "Dokumentnummer"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Document type"
+msgstr "Dokumentart"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__state__done
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Done"
+msgstr "Erledigt"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__state
+msgid ""
+"Done: the notes were exchanged. Cancelled: the operation was reversed by two"
+" opposite statement lines; it no longer counts in the commissions."
+msgstr ""
+"Erledigt: Die Scheine wurden gewechselt. Storniert: Der Vorgang wurde durch "
+"zwei gegenläufige Kontoauszugszeilen storniert; er zählt nicht mehr in den "
+"Provisionen."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__driving_licence
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__res_partner__nm_id_document_type__driving_licence
+msgid "Driving Licence"
+msgstr "Führerschein"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+msgid "EXCHANGE RATES"
+msgstr "WECHSELKURSE"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid "Enter the expiry date of the identity document of the customer."
+msgstr "Geben Sie das Ablaufdatum des Ausweisdokuments des Kunden ein."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"Enter the type and the number of the identity document of the customer."
+msgstr "Geben Sie Art und Nummer des Ausweisdokuments des Kunden ein."
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange_register
+msgid ""
+"Every exchange operation in the order of its reference, the cancelled ones included. Export the list\n"
+"                to Excel, or print the register of a period with Print Register."
+msgstr ""
+"Jeder Wechselvorgang in der Reihenfolge seiner Referenz, einschließlich der stornierten. Exportieren Sie die Liste\n"
+"                nach Excel oder drucken Sie das Register eines Zeitraums mit Register drucken."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_customer_always
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_customer_always
+msgid ""
+"Every exchange operation names its customer, so that the operations of the "
+"same customer are added up over the linked operations period."
+msgstr ""
+"Jeder Wechselvorgang nennt seinen Kunden, damit die Vorgänge desselben "
+"Kunden über den Zeitraum der verbundenen Vorgänge addiert werden."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__exchange_commission_percent
@@ -316,6 +789,68 @@ msgid "Exchange Customer Required Above"
 msgstr "Kunde erforderlich ab (Geldwechsel)"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__nm_exchange_customer_always
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_customer_always
+msgid "Exchange Customer Required for Every Operation"
+msgstr "Kunde für jeden Vorgang erforderlich (Geldwechsel)"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__nm_exchange_document_threshold
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_document_threshold
+msgid "Exchange Identity Document Required Above"
+msgstr "Ausweisdokument erforderlich ab (Geldwechsel)"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__nm_exchange_licence
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_licence
+msgid "Exchange Licence Number"
+msgstr "Wechsellizenznummer"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__nm_exchange_linked_days
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_linked_days
+msgid "Exchange Linked Operations Period"
+msgstr "Zeitraum der verbundenen Vorgänge (Geldwechsel)"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/components/navbar/burger_menu_dialog.xml:0
+msgid "Exchange Operations"
+msgstr "Wechselvorgänge"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/components/navbar/burger_menu_dialog.xml:0
+#: model:ir.actions.report,name:pos_nm_currency_exchange.action_report_exchange_rates
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid "Exchange Rates"
+msgstr "Wechselkurse"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.actions.report,name:pos_nm_currency_exchange.action_report_pos_nm_exchange
+msgid "Exchange Receipt"
+msgstr "Wechselbeleg"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.actions.act_window,name:pos_nm_currency_exchange.action_pos_nm_exchange_register
+#: model:ir.actions.act_window,name:pos_nm_currency_exchange.action_pos_nm_exchange_register_wizard
+#: model:ir.actions.report,name:pos_nm_currency_exchange.action_report_exchange_register
+#: model:ir.model,name:pos_nm_currency_exchange.model_report_pos_nm_currency_exchange_report_exchange_register
+#: model:ir.ui.menu,name:pos_nm_currency_exchange.menu_pos_nm_exchange_register
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_list
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_wizard
+msgid "Exchange Register"
+msgstr "Wechselregister"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__exchange_sell_margin_percent
+msgid "Exchange Sell Margin (%)"
+msgstr "Wechsel-Verkaufsmarge (%)"
+
+#. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
 msgid ""
 "Exchange counter in the menu of the register: the customer brings notes in "
@@ -324,6 +859,11 @@ msgid ""
 msgstr ""
 "Wechselschalter im Menü der Kasse: Der Kunde bringt Scheine in einer "
 "Bargeldwährung der Kasse und erhält eine andere, abzüglich einer Provision"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
+msgid "Exchange licence number"
+msgstr "Wechsellizenznummer"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange
@@ -341,6 +881,17 @@ msgid "Exchanges"
 msgstr "Wechselvorgänge"
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_session_form_exchange
+msgid "Exchanges:"
+msgstr "Vorgänge:"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Expiry date"
+msgstr "Ablaufdatum"
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__exchange_commission_fixed
 msgid "Fixed Exchange Commission"
 msgstr "Feste Wechselprovision"
@@ -355,7 +906,32 @@ msgstr ""
 " Kasse, zusätzlich zum Prozentsatz."
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_follower_ids
+msgid "Followers"
+msgstr "Follower"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_partner_ids
+msgid "Followers (Partners)"
+msgstr "Follower (Partner)"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__note
+msgid "Free note of the cashier, the only field a manager can edit."
+msgstr ""
+"Freie Notiz des Kassierers, das einzige Feld, das ein Manager bearbeiten "
+"kann."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__date_start
+msgid "From"
+msgstr "Von"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__amount_out
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_saledetails_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_list
 msgid "Handed Back"
@@ -363,6 +939,7 @@ msgstr "Ausgezahlt"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__currency_out_id
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_list
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "Handed Currency"
 msgstr "Ausgezahlte Währung"
@@ -371,6 +948,11 @@ msgstr "Ausgezahlte Währung"
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__statement_line_out_id
 msgid "Handed Line"
 msgstr "Auszahlungszeile"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__statement_line_cancel_out_id
+msgid "Handed Reversal Line"
+msgstr "Stornozeile Auszahlung"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__value_out
@@ -390,15 +972,84 @@ msgid "Handed back to the customer"
 msgstr "An den Kunden ausgezahlt"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__has_message
+msgid "Has Message"
+msgstr "Hat Nachricht"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_account_bank_statement_line__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_ir_ui_view__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_session__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_report_point_of_sale_report_saledetails__id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_report_pos_nm_currency_exchange_report_exchange_register__id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__id
 msgid "ID"
 msgstr "ID"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__uuid
+msgid ""
+"Identifier of the operation sent by the register: an operation confirmed "
+"again after a lost connection is recorded only once."
+msgstr ""
+"Von der Kasse gesendete Kennung des Vorgangs: Ein nach einem "
+"Verbindungsabbruch erneut bestätigter Vorgang wird nur einmal erfasst."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__id_card
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__res_partner__nm_id_document_type__id_card
+msgid "Identity Card"
+msgstr "Personalausweis"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_type
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_id_document_type
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_id_document_type
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_partner_form_inherit_nm_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid "Identity Document"
+msgstr "Ausweisdokument"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Identity document of the customer"
+msgstr "Ausweisdokument des Kunden"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
+msgid "Identity document required above"
+msgstr "Ausweisdokument erforderlich ab"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_type
+msgid ""
+"Identity document shown by the customer, as recorded with the operation."
+msgstr "Vom Kunden vorgelegtes Ausweisdokument, wie mit dem Vorgang erfasst."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction
+msgid "If checked, new messages require your attention."
+msgstr "Falls markiert, erfordern neue Nachrichten Ihre Aufmerksamkeit."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_error
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_sms_error
+msgid "If checked, some messages have a delivery error."
+msgstr ""
+"Falls markiert, weisen einige Nachrichten einen Zustellungsfehler auf."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "In the drawer"
+msgstr "In der Schublade"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_income_account_id
@@ -408,14 +1059,104 @@ msgstr ""
 "Ertragskonto, auf dem die Provisionen der Wechselvorgänge gebucht werden."
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "Invalid date in the identity document of the customer: %s"
+msgstr "Ungültiges Datum im Ausweisdokument des Kunden: %s"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_is_follower
+msgid "Is Follower"
+msgstr "Ist Follower"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_country_id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_id_document_country_id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_id_document_country_id
+msgid "Issuing Country"
+msgstr "Ausstellungsland"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Issuing country"
+msgstr "Ausstellungsland"
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__write_uid
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__write_uid
 msgid "Last Updated by"
 msgstr "Zuletzt aktualisiert von"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__write_date
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__write_date
 msgid "Last Updated on"
 msgstr "Zuletzt aktualisiert am"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
+msgid "Licence No."
+msgstr "Lizenz-Nr."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_licence
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_licence
+msgid ""
+"Licence or registration number of the currency exchange activity, printed on"
+" the exchange receipts and the rate board when set."
+msgstr ""
+"Lizenz- oder Registrierungsnummer der Geldwechseltätigkeit, auf den "
+"Wechselbelegen und der Kurstafel gedruckt, wenn angegeben."
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
+msgid "Linked operations period (days)"
+msgstr "Zeitraum der verbundenen Vorgänge (Tage)"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__rate_margin
+msgid ""
+"Margin earned on the rates: the value of the notes received at the rate of "
+"Odoo of the day less the received value, plus the handed value less the "
+"value of the notes handed back at the rate of Odoo. Realized when the "
+"foreign notes are deposited or revalued; the commission plus the rate margin"
+" is the income of the operation."
+msgstr ""
+"Auf den Kursen verdiente Marge: der Wert der erhaltenen Scheine zum Odoo-"
+"Tageskurs abzüglich des erhaltenen Werts, plus der ausgezahlte Wert "
+"abzüglich des Werts der ausgezahlten Scheine zum Odoo-Kurs. Realisiert, wenn"
+" die Fremdwährungsscheine eingezahlt oder neu bewertet werden; Provision "
+"plus Kursmarge ist der Ertrag des Vorgangs."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_currency_setting__exchange_sell_margin_percent
+msgid ""
+"Margin of the exchange counter on the notes of this currency it hands back, "
+"with the rate of Odoo: they are handed back at the rate of Odoo divided by 1"
+" + this margin, so the counter sells them above the market. The notes "
+"received keep the cash rate (the rate of Odoo with the Cash Rate Margin, the"
+" buy margin). With a fixed cash rate, the notes are handed back at the lower"
+" of the fixed rate and the fixed change rate, and this margin is not used."
+msgstr ""
+"Marge des Wechselschalters auf die Scheine dieser Währung, die er auszahlt, "
+"mit dem Odoo-Kurs: Sie werden zum Odoo-Kurs geteilt durch 1 + diese Marge "
+"ausgezahlt, der Schalter verkauft sie also über dem Markt. Die erhaltenen "
+"Scheine behalten den Kassenkurs (den Odoo-Kurs mit der Kassenkurs-Marge, der"
+" Ankaufsmarge). Mit einem festen Kassenkurs werden die Scheine zum "
+"niedrigeren Wert aus festem Kurs und festem Wechselgeldkurs ausgezahlt, und "
+"diese Marge wird nicht verwendet."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_error
+msgid "Message Delivery error"
+msgstr "Nachricht mit Zustellungsfehler"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_ids
+msgid "Messages"
+msgstr "Nachrichten"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__exchange_commission_min
@@ -432,7 +1173,45 @@ msgstr ""
 "der Kasse."
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__customer_name
+msgid ""
+"Name of the customer when the operation was recorded: later changes of the "
+"contact do not change it."
+msgstr ""
+"Name des Kunden bei der Erfassung des Vorgangs: Spätere Änderungen des "
+"Kontakts ändern ihn nicht."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_nationality_id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_nationality_id
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_nationality_id
+msgid "Nationality"
+msgstr "Staatsangehörigkeit"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "No amount received in %(currency)s hands back %(amount)s."
+msgstr ""
+"Kein in %(currency)s erhaltener Betrag ergibt eine Auszahlung von "
+"%(amount)s."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
+msgid "No exchange operation in this session yet."
+msgstr "Noch kein Wechselvorgang in dieser Sitzung."
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid "No exchange operation over this period."
+msgstr "Kein Wechselvorgang in diesem Zeitraum."
+
+#. module: pos_nm_currency_exchange
 #: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange
+#: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange_register
 msgid "No exchange operation yet"
 msgstr "Noch kein Wechselvorgang"
 
@@ -448,6 +1227,12 @@ msgid "Note (optional)"
 msgstr "Notiz (optional)"
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "Note: %(old)s -> %(new)s"
+msgstr "Notiz: %(old)s -> %(new)s"
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__amount_out
 msgid "Notes handed to the customer."
 msgstr "An den Kunden ausgezahlte Scheine."
@@ -456,6 +1241,40 @@ msgstr "An den Kunden ausgezahlte Scheine."
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__amount_in
 msgid "Notes received from the customer."
 msgstr "Vom Kunden erhaltene Scheine."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction_counter
+msgid "Number of Actions"
+msgstr "Anzahl der Aktionen"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_linked_days
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_linked_days
+msgid ""
+"Number of days over which the operations of a customer are linked: the value"
+" compared to the identification thresholds is the operation plus the "
+"operations of the customer over these days, at every point of sale of the "
+"company. 0: each operation alone."
+msgstr ""
+"Anzahl der Tage, über die die Vorgänge eines Kunden verbunden sind: Der mit "
+"den Identifikationsschwellen verglichene Wert ist der Vorgang plus die "
+"Vorgänge des Kunden in diesen Tagen, an allen Kassen des Unternehmens. 0: "
+"jeder Vorgang für sich."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_error_counter
+msgid "Number of errors"
+msgstr "Anzahl Fehler"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction_counter
+msgid "Number of messages requiring action"
+msgstr "Anzahl der Nachrichten, die eine Aktion erfordern"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_error_counter
+msgid "Number of messages with delivery error"
+msgstr "Anzahl der Nachrichten mit Zustellungsfehler."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_enabled
@@ -469,15 +1288,47 @@ msgstr ""
 "einer Bargeldwährung der Kasse und erhält eine andere."
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "Only a Point of Sale manager can cancel an exchange operation."
+msgstr "Nur ein Kassenmanager kann einen Wechselvorgang stornieren."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
 msgid "Operation"
 msgstr "Vorgang"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__operation_type
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Operation Type"
+msgstr "Vorgangsart"
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/overrides/components/closing_popup/closing_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 msgid "Operations"
 msgstr "Vorgänge"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__date_start
+msgid "Operations recorded from this date and time."
+msgstr "Ab diesem Datum und dieser Uhrzeit erfasste Vorgänge."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__date_stop
+msgid "Operations recorded up to this date and time."
+msgstr "Bis zu diesem Datum und dieser Uhrzeit erfasste Vorgänge."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__other
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__res_partner__nm_id_document_type__other
+msgid "Other"
+msgstr "Andere"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model,name:pos_nm_currency_exchange.model_pos_nm_currency_setting
@@ -491,7 +1342,14 @@ msgid "POS Currency Exchange"
 msgstr "POS Geldwechsel"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__passport
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__res_partner__nm_id_document_type__passport
+msgid "Passport"
+msgstr "Reisepass"
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__config_id
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "Point of Sale"
 msgstr "Kassensystem"
@@ -512,15 +1370,103 @@ msgid "Point of Sale Session"
 msgstr "Kassensitzung"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__config_ids
+msgid "Points of Sale"
+msgstr "Kassen"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__config_ids
+msgid "Points of sale of the register; all of them when empty."
+msgstr "Kassen des Registers; alle, wenn leer."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_wizard
+msgid "Print"
+msgstr "Drucken"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
+msgid "Print Exchange Rates"
+msgstr "Wechselkurse drucken"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_list
+msgid "Print Register"
+msgstr "Register drucken"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model,name:pos_nm_currency_exchange.model_pos_nm_exchange_register_wizard
+msgid "Print the Exchange Register"
+msgstr "Wechselregister drucken"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__operation_type__purchase
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Purchase of foreign currency"
+msgstr "Ankauf von Fremdwährung"
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__rate
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 msgid "Rate"
 msgstr "Kurs"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__rate_label
+msgid "Rate Applied"
+msgstr "Angewandter Kurs"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/components/closing_popup/closing_popup.xml:0
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__rate_margin
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_saledetails_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_list
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_list
+msgid "Rate Margin"
+msgstr "Kursmarge"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
+msgid "Rate applied"
+msgstr "Angewandter Kurs"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__rate_label
+msgid ""
+"Rate of the operation in the direction where it is at least 1, commission "
+"included."
+msgstr ""
+"Kurs des Vorgangs in der Richtung, in der er mindestens 1 beträgt, Provision"
+" inbegriffen."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+msgid ""
+"Rates before the commission; the amounts include it and are rounded to the "
+"notes and coins."
+msgstr ""
+"Kurse vor Provision; die Beträge enthalten sie und sind auf Scheine und "
+"Münzen gerundet."
+
+#. module: pos_nm_currency_exchange
+#: model:mail.template,description:pos_nm_currency_exchange.mail_template_pos_nm_exchange
+msgid "Receipt of a currency exchange operation sent to its customer"
+msgstr "An den Kunden gesendeter Beleg eines Wechselvorgangs"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__amount_in
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_saledetails_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_list
 msgid "Received"
@@ -534,6 +1480,7 @@ msgstr "Erhalten (%s)"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__currency_in_id
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_register_list
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "Received Currency"
 msgstr "Erhaltene Währung"
@@ -542,6 +1489,11 @@ msgstr "Erhaltene Währung"
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__statement_line_in_id
 msgid "Received Line"
 msgstr "Eingangszeile"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__statement_line_cancel_in_id
+msgid "Received Reversal Line"
+msgstr "Stornozeile Eingang"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__value_in
@@ -565,13 +1517,55 @@ msgstr ""
 "einschließlich der Rundung der ausgezahlten Scheine."
 
 #. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__name
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_saledetails_exchange
 msgid "Reference"
 msgstr "Referenz"
 
 #. module: pos_nm_currency_exchange
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__uuid
+msgid "Register Identifier"
+msgstr "Kassenkennung"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
+msgid "Reprint"
+msgstr "Nachdrucken"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__residence_permit
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__res_partner__nm_id_document_type__residence_permit
+msgid "Residence Permit"
+msgstr "Aufenthaltstitel"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_sms_error
+msgid "SMS Delivery error"
+msgstr "SMS-Zustellungsfehler"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__operation_type__sale
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Sale of foreign currency"
+msgstr "Verkauf von Fremdwährung"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "Send Exchange Receipt"
+msgstr "Wechselbeleg senden"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid "Send by E-mail"
+msgstr "Per E-Mail senden"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
 msgid "Served by"
 msgstr "Bedient von"
 
@@ -583,8 +1577,10 @@ msgid "Session"
 msgstr "Sitzung"
 
 #. module: pos_nm_currency_exchange
+#. odoo-javascript
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+#: code:addons/pos_nm_currency_exchange/static/src/overrides/services/pos_store.js:0
 msgid ""
 "Set the exchange commission account of the Point of Sale (Settings > "
 "Currency Exchange) before exchanging currencies."
@@ -593,11 +1589,38 @@ msgstr ""
 "Geldwechsel), bevor Sie Währungen wechseln."
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_partner_form_inherit_nm_exchange
+msgid ""
+"Shown by the customer at the currency exchange counter. Every exchange operation keeps its own copy\n"
+"                        of the document: changing it here does not change the operations already recorded."
+msgstr ""
+"Vom Kunden am Wechselschalter vorgelegt. Jeder Wechselvorgang behält seine eigene Kopie\n"
+"                        des Dokuments: Eine Änderung hier ändert die bereits erfassten Vorgänge nicht."
+
+#. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
 msgid "Statement Lines"
 msgstr "Kontoauszugszeilen"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__statement_line_cancel_in_id
+msgid "Statement line handing the notes received back to the customer."
+msgstr "Kontoauszugszeile, die dem Kunden die erhaltenen Scheine zurückgibt."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__statement_line_cancel_out_id
+msgid "Statement line taking back the notes handed to the customer."
+msgstr ""
+"Kontoauszugszeile, die die an den Kunden ausgezahlten Scheine zurücknimmt."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__state
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
+msgid "Status"
+msgstr "Status"
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -614,17 +1637,45 @@ msgstr "Währungen tauschen"
 #. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
-msgid "The amount is too small for an exchange operation in %s."
-msgstr "Der Betrag ist zu gering für einen Wechselvorgang in %s."
+msgid "The amount handed back must be positive."
+msgstr "Der ausgezahlte Betrag muss positiv sein."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"The amount is too small for an exchange operation in %s: once the commission"
+" is deducted, no note can be handed back."
+msgstr ""
+"Der Betrag ist zu gering für einen Wechselvorgang in %s: Nach Abzug der "
+"Provision kann kein Schein ausgezahlt werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid "The cash drawer could not be opened."
+msgstr "Die Kassenschublade konnte nicht geöffnet werden."
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
 msgid ""
-"The commissions are set per currency in Cash Currencies (percentage, fixed part, minimum).\n"
-"                            The notes handed back follow the change rate and the change rounding of their currency."
+"The commissions and the sell margin are set per currency in Cash Currencies.\n"
+"                            The notes handed back are rounded down to the coins and notes of their currency."
 msgstr ""
-"Die Provisionen werden je Währung in Bargeldwährungen festgelegt (Prozentsatz, fester Teil, Minimum).\n"
-"                            Die ausgezahlten Scheine folgen dem Wechselgeldkurs und der Wechselgeldrundung ihrer Währung."
+"Die Provisionen und die Verkaufsmarge werden je Währung in Bargeldwährungen festgelegt.\n"
+"                            Die ausgezahlten Scheine werden auf die Münzen und Scheine ihrer Währung abgerundet."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"The connection was lost: the operation may have been recorded. Confirm again"
+" once the connection is back: an operation already recorded is not recorded "
+"twice."
+msgstr ""
+"Die Verbindung wurde unterbrochen: Der Vorgang wurde möglicherweise erfasst."
+" Bestätigen Sie erneut, sobald die Verbindung wiederhergestellt ist: Ein "
+"bereits erfasster Vorgang wird nicht doppelt erfasst."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -644,6 +1695,18 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
+#: code:addons/pos_nm_currency_exchange/wizard/pos_exchange_register_wizard.py:0
+msgid "The end of the period must be after its start."
+msgstr "Das Ende des Zeitraums muss nach seinem Beginn liegen."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "The exchange commission account must be an income account."
+msgstr "Das Konto für Wechselprovisionen muss ein Ertragskonto sein."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_currency_setting.py:0
 msgid "The exchange commission must be lower than 100%."
 msgstr "Die Wechselprovision muss unter 100 % liegen."
@@ -655,6 +1718,24 @@ msgid "The exchange commissions cannot be negative."
 msgstr "Die Wechselprovisionen dürfen nicht negativ sein."
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_partner__nm_id_document_expiry
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_users__nm_id_document_expiry
+msgid "The exchange counter refuses an expired document."
+msgstr "Der Wechselschalter lehnt ein abgelaufenes Dokument ab."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.js:0
+msgid "The exchange rates could not be printed."
+msgstr "Die Wechselkurse konnten nicht gedruckt werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_currency_setting.py:0
+msgid "The exchange sell margin cannot be negative."
+msgstr "Die Wechsel-Verkaufsmarge darf nicht negativ sein."
+
+#. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
 msgid "The identification threshold cannot be negative."
@@ -663,14 +1744,103 @@ msgstr "Die Identifikationsschwelle darf nicht negativ sein."
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid "The identity document could not be loaded."
+msgstr "Das Ausweisdokument konnte nicht geladen werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"The identity document of the customer expired on %s: it cannot be accepted."
+msgstr ""
+"Das Ausweisdokument des Kunden ist am %s abgelaufen: Es kann nicht "
+"akzeptiert werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"The identity document of the customer is required for an exchange operation "
+"above %s."
+msgstr ""
+"Für einen Wechselvorgang über %s ist das Ausweisdokument des Kunden "
+"erforderlich."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"The identity document of the customer is required: with the operations of "
+"the last %(days)s days, %(amount)s were exchanged, above %(threshold)s."
+msgstr ""
+"Das Ausweisdokument des Kunden ist erforderlich: Mit den Vorgängen der "
+"letzten %(days)s Tage wurden %(amount)s gewechselt, über %(threshold)s."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "The linked operations period cannot be negative."
+msgstr "Der Zeitraum der verbundenen Vorgänge darf nicht negativ sein."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"The operation %(name)s belongs to the closed session %(session)s: an "
+"operation can only be cancelled while its session is open. Record an "
+"opposite operation or a cash move instead."
+msgstr ""
+"Der Vorgang %(name)s gehört zur geschlossenen Sitzung %(session)s: Ein "
+"Vorgang kann nur storniert werden, solange seine Sitzung geöffnet ist. "
+"Erfassen Sie stattdessen einen Gegenvorgang oder eine Bargeldbewegung."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "The operation %s is already cancelled."
+msgstr "Der Vorgang %s ist bereits storniert."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
 msgid "The operation could not be recorded."
 msgstr "Der Vorgang konnte nicht erfasst werden."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__operation_type
+msgid ""
+"The operation from the point of view of the shop: purchase of foreign "
+"currency (foreign notes received), sale of foreign currency (foreign notes "
+"handed back) or cross exchange (two foreign currencies)."
+msgstr ""
+"Der Vorgang aus Sicht des Geschäfts: Ankauf von Fremdwährung "
+"(Fremdwährungsscheine erhalten), Verkauf von Fremdwährung "
+"(Fremdwährungsscheine ausgezahlt) oder Kreuzwechsel (zwei Fremdwährungen)."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"The quote changed: %(amount)s is now handed back instead of %(quoted)s. "
+"Check the amount again before confirming."
+msgstr ""
+"Das Angebot hat sich geändert: Jetzt werden %(amount)s statt %(quoted)s "
+"ausgezahlt. Prüfen Sie den Betrag erneut vor dem Bestätigen."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
 msgid "The quote could not be computed."
 msgstr "Das Angebot konnte nicht berechnet werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.js:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid "The receipt of %(name)s could not be printed."
+msgstr "Der Beleg von %(name)s konnte nicht gedruckt werden."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -693,8 +1863,27 @@ msgstr "Die Sitzung muss geöffnet sein, um Währungen zu wechseln."
 #. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"The statement lines of the operation %s are missing: it cannot be reversed."
+msgstr ""
+"Die Kontoauszugszeilen des Vorgangs %s fehlen: Er kann nicht storniert "
+"werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "There is no cash payment method for this PoS Session"
 msgstr "Für diese Kassensitzung gibt es keine Barzahlungsmethode"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/account_bank_statement_line.py:0
+msgid ""
+"This cash move belongs to the currency exchange operation %s and cannot be "
+"deleted. A Point of Sale manager can cancel the operation instead."
+msgstr ""
+"Diese Bargeldbewegung gehört zum Wechselvorgang %s und kann nicht gelöscht "
+"werden. Ein Kassenmanager kann stattdessen den Vorgang stornieren."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -704,9 +1893,51 @@ msgid ""
 msgstr "Diese Währung wird am Wechselschalter dieser Kasse nicht akzeptiert."
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "This employee is not allowed to use this Point of Sale."
+msgstr "Dieser Mitarbeiter darf diese Kasse nicht verwenden."
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
+msgid ""
+"Thresholds at 0: never required. With a linked operations period, the value compared to the\n"
+"                                thresholds is the operation plus the operations of the same customer over that many days, at every\n"
+"                                Point of Sale of the company."
+msgstr ""
+"Schwellen auf 0: nie erforderlich. Mit einem Zeitraum der verbundenen Vorgänge ist der mit den\n"
+"                                Schwellen verglichene Wert der Vorgang plus die Vorgänge desselben Kunden in so vielen Tagen, an allen\n"
+"                                Kassen des Unternehmens."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_wizard__date_stop
+msgid "To"
+msgstr "Bis"
+
+#. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "Today"
 msgstr "Heute"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid "Totals per currency"
+msgstr "Summen je Währung"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_partner__nm_id_document_type
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_users__nm_id_document_type
+msgid ""
+"Type of the identity document shown by the customer at the exchange counter."
+msgstr "Art des Ausweisdokuments, das der Kunde am Wechselschalter vorlegt."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Type the amount the customer wants: the amount to receive is computed"
+msgstr ""
+"Geben Sie den gewünschten Betrag des Kunden ein: Der zu erhaltende Betrag "
+"wird berechnet"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__rate
@@ -726,24 +1957,57 @@ msgstr "Unbekannte Währung."
 #. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "Unknown exchange operation."
+msgstr "Unbekannter Wechselvorgang."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "Unknown point of sale or currency."
 msgstr "Unbekannte Kasse oder Währung."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__user_id
+msgid "User"
+msgstr "Benutzer"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__user_id
+msgid "User logged in to Odoo who recorded the operation."
+msgstr "In Odoo angemeldeter Benutzer, der den Vorgang erfasst hat."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__linked_value
+msgid ""
+"Value compared to the identification thresholds: the received value plus the"
+" operations of the customer over the linked operations period of the point "
+"of sale."
+msgstr ""
+"Mit den Identifikationsschwellen verglichener Wert: der erhaltene Wert plus "
+"die Vorgänge des Kunden im Zeitraum der verbundenen Vorgänge der Kasse."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_customer_threshold
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_customer_threshold
 msgid ""
 "Value of an exchange operation, in the currency of the point of sale, above "
-"which the customer must be identified. 0: never required."
+"which the customer must be identified. 0: never required. With a linked "
+"operations period, the value of the operations of the customer over that "
+"period is added."
 msgstr ""
 "Wert eines Wechselvorgangs in der Währung der Kasse, ab dem der Kunde "
-"erfasst werden muss. 0: nie erforderlich."
+"erfasst werden muss. 0: nie erforderlich. Mit einem Zeitraum der verbundenen"
+" Vorgänge wird der Wert der Vorgänge des Kunden in diesem Zeitraum "
+"hinzugerechnet."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__value_out
 msgid ""
-"Value of the notes handed back at the change rate of the point of sale."
-msgstr "Wert der ausgezahlten Scheine zum Wechselgeldkurs der Kasse."
+"Value of the notes handed back at the sell rate of the counter (the rate of "
+"Odoo less the exchange sell margin, or the lower fixed rate)."
+msgstr ""
+"Wert der ausgezahlten Scheine zum Verkaufskurs des Schalters (der Odoo-Kurs "
+"abzüglich der Wechsel-Verkaufsmarge oder der niedrigere feste Kurs)."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -753,8 +2017,29 @@ msgstr "Wert der erhaltenen Scheine"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__value_in
-msgid "Value of the notes received at the cash rate of the point of sale."
-msgstr "Wert der erhaltenen Scheine zum Bargeldkurs der Kasse."
+msgid ""
+"Value of the notes received at the cash rate of the point of sale (the rate "
+"of Odoo with the cash rate margin, or the fixed rate)."
+msgstr ""
+"Wert der erhaltenen Scheine zum Kassenkurs der Kasse (der Odoo-Kurs mit der "
+"Kassenkurs-Marge oder der feste Kurs)."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__linked_value
+msgid "Value with Linked Operations"
+msgstr "Wert mit verbundenen Vorgängen"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_document_threshold
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_document_threshold
+msgid ""
+"Value, in the currency of the point of sale, above which the identity "
+"document of the customer is recorded on the operation (with the linked "
+"operations when a period is set). 0: never required."
+msgstr ""
+"Wert in der Währung der Kasse, ab dem das Ausweisdokument des Kunden auf dem"
+" Vorgang erfasst wird (mit den verbundenen Vorgängen, wenn ein Zeitraum "
+"festgelegt ist). 0: nie erforderlich."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model,name:pos_nm_currency_exchange.model_ir_ui_view
@@ -762,15 +2047,76 @@ msgid "View"
 msgstr "Ansicht"
 
 #. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid "We buy"
+msgstr "Wir kaufen"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid ""
+"We buy: value of 1 unit of the notes you bring, and what you receive for them. We sell: price of\n"
+"                            1 unit of the notes you take, and what you pay for them. Rates before the commission; the amounts\n"
+"                            include it and are rounded to the notes and coins."
+msgstr ""
+"Wir kaufen: Wert von 1 Einheit der Scheine, die Sie bringen, und was Sie dafür erhalten. Wir verkaufen: Preis von\n"
+"                            1 Einheit der Scheine, die Sie nehmen, und was Sie dafür zahlen. Kurse vor Provision; die Beträge\n"
+"                            enthalten sie und sind auf Scheine und Münzen gerundet."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid "We sell"
+msgstr "Wir verkaufen"
+
+#. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 msgid "With Customer"
 msgstr "Mit Kunde"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "With the linked operations of the customer"
+msgstr "Mit den verbundenen Vorgängen des Kunden"
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "You don't have the access rights to use the exchange counter."
 msgstr "Sie haben keine Zugriffsrechte für den Wechselschalter."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid "You pay"
+msgstr "Sie zahlen"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
+msgid "You receive"
+msgstr "Sie erhalten"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
+msgid "by"
+msgstr "von"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid ""
+"cancelled operations are listed but not counted in the totals:\n"
+"                        each was reversed by two opposite statement lines."
+msgstr ""
+"stornierte Vorgänge sind aufgeführt, aber nicht in den Summen gezählt:\n"
+"                        jeder wurde durch zwei gegenläufige Kontoauszugszeilen storniert."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -789,3 +2135,8 @@ msgstr "id"
 #: code:addons/pos_nm_currency_exchange/models/pos_session.py:0
 msgid "session_id"
 msgstr "session_id"
+
+#. module: pos_nm_currency_exchange
+#: model:mail.template,subject:pos_nm_currency_exchange.mail_template_pos_nm_exchange
+msgid "{{ object.company_id.name }} Currency Exchange {{ object.name }}"
+msgstr "{{ object.company_id.name }} Geldwechsel {{ object.name }}"

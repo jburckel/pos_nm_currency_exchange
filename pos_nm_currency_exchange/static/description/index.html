@@ -37,21 +37,24 @@
                 <p class="oe_mt8">
                     A <b>Currency Exchange</b> entry in the menu of the register. The cashier picks
                     the currency received and the currency handed back, types the amount, and the
-                    quote appears: the notes to hand back, the rate applied and the commission.
-                    One tap swaps the two currencies. Any two cash currencies of the point of
-                    sale can be exchanged, your own included.
+                    quote appears: the notes to hand back, the rate applied, the commission and
+                    what the drawer holds. The customer wants an exact amount? Type it in
+                    <i>Handed back</i>: the amount to receive is computed. Any two cash
+                    currencies of the point of sale can be exchanged, your own included.
                 </p>
             </div>
             <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
                 <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
                     <img src="screenshot_exchange_commissions.png" alt="Commission fields on the cash currency setting" style="display: block; width: 100%; height: auto;"/>
                 </div>
-                <h4 class="oe_mb8"><b>Commissions per Currency</b></h4>
+                <h4 class="oe_mb8"><b>Buy Rate, Sell Rate, Commission</b></h4>
                 <p class="oe_mt8">
-                    A percentage, a fixed part and a minimum, set on each cash currency of the
-                    point of sale. The notes handed back follow the change rate and the change
-                    rounding of their currency: the customer leaves with whole notes and the
-                    rounding stays in the commission.
+                    The notes received are bought at the cash rate of POS Multi-Currency Cash, the
+                    notes handed back are sold at a sell rate with its own margin: the spread is
+                    always in your favour. On top, a commission per currency: a percentage, a
+                    fixed part and a minimum. The notes handed back are rounded down to the coins
+                    and notes of their currency, your own currency included: the customer leaves
+                    with money the drawer really holds, and the rounding stays in the commission.
                 </p>
             </div>
         </div>
@@ -68,9 +71,11 @@
                 <h4 class="oe_mb8"><b>A Receipt for the Customer</b></h4>
                 <p class="oe_mt8">
                     Every operation prints an exchange receipt on the receipt printer of the point
-                    of sale: reference, cashier, notes received, notes handed back, rate,
-                    commission and the note typed by the cashier, with the header and footer of
-                    your company.
+                    of sale: the header and footer of the point of sale, your exchange licence
+                    number, purchase or sale of foreign currency, reference, date and time,
+                    cashier, customer, notes received, notes handed back, rate applied and
+                    commission. Reprint it from the register (marked COPY), print it in PDF or
+                    send it by e-mail from the back office.
                 </p>
             </div>
             <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
@@ -82,8 +87,55 @@
                     Each operation posts two lines on the cash journal of the session, in the
                     currency of each side: the drawer of every currency is updated, and the
                     closing control of POS Multi-Currency Cash lists the operations under the
-                    cash moves of each currency. The commission lands on a dedicated income
+                    cash moves of each currency. The register refuses to hand back more than the
+                    drawer holds, in every currency. The commission lands on a dedicated income
                     account.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_spaced" style="max-width: 928px; margin-left: auto; margin-right: auto; padding: 24px 16px;">
+        <div class="row" style="margin-top: 0px;">
+            <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
+                <h4 class="oe_mb8"><b>Your Rate Board</b></h4>
+                <p class="oe_mt8">
+                    An <b>Exchange Rates</b> entry of the register shows, per currency, what you buy
+                    and sell 1 unit for, what the customer receives or pays for a typical amount,
+                    and the commission, computed exactly like the operations. Print it on the
+                    receipt printer for the counter, or in PDF from the back office.
+                </p>
+            </div>
+            <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
+                <h4 class="oe_mb8"><b>Customer Identification</b></h4>
+                <p class="oe_mt8">
+                    Require a customer above a value, or for every operation, and an identity
+                    document above another value. Operations of the same customer over a period
+                    of days can be added up. The document is entered at the register, refused
+                    when expired, kept on the operation and visible to managers only: it helps
+                    you apply the identification rules of your country.
+                </p>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 0px;">
+            <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
+                <h4 class="oe_mb8"><b>Mistakes Undone Cleanly</b></h4>
+                <p class="oe_mt8">
+                    A manager cancels an operation while the session is open: two opposite lines
+                    put both drawers and the commission account back where they were. Operations
+                    cannot be edited or deleted, cashiers only read them, and the references
+                    follow each other without gap.
+                </p>
+            </div>
+            <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
+                <h4 class="oe_mb8"><b>Your Margin, Measured</b></h4>
+                <p class="oe_mt8">
+                    Every operation shows its commission and its rate margin, what your rates earn
+                    against the rates of Odoo of the day: together, the income of the operation.
+                    Both appear in the list, the pivot, the closing control and the Sales Details
+                    report.
                 </p>
             </div>
         </div>
@@ -95,17 +147,18 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">Know Your Exchange Business</h2>
         <h4 class="oe_mb8"><b>Every Operation on Record</b></h4>
         <p class="oe_mt8">
-            Point of Sale &gt; Currency Exchanges lists every operation with its point of
-            sale, session, cashier, customer, notes received, notes handed back and
-            commission. Each record links to its two statement lines.
+            Point of Sale &gt; Orders &gt; Currency Exchanges (POS Administrators) lists every
+            operation with its point of sale, session, cashier, customer, notes received,
+            notes handed back, commission, rate margin and status. Each record links to its
+            statement lines, and keeps a chatter of its changes.
         </p>
         <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
             <img src="screenshot_exchange_list.png" alt="List of the exchange operations" style="display: block; width: 100%; height: auto;"/>
         </div>
         <h4 class="oe_mb8" style="margin-top: 32px;"><b>Commissions at a Glance</b></h4>
         <p class="oe_mt8">
-            A pivot of the commissions and values received, per currency, per day, per
-            point of sale or per cashier. The session form carries the number of
+            A pivot of the commissions, rate margins and values received, per currency, per
+            day, per point of sale or per cashier. The session form carries the number of
             operations and the commissions of the session.
         </p>
         <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
@@ -114,16 +167,25 @@
         <h4 class="oe_mb8" style="margin-top: 32px;"><b>In the Session Report</b></h4>
         <p class="oe_mt8">
             The Sales Details report gains a Currency Exchange block: the operations of the
-            period with their amounts and commissions, and the total of the commissions.
+            session, or of the period on the selected points of sale, with their amounts,
+            commissions and rate margins, and the totals per currency.
         </p>
         <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
             <img src="screenshot_exchange_sale_details.png" alt="Currency Exchange block of the sales details report" style="display: block; width: 100%; height: auto;"/>
         </div>
-        <h4 class="oe_mb8" style="margin-top: 32px;"><b>Two Settings per Point of Sale</b></h4>
+        <h4 class="oe_mb8" style="margin-top: 32px;"><b>The Exchange Register</b></h4>
         <p class="oe_mt8">
-            Enable the counter, pick the income account of the commissions and, if your
-            regulation requires it, the value above which the customer must be identified:
-            the register then asks for a customer before confirming the operation.
+            Point of Sale &gt; Reporting &gt; Exchange Register lists every operation in the
+            order of its reference, cancelled ones included, with the customer and the
+            identity document. Export it to Excel, or print it in PDF for a period with the
+            totals per currency.
+        </p>
+        <h4 class="oe_mb8" style="margin-top: 32px;"><b>Settings per Point of Sale</b></h4>
+        <p class="oe_mt8">
+            Enable the counter, pick the income account of the commissions, print your
+            exchange licence number on the receipts and set the identification rules: the
+            register then asks for a customer, and for an identity document, before
+            confirming the operation.
         </p>
         <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
             <img src="screenshot_exchange_settings.png" alt="Currency Exchange section of the Point of Sale settings" style="display: block; width: 100%; height: auto;"/>
@@ -135,10 +197,11 @@
     <div class="oe_spaced" style="max-width: 928px; margin-left: auto; margin-right: auto; padding: 24px 16px;">
         <h2 class="oe_slogan" style="color: #4A6BB5;">How It Works</h2>
         <ol>
-            <li><b>Configure</b>: install POS Multi-Currency Cash, list the currencies on the cash payment method, set the commissions on each cash currency and the commission account on the point of sale.</li>
-            <li><b>Exchange</b>: at the register, menu &gt; Currency Exchange, currencies, amount, customer if required, Confirm. The receipt prints.</li>
+            <li><b>Configure</b>: install POS Multi-Currency Cash, list the currencies on the cash payment method, set the sell margin and the commissions on each cash currency, the commission account and the identification rules on the point of sale.</li>
+            <li><b>Exchange</b>: at the register, menu &gt; Currency Exchange, currencies, amount received or handed back, customer and identity document if required, Confirm. The receipt prints.</li>
+            <li><b>Correct</b>: a manager cancels a mistaken operation while the session is open.</li>
             <li><b>Close</b>: the closing control shows the notes received and handed back in each drawer; the commission is already on its income account.</li>
-            <li><b>Review</b>: Currency Exchanges, the pivot of the commissions, the Currency Position report and the session report.</li>
+            <li><b>Review</b>: Currency Exchanges, the pivot of the commissions and rate margins, the Exchange Register, the Currency Position report and the Sales Details report.</li>
         </ol>
     </div>
 </section>
@@ -148,7 +211,8 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">The Guide, in Your Language</h2>
         <p class="oe_mt8" style="text-align: center;">
             The complete documentation - configuration, the operation at the register, the
-            accounting of the commissions and troubleshooting - ships with the module as a
+            cancellation, the identification of the customer, the reports, the accounting of
+            the commissions and rate margins, and troubleshooting - ships with the module as a
             printable PDF in <b>English</b>, <b>Fran&ccedil;ais</b>, <b>Deutsch</b> and <b>Espa&ntilde;ol</b>.
         </p>
         <p class="oe_mt8" style="text-align: center;">
@@ -163,11 +227,11 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">Technical Requirements</h2>
         <div>
             <ul>
-                <li><b>Odoo Version:</b> 20.0</li>
-                <li><b>Dependencies:</b> Point of Sale (point_of_sale), <b>POS Multi-Currency Cash</b> (pos_nm_multicurrencies, 20.0), sold separately</li>
+                <li><b>Odoo Version:</b> 20.0, Odoo Community and Enterprise</li>
+                <li><b>Dependencies:</b> Point of Sale (point_of_sale), <a href="https://apps.odoo.com/apps/modules/20.0/pos_nm_multicurrencies"><b>POS Multi-Currency Cash</b></a> (pos_nm_multicurrencies) <b>20.0.2.1.0 or later</b>, sold separately</li>
                 <li><b>License:</b> OPL-1 (Odoo Proprietary License)</li>
                 <li><b>Translations:</b> English, French, German and Spanish included.</li>
-                <li><b>Quality:</b> automated tests of the quote, the operation and its accounting, plus an end-to-end tour of the register.</li>
+                <li><b>Quality:</b> automated tests of the quote, the operation, its accounting, its cancellation, the identification rules and the reports, plus end-to-end tours of the register.</li>
                 <li><b>Scope:</b> exchange between the <b>cash</b> currencies of the point of sale (the currency of the point of sale and the currencies listed on its cash payment method).</li>
             </ul>
         </div>
@@ -179,15 +243,16 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">Frequently Asked Questions</h2>
         <div>
             <h4><b>Do I need POS Multi-Currency Cash?</b></h4>
-            <p>Yes. The exchange counter works on the drawers, cash rates, coins and notes and closing
-            control of that module. Both modules are available from the same author; ask for a test
-            database with both installed.</p>
+            <p>Yes, version 20.0.2.1.0 or later. The exchange counter works on the drawers, cash rates,
+            coins and notes and closing control of that module. Both modules are available from the
+            same author; ask for a test database with both installed.</p>
         </div>
         <div>
             <h4><b>Which rates are applied?</b></h4>
-            <p>The cash rates of POS Multi-Currency Cash: the rate of Odoo with the margin of the point of
-            sale, or the fixed cash rates you set. The notes received are valued at the cash rate of
-            their currency, the notes handed back at the change rate of theirs.</p>
+            <p>The notes received are bought at the cash rate of POS Multi-Currency Cash: the rate of Odoo
+            with its margin, or the fixed rate you set. The notes handed back are sold at the rate of
+            Odoo less the exchange sell margin of their currency, or with fixed rates at the lower of
+            the fixed rate and the fixed change rate. Then the commission of the currency applies.</p>
         </div>
         <div>
             <h4><b>Where does the commission go?</b></h4>
@@ -196,8 +261,23 @@
         </div>
         <div>
             <h4><b>Can I require the identity of the customer?</b></h4>
-            <p>Yes. Set the value above which a customer is required: the register refuses to confirm
-            an operation above it without a customer, and the customer is stored on the operation.</p>
+            <p>Yes. Set the value above which a customer is required, or require one for every
+            operation, and the value above which an identity document is recorded; operations of the
+            same customer over a period can be added up. The register refuses to confirm without them,
+            and the server checks again. These settings help you apply the rules of your country; they
+            do not replace your own legal review.</p>
+        </div>
+        <div>
+            <h4><b>How do I correct a mistaken operation?</b></h4>
+            <p>A manager opens it and presses Cancel Operation while the session is open: two opposite
+            lines give the customer the notes back and take back the notes handed back, and the
+            commission is reversed. Operations cannot be deleted, so the register stays complete.</p>
+        </div>
+        <div>
+            <h4><b>Can my cashiers see or change the operations?</b></h4>
+            <p>Cashiers record operations at the register, reprint the receipts of the session and show
+            the rate board. The Currency Exchanges and Exchange Register menus, the identity documents
+            and the cancellation are for POS Administrators.</p>
         </div>
         <div>
             <h4><b>What do I get with my purchase?</b></h4>

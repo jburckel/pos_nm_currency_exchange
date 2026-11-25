@@ -47,8 +47,8 @@
                             </div>
                         </div>
                         <div class="text-muted mt8" invisible="not pos_nm_exchange_enabled">
-                            The commissions are set per currency in Cash Currencies (percentage, fixed part, minimum).
-                            The notes handed back follow the change rate and the change rounding of their currency.
+                            The commissions and the sell margin are set per currency in Cash Currencies.
+                            The notes handed back are rounded down to the coins and notes of their currency.
                         </div>
                     </setting>
                 </block>

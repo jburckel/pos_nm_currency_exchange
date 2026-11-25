@@ -1,44 +1,125 @@
 # Design notes
 
-Version 20.0.1.0.0 (see the parent module for the primitives it relies on: drawers
-per currency, cash rates and fixed rates, coins and notes, Currency Position,
-deposits, counts per cashier).
+Version 20.0.2.0.0, on `pos_nm_multicurrencies` 20.0.2.1.0 or later (see the parent
+module for the primitives it relies on: drawers per currency, cash rates and fixed
+rates, coins and notes, payment and change rounding, Currency Position, deposits,
+drawer revaluation, counts per cashier).
 
 ## Operation
 
-- One record per operation (`pos.nm.exchange`): session, cashier, customer (optional
-  below the identification threshold), currency given by the customer and amount,
-  currency handed back and amount, rate applied, commission, date.
-- Two statement lines on the cash journal of the session, like a cash in and a cash
-  out of `pos_nm_multicurrencies`: the notes received (positive, in their currency,
-  at the cash rate of that currency) and the notes handed back (negative, in their
-  currency, at the change rate of that currency). Both lines take the commission
-  income account of the point of sale as counterpart, so the commission is the net
-  of that account. The notes handed back are rounded down to the change rounding of
-  their currency: the remainder stays in the commission.
-- The quote (`_nm_quote`) is computed server side and called by the popup (debounced
-  RPC `get_quote`); the operation (`create_from_ui`) checks the session, the account,
-  the currencies, the customer threshold and the drawer balance of the currency
-  handed back before posting.
-- The register: a "Currency Exchange" entry in the burger menu opening a popup
-  (currency in, amount in, currency out with the computed amount, rate, commission,
-  customer, note), printing an exchange receipt through the ticket printer. The
-  receipt template is a QWeb view added to the templates the POS loads
-  (`ir.ui.view._get_xml_ids_to_load`).
+- One record per operation (`pos.nm.exchange`, with `mail.thread`): session,
+  cashier (name and `user_id`), customer and frozen customer name, currency and
+  amount received, currency and amount handed back, received and handed values in
+  the currency of the point of sale, rate (12 decimals) and its label, commission,
+  rate margin, operation type (purchase, sale, cross), status (done, cancelled),
+  register identifier (`uuid`), frozen copy of the identity document.
+- Pricing (`_nm_quote`): the notes received are valued at the cash rate of the
+  parent (`_nm_from_currency`: rate of Odoo x (1 + Cash Rate Margin), or the Fixed
+  Rate); the notes handed back at the sell rate of the counter
+  (`pos.config._nm_exchange_sell_rate`: rate of Odoo / (1 + Exchange Sell Margin),
+  or the lower of the Fixed Rate and the Fixed Change Rate). The commission of the
+  foreign currency (the handed one when both are foreign) is deducted from the
+  received value, then the notes handed back are rounded once, down, to the
+  Change Rounding of a foreign currency or the cash rounding of the point of sale
+  (`rounding_method`) for its own currency, else the currency rounding. The
+  commission is received value - handed value, so the remainder of the rounding
+  stays in it and it is never below the configured one.
+- Rate margin (`_nm_rate_margin`): market value of the notes received at the rate
+  of Odoo - received value + handed value - market value of the notes handed back.
+  It is what the drawer revaluation of the parent realizes at closing.
+- Reverse quote (`_nm_reverse_amount_in`, RPC `get_reverse_quote`): smallest amount
+  received, rounded up to the payment step of the received currency (Payment
+  Rounding, else Change Rounding kept as rounding, cash rounding of the point of
+  sale for its currency, else currency rounding), whose quote hands back at least
+  the amount asked.
+- Two statement lines on the cash journal of the session, like a cash in and a
+  cash out of `pos_nm_multicurrencies`: the notes received (positive, in their
+  currency, at the received value) and the notes handed back (negative, in their
+  currency, at the handed value). Both lines take the commission income account of
+  the point of sale as counterpart, so the commission is the net of that account.
+  The lines carry the cashier as partner; they cannot be deleted
+  (`account.bank.statement.line` unlink check).
+- `create_from_ui` is the only way to create an operation (POS users have no
+  create right; the method checks and creates with sudo). It checks the POS user,
+  the session (open), the counter (enabled, commission account), the currencies,
+  the identification rules (recomputed server side), the drawer of the currency
+  handed back in every currency (closing control amount of the open session), and
+  that the amount handed back is the one quoted to the cashier (`amount_out`). The
+  cashier is the user, or the employee logged in with `pos_hr` (checked against the
+  employees of the point of sale). A second call with the same `uuid` returns the
+  operation already recorded (lost connection).
+- References `EXC/YYYY/NNNNN` from a `no_gap` sequence.
+- The register: entries "Currency Exchange", "Exchange Operations" and "Exchange
+  Rates" in the burger menu. The exchange popup quotes through debounced RPCs
+  (`get_quote`, `get_reverse_quote`), drops the stale answers, enables Confirm only
+  for the quote of the amounts shown, and prints the receipt through the ticket
+  printer. The receipt templates are QWeb views added to the templates the POS
+  loads (`ir.ui.view._get_xml_ids_to_load`); the receipt body is shared with the
+  PDF report of the operation.
 
 ## Settings
 
-- Per currency, on `pos.nm.currency.setting`: commission in percent, fixed
-  commission, minimum commission.
-- On the point of sale: enable the counter, commission income account,
-  identification threshold (customer required above it).
+- Per currency, on `pos.nm.currency.setting`: Exchange Sell Margin (%), commission
+  in percent, fixed commission, minimum commission, logged in the chatter.
+- On the point of sale: counter enabled, commission income account (income types
+  only), exchange licence number, customer required above, customer required for
+  every operation, identity document required above, linked operations period
+  (days).
+
+## Identification
+
+- Value compared to the thresholds: received value, plus with a linked period the
+  done operations of the same customer over the last N x 24 h at every point of
+  sale of the company (`_nm_linked_value`).
+- Above the document threshold: customer and valid (not expired) identity document
+  required. The document typed at the register is written on the contact
+  (`res.partner` fields, POS managers only, not copied on duplicate) and frozen on
+  the operation with the customer name. The receipt prints the document type and
+  the last 4 characters of its number.
+- Cashiers read the document of the selected customer through
+  `get_customer_document` (sudo after an access check on the customer).
+
+## Cancellation
+
+- `action_cancel` (POS managers): only while the session is open and when the
+  drawer holds the notes received. Two statement lines exactly opposite to the
+  original ones (same amounts in both currencies, same counterpart account), status
+  `cancelled`, cancel date and user, message on the session and the operation.
+- Cancelled operations are left out of the counts, commissions and rate margins of
+  the session button, the closing popup, the Sales Details report and the point of
+  sale; the closing popup and the reports name them apart.
 
 ## Reporting
 
 - Closing popup: the operations appear in the cash moves of each currency (parent
-  module) and a "Currency Exchange" block gives the count and the commissions.
+  module) and a "Currency Exchange" block gives the count, the operations, the
+  commissions, the rate margin and the cancelled operations.
 - Currency Position: unchanged (the operations are statement lines of the drawers).
-- Session form: stat button with the commissions of the session.
-- Session report: one block "Currency Exchange" listing the operations, with the
-  number of operations and the total of the commissions.
-- Back-office: list, form, pivot and search of `pos.nm.exchange` under Point of Sale.
+- Session form: stat button with the commissions and the number of operations.
+- Sales Details: "Currency Exchange" block; from sessions, the operations of the
+  sessions; by period, the operations dated in the period on the selected points of
+  sale; totals per currency of the points of sale.
+- Back office: list, form, pivot and search of `pos.nm.exchange` under Point of
+  Sale > Orders > Currency Exchanges; PDF receipt and e-mail (mail template).
+- Exchange Register (Point of Sale > Reporting): list in reference order with the
+  identity documents (Excel through Export) and PDF per period
+  (`pos.nm.exchange.register.wizard`, A4 landscape, totals per currency).
+- Rate board (`pos.config._nm_rate_board`): register popup, receipt printer and
+  PDF report on `pos.config`.
+
+## Security model
+
+- `pos.nm.exchange`: POS users read, POS managers read and write (the note only:
+  `write` refuses every other field), nobody creates through the ORM except
+  `create_from_ui`, nobody deletes. Multi-company record rule on `company_id`.
+- Identity fields of `res.partner` and `pos.nm.exchange`: `groups` POS managers.
+- Menus Currency Exchanges and Exchange Register, register wizard: POS managers.
+
+## Migration 20.0.2.0.0
+
+- pre: Exchange Sell Margin = Cash Rate Margin (0 if negative); user of the
+  operations = their creator.
+- post: status done, rate recomputed, rate margin at the rate of Odoo of the day of
+  each operation, customer name, linked value, reference sequence `no_gap`. The
+  scripts are idempotent (empty values filled, rate recomputed from the amounts):
+  they can run twice.
