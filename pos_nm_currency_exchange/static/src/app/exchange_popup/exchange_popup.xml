@@ -128,7 +128,7 @@
                     <div t-if="this.documentError" class="text-danger small nm-exchange-document-error" t-out="this.documentError"/>
                 </div>
                 <input type="text" class="form-control nm-exchange-note" placeholder="Note (optional)"
-                       t-att-value="this.state.note" t-on-input="(ev) => this.state.note = ev.target.value"/>
+                       t-att-value="this.state.note" t-att-readonly="this.state.pending" t-on-input="(ev) => this.state.note = ev.target.value"/>
             </div>
             <t t-set-slot="footer">
                 <button class="btn btn-primary btn-lg nm-exchange-confirm" t-att-disabled="!this.isValid or this.state.saving" t-on-click="this.confirm">Confirm</button>

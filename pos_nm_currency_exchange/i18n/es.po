@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 21:59+0000\n"
-"PO-Revision-Date: 2026-11-25 21:59+0000\n"
+"POT-Creation-Date: 2026-11-25 23:33+0000\n"
+"PO-Revision-Date: 2026-11-25 23:33+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -188,6 +188,33 @@ msgstr "- Licencia n.º"
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "1 %(in)s = %(out)s"
 msgstr "1 %(in)s = %(out)s"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid ""
+"1 cancelled operation is listed but not counted in the totals: it was reversed by two\n"
+"                        opposite statement lines."
+msgstr ""
+"1 operación cancelada aparece pero no se cuenta en los totales: se revirtió con dos\n"
+"                        líneas de extracto opuestas."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "1 cancelled operation: %s"
+msgstr "1 operación cancelada: %s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "1 operation"
+msgstr "1 operación"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "1 operation in %(currency)s"
+msgstr "1 operación en %(currency)s"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
@@ -1029,7 +1056,9 @@ msgstr ""
 msgid ""
 "Identity document updated by %(user)s with the exchange operation %(name)s: "
 "%(document)s"
-msgstr "Documento de identidad actualizado por %(user)s con la operación de cambio %(name)s: %(document)s"
+msgstr ""
+"Documento de identidad actualizado por %(user)s con la operación de cambio "
+"%(name)s: %(document)s"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction
@@ -1296,7 +1325,9 @@ msgstr ""
 msgid ""
 "Only a Point of Sale manager can change the settings of the currency "
 "exchange counter."
-msgstr "Solo un administrador del Punto de venta puede modificar los ajustes del mostrador de cambio."
+msgstr ""
+"Solo un administrador del Punto de venta puede modificar los ajustes del "
+"mostrador de cambio."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -1352,7 +1383,9 @@ msgstr "Cambio de divisas TPV"
 msgid ""
 "POS Multi-Currency Cash %(version)s or later is required: update it first "
 "(installed: %(installed)s)."
-msgstr "Se requiere POS Multi-Currency Cash %(version)s o posterior: actualícelo primero (instalado: %(installed)s)."
+msgstr ""
+"Se requiere POS Multi-Currency Cash %(version)s o posterior: actualícelo "
+"primero (instalado: %(installed)s)."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__passport
@@ -1678,6 +1711,46 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.js:0
+msgid ""
+"The connection to the server was lost: the exchange operations could not be "
+"loaded."
+msgstr ""
+"Se perdió la conexión con el servidor: no se pudieron cargar las operaciones"
+" de cambio."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.js:0
+msgid ""
+"The connection to the server was lost: the exchange rates could not be "
+"loaded."
+msgstr ""
+"Se perdió la conexión con el servidor: no se pudieron cargar los tipos de "
+"cambio."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"The connection to the server was lost: the identity document could not be "
+"loaded."
+msgstr ""
+"Se perdió la conexión con el servidor: no se pudo cargar el documento de "
+"identidad."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"The connection to the server was lost: the quote will be requested again in "
+"a few seconds."
+msgstr ""
+"Se perdió la conexión con el servidor: la cotización se volverá a pedir en "
+"unos segundos."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
 msgid ""
 "The connection was lost: the operation may have been recorded. Confirm again"
@@ -1762,7 +1835,8 @@ msgstr "El margen de venta de cambio no puede ser negativo."
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
 msgid "The fields left empty keep the values recorded on the customer."
-msgstr "Los campos dejados vacíos conservan los valores registrados en el cliente."
+msgstr ""
+"Los campos dejados vacíos conservan los valores registrados en el cliente."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -1897,7 +1971,11 @@ msgid ""
 "before the upgrade to 20.0.2.0.0: the drawer and the commission account are "
 "off by that line, and the operation cannot be cancelled. Correct the drawer "
 "with a cash move."
-msgstr "La línea de extracto de los billetes %(legs)s de esta operación se eliminó antes de la actualización a 20.0.2.0.0: el cajón y la cuenta de comisiones difieren en esa línea, y la operación no se puede cancelar. Corrija el cajón con un movimiento de efectivo."
+msgstr ""
+"La línea de extracto de los billetes %(legs)s de esta operación se eliminó "
+"antes de la actualización a 20.0.2.0.0: el cajón y la cuenta de comisiones "
+"difieren en esa línea, y la operación no se puede cancelar. Corrija el cajón"
+" con un movimiento de efectivo."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -1950,7 +2028,9 @@ msgstr "Este empleado no está autorizado a usar este punto de venta."
 msgid ""
 "This operation was already recorded as %s with other amounts: close the "
 "popup and start a new operation."
-msgstr "Esta operación ya se registró como %s con otros importes: cierre la ventana e inicie una nueva operación."
+msgstr ""
+"Esta operación ya se registró como %s con otros importes: cierre la ventana "
+"e inicie una nueva operación."
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange

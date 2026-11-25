@@ -194,10 +194,15 @@ rechts) und tippen Sie auf **Geldwechsel**:
 4. wenn der Kunde erfasst werden muss, wird die Schaltfläche **Kunde** rot
    mit dem Grund: Tippen Sie darauf und wählen Sie den Kunden (legen Sie
    ihn bei Bedarf an). Wenn das Ausweisdokument erforderlich ist,
-   erscheinen seine Felder, vorausgefüllt aus dem Kontakt (von der Nummer
-   nur die letzten 4 Zeichen): Art, Nummer und Ablaufdatum sind
-   Pflichtfelder, und leer gelassene Felder behalten die Werte des
-   Kontakts;
+   erscheinen seine Felder: Art, Ausstellungsland und Ablaufdatum sind
+   aus dem Kontakt vorausgefüllt, und das Feld der Nummer zeigt nur als
+   Hinweis die letzten 4 Zeichen der gespeicherten Nummer. Art, Nummer
+   und Ablaufdatum sind Pflichtfelder. **Staatsangehörigkeit** und
+   **Geburtsdatum** erscheinen leer: Leer gelassen, behalten sie die Werte
+   des Kontakts. Beim selben Dokument (gleiche Art, Nummer leer gelassen)
+   behalten auch die Nummer und die anderen leer gelassenen Felder die
+   Werte des Kontakts; geben Sie für ein anderes Dokument seine Nummer
+   ein;
 5. fügen Sie bei Bedarf eine Notiz hinzu und tippen Sie auf
    **Bestätigen**. Die Kassenschublade öffnet sich, der Wechselbeleg wird
    gedruckt und eine Benachrichtigung fasst den Vorgang zusammen.
@@ -208,8 +213,11 @@ die Schublade der ausgezahlten Währung den Betrag nicht enthält (die Zeile
 
 Bricht die Verbindung beim Bestätigen ab, meldet das Fenster, dass der
 Vorgang möglicherweise erfasst wurde: Bestätigen Sie erneut, sobald die
-Verbindung wiederhergestellt ist. Ein bereits erfasster Vorgang wird nicht
-doppelt erfasst, und sein Beleg wird gedruckt.
+Verbindung wiederhergestellt ist. Bis dahin können Beträge, Währungen,
+Kunde, Dokument und Notiz nicht geändert werden. Ein bereits erfasster
+Vorgang wird nicht doppelt erfasst, und sein Beleg wird gedruckt. Bricht
+die Verbindung ab, während das Angebot berechnet wird, meldet das Fenster
+dies und fordert das Angebot einige Sekunden später erneut an.
 
 Wenn der Schalter an dieser Kasse nicht arbeiten kann, zeigt der Eintrag
 **Geldwechsel** den Grund statt des Fensters: keine Fremdwährung auf der
@@ -329,8 +337,9 @@ Ausweisdokumente nicht gegen ein Register.
 * Mit einem **Zeitraum der verbundenen Vorgänge** werden die erledigten
   (nicht stornierten) Vorgänge desselben Kunden der letzten Tage, an allen
   Kassen des Unternehmens, hinzugerechnet, umgerechnet in die Währung der
-  Kasse. Das Fenster zeigt dann „Mit den verbundenen Vorgängen des Kunden“
-  und die Summe. Ohne Kunden zählt nur der Vorgang: Aktivieren Sie **Kunde
+  Kasse. Überschreitet diese Summe eine Schwelle, zeigt das Fenster „Mit
+  den verbundenen Vorgängen des Kunden“ und die Summe; sonst werden die
+  anderen Vorgänge des Kunden nicht gezeigt. Ohne Kunden zählt nur der Vorgang: Aktivieren Sie **Kunde
   für jeden Vorgang erforderlich**, damit die Regel immer gilt.
 * Über **Kunde erforderlich ab** erfordert der Vorgang einen Kunden.
 * Über **Ausweisdokument erforderlich ab** erfordert er einen Kunden und
@@ -340,8 +349,8 @@ Ausweisdokumente nicht gegen ein Register.
   Dokument wird abgelehnt.
 
 Der Server prüft diese Regeln beim Erfassen erneut. Das an der Kasse
-eingegebene Dokument wird im Kontakt gespeichert (Reiter
-**Ausweisdokument** des Kontaktformulars), und eine Kopie wird mit dem
+eingegebene Dokument wird, wenn es vom gespeicherten abweicht, im Kontakt
+gespeichert (Reiter **Ausweisdokument** des Kontaktformulars), und eine Kopie wird mit dem
 Namen des Kunden im Vorgang aufbewahrt: Spätere Änderungen oder
 Umbenennungen des Kontakts ändern die erfassten Vorgänge nicht. Der Beleg
 druckt den Namen des Kunden und die Dokumentart mit nur den letzten
@@ -350,8 +359,10 @@ druckt den Namen des Kunden und die Dokumentart mit nur den letzten
 Die Ausweisdokumente sind nur für Kassenadministratoren sichtbar; der
 Kassierer sieht im Fenster Art, Ausstellungsland, Ablaufdatum und die
 letzten 4 Zeichen der Nummer des gewählten Kunden. Ein an der Kasse
-geändertes Dokument wird im Kontakt protokolliert (den Kontakt eines
-Benutzers ändert nur ein Kassenadministrator).
+geändertes Dokument wird im Kontakt protokolliert. Den Kontakt eines
+internen Benutzers, auch eines archivierten, ändert nur ein
+Kassenadministrator (das Dokument bleibt dann im Vorgang); ein Kunde mit
+einem Portalkonto ist ein Kunde wie jeder andere.
 
 Die Vorgänge prüfen
 ===================

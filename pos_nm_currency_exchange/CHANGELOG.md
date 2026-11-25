@@ -114,8 +114,8 @@ cannot record operations.
   quote; *Confirm* waits for the quote of the amounts shown.
 - Confirming again after a lost connection could record the operation
   twice; the register now sends an identifier and the server records it
-  once. After a lost connection the popup freezes the amounts, currencies
-  and customer, keeps *Confirm* enabled to confirm again, and the server
+  once. After a lost connection the popup freezes the amounts, currencies,
+  customer, document and note, keeps *Confirm* enabled to confirm again, and the server
   refuses an identifier already recorded with other amounts.
 - *Discard* and *Escape* closed the popup while the operation was being
   recorded.
@@ -129,7 +129,12 @@ cannot record operations.
   a *Handed back* line, and *Swap* asks for the amount typed in the other
   currency, not the one rounded for the first.
 - *Exchange Rates* and *Exchange Operations* show an error in the popup
-  when they cannot be loaded, instead of a connection error dialog.
+  when they cannot be loaded, instead of a connection error dialog. A lost
+  connection is explained in the language of the user, in these popups and
+  for the quote and the identity document of the exchange popup; a quote
+  lost with the connection is requested again a few seconds later.
+- The count lines of the closing popup, the Sales Details and the Exchange
+  Register read "1 operation" and "1 cancelled operation" in the singular.
 - The expiry date of a refused document, the amount placeholders and the
   commission rule of the rate board follow the language of the user.
 
@@ -145,8 +150,9 @@ cannot record operations.
 - The register reads the identity document of a customer only at a point
   of sale whose counter asks for documents, and only its type, issuing
   country, expiry date and the last 4 characters of its number. A
-  document changed at the register is logged on the contact; the contact
-  of a user is changed by a POS Administrator only.
+  document changed at the register is saved and logged on the contact;
+  the contact of an internal user, even archived, is changed by a POS
+  Administrator only (a customer with a portal account is a customer).
 - The quote shows the exchanges of a customer over the linked operations
   period only when they make the customer or the document required.
 - The identity fields of contacts and operations are restricted to POS

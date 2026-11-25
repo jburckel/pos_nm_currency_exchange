@@ -196,10 +196,14 @@ droite) et appuyez sur **Opération de change** :
 4. lorsque le client doit être identifié, le bouton **Client** devient
    rouge avec la raison : appuyez dessus et choisissez le client (créez-le
    si besoin). Lorsque la pièce d'identité est requise, ses champs
-   apparaissent, préremplis depuis le contact (le numéro n'en montre que
-   les 4 derniers caractères) : type, numéro et date d'expiration sont
-   obligatoires, et les champs laissés vides gardent les valeurs du
-   contact ;
+   apparaissent : type, pays de délivrance et date d'expiration sont
+   préremplis depuis le contact, et le champ du numéro n'affiche, en
+   indication, que les 4 derniers caractères du numéro enregistré. Type,
+   numéro et date d'expiration sont obligatoires. **Nationalité** et
+   **Date de naissance** s'affichent vides : laissés vides, ils gardent
+   les valeurs du contact. Pour la même pièce (même type, numéro laissé
+   vide), le numéro et les autres champs laissés vides gardent aussi les
+   valeurs du contact ; pour une autre pièce, saisissez son numéro ;
 5. ajoutez une note si utile, puis **Confirmer**. Le tiroir-caisse
    s'ouvre, le ticket de change s'imprime et une notification résume
    l'opération.
@@ -210,8 +214,11 @@ alors rouge, avec le refus).
 
 Si la connexion est perdue pendant la confirmation, la fenêtre indique que
 l'opération a peut-être été enregistrée : confirmez à nouveau une fois la
-connexion rétablie. Une opération déjà enregistrée ne l'est pas deux fois,
-et son ticket est imprimé.
+connexion rétablie. D'ici là, montants, devises, client, pièce et note ne
+peuvent plus être modifiés. Une opération déjà enregistrée ne l'est pas
+deux fois, et son ticket est imprimé. Si la connexion est perdue pendant le
+calcul de la cotation, la fenêtre l'indique et redemande la cotation
+quelques secondes plus tard.
 
 Lorsque le guichet ne peut pas fonctionner sur ce point de vente, l'entrée
 **Opération de change** affiche la raison au lieu de la fenêtre : aucune
@@ -328,8 +335,9 @@ les pièces d'identité auprès d'un quelconque registre.
 * Avec une **Période des opérations liées**, les opérations effectuées (non
   annulées) par le même client sur les derniers jours, à tous les points
   de vente de la société, sont ajoutées, converties dans la devise du point
-  de vente. La fenêtre affiche alors « Avec les opérations liées du
-  client » et le total. Sans client, seule l'opération compte : activez
+  de vente. Lorsque ce total dépasse un seuil, la fenêtre affiche « Avec
+  les opérations liées du client » et le total ; sinon les autres
+  opérations du client ne sont pas montrées. Sans client, seule l'opération compte : activez
   **Client obligatoire pour chaque opération** pour que la règle
   s'applique toujours.
 * Au-delà de **Client obligatoire au-delà de**, l'opération exige un
@@ -341,8 +349,9 @@ les pièces d'identité auprès d'un quelconque registre.
   pièce expirée est refusée.
 
 Le serveur vérifie à nouveau ces règles lors de l'enregistrement. La pièce
-saisie à la caisse est enregistrée sur le contact (onglet **Pièce
-d'identité** de la fiche contact) et une copie est conservée sur
+saisie à la caisse, lorsqu'elle diffère de celle enregistrée, est
+enregistrée sur le contact (onglet **Pièce d'identité** de la fiche
+contact) et une copie est conservée sur
 l'opération avec le nom du client : modifier ou renommer le contact
 ensuite ne change pas les opérations enregistrées. Le ticket imprime le nom
 du client et le type de pièce avec seulement les 4 derniers caractères de
@@ -351,9 +360,10 @@ son numéro (par exemple « Passeport \*\*\*\*4567 »).
 Les pièces d'identité ne sont visibles que des administrateurs du Point de
 Vente ; dans la fenêtre, le caissier voit le type, le pays d'émission, la
 date d'expiration et les 4 derniers caractères du numéro du client
-sélectionné. Une pièce modifiée à la caisse est tracée sur le contact (le
-contact d'un utilisateur n'est modifié que par un administrateur du Point
-de Vente).
+sélectionné. Une pièce modifiée à la caisse est tracée sur le contact. Le
+contact d'un utilisateur interne, même archivé, n'est modifié que par un
+administrateur du Point de Vente (la pièce reste alors sur l'opération) ;
+un client disposant d'un compte portail est un client comme un autre.
 
 Consulter les opérations
 ========================

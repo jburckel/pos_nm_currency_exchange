@@ -47,13 +47,18 @@ drawer revaluation, counts per cashier).
   that the amount handed back is the one quoted to the cashier (`amount_out`). The
   cashier is the user, or the employee logged in with `pos_hr` (checked against the
   employees of the point of sale). A second call with the same `uuid` returns the
-  operation already recorded (lost connection).
+  operation already recorded (lost connection), after `_nm_check_same_operation`:
+  it is refused when the currencies, the amount received, the amount handed back
+  or the customer differ from the operation recorded (the register freezes its
+  inputs, the note included, until then, but the server does not trust it).
 - References `EXC/YYYY/NNNNN` from a `no_gap` sequence.
 - The register: entries "Currency Exchange", "Exchange Operations" and "Exchange
   Rates" in the burger menu. The exchange popup quotes through debounced RPCs
   (`get_quote`, `get_reverse_quote`), drops the stale answers, enables Confirm only
   for the quote of the amounts shown, and prints the receipt through the ticket
-  printer. The receipt templates are QWeb views added to the templates the POS
+  printer. A `ConnectionLostError` is shown as a translated message (the server
+  message `error.data.message` only for server errors); a quote lost with the
+  connection is requested again 5 s later while the inputs do not change. The receipt templates are QWeb views added to the templates the POS
   loads (`ir.ui.view._get_xml_ids_to_load`); the receipt body is shared with the
   PDF report of the operation.
 
@@ -72,12 +77,28 @@ drawer revaluation, counts per cashier).
   done operations of the same customer over the last N x 24 h at every point of
   sale of the company (`_nm_linked_value`).
 - Above the document threshold: customer and valid (not expired) identity document
-  required. The document typed at the register is written on the contact
-  (`res.partner` fields, POS managers only, not copied on duplicate) and frozen on
-  the operation with the customer name. The receipt prints the document type and
-  the last 4 characters of its number.
+  required. The document is frozen on the operation with the customer name. The
+  receipt prints the document type and the last 4 characters of its number.
+- The register sends the document typed (`_nm_document_values`): the fields left
+  empty keep the values of the contact when the document is the same (same type,
+  number empty or equal), else only the nationality and the date of birth do.
+- The document is written on the contact (`res.partner` fields, readable by POS
+  managers only, not copied on duplicate) only when it differs from the one
+  recorded, with a note in the chatter of the contact (masked number)
+  (`_nm_save_customer_document`). The contact of an internal user (`share` false,
+  archived users included through `active_test=False`) is written only when the
+  cashier is a POS manager; otherwise the document stays on the operation alone.
+  Portal and public users do not protect their contact: they are customers.
 - Cashiers read the document of the selected customer through
-  `get_customer_document` (sudo after an access check on the customer).
+  `get_customer_document(config_id, partner_id)`: sudo after an access check on the
+  customer, refused unless the counter of that point of sale is enabled and has a
+  document threshold, and partial: type, issuing country, expiry date and the last
+  4 characters of the number (`number_masked`). Nationality and date of birth are
+  not returned; the popup shows them empty.
+- The popup shows the linked value (with the operations of the customer) only when
+  it exceeds a threshold (`get_quote` replaces it by the value of the operation
+  otherwise): the exchanges of a customer are not shown to the cashier without
+  reason.
 
 ## Cancellation
 
@@ -114,12 +135,22 @@ drawer revaluation, counts per cashier).
   `create_from_ui`, nobody deletes. Multi-company record rule on `company_id`.
 - Identity fields of `res.partner` and `pos.nm.exchange`: `groups` POS managers.
 - Menus Currency Exchanges and Exchange Register, register wizard: POS managers.
+- `pos.config.write`: the POS users write the point of sale from the register, but a
+  value of an `nm_exchange_*` field (counter enabled, commission account, thresholds,
+  linked period, licence) is refused unless the user is a POS manager or a system
+  administrator (or sudo).
 
 ## Migration 20.0.2.0.0
 
+- Parent version: `pre_init_hook` (installation) and the pre-migrate script
+  (upgrade) call `_nm_check_parent_version`, which refuses `pos_nm_multicurrencies`
+  older than 20.0.2.1.0 (the register imports its coin helpers and would not load).
 - pre: Exchange Sell Margin = Cash Rate Margin (-m / (1 + m/100) when negative: same sell rate); user of the
   operations = their creator.
 - post: status done, rate recomputed, rate margin at the rate of Odoo of the day of
-  each operation, customer name, linked value, reference sequence `no_gap`. The
-  scripts are idempotent (empty values filled, rate recomputed from the amounts):
-  they can run twice.
+  each operation, customer name, linked value, reference sequence `no_gap`. A done
+  operation whose statement line (received or handed back) was deleted under
+  20.0.1.x is logged as a warning and gets a message in its chatter, once (an
+  existing message is looked up), telling to correct the drawer with a cash move.
+  The scripts are idempotent (empty values filled, rate recomputed from the
+  amounts): they can run twice.

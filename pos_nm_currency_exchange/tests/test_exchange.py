@@ -995,8 +995,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertIn(self.main.format(3.2), html)
         self.assertIn(self.main.format(8.8), html)
         self.assertIn('Rate Margin', html)
-        self.assertIn('1 operations', html)
-        self.assertIn('cancelled operations: %s' % cancelled.name, html)
+        self.assertIn('1 operation<', html)
+        self.assertIn('1 cancelled operation: %s' % cancelled.name, html)
+        self.assertNotIn('1 operations', html)
 
     def test_closing_after_counter_disabled(self):
         """The closing popup lists the operations even when the counter was
@@ -1182,8 +1183,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
         """The register sends the document with the fields left empty that it
         does not show: the number, nationality and date of birth recorded on
         the customer are kept for the same document. A new document keeps
-        only the personal data. The contact of a user is changed by a
-        manager only."""
+        only the personal data. The contact of an internal user, even
+        archived, is changed by a manager only; a portal customer's is
+        saved."""
         self.pos_config.write({'nm_exchange_document_threshold': 50.0})
         session = self._open(fx=10000.0)
         Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
@@ -1225,6 +1227,17 @@ class TestPosCurrencyExchange(TestPosAccounting):
             'type': 'passport', 'number': 'FORGED001', 'expiry': renewed})
         self.assertEqual(receipt['id_document'], 'Passport ****D001')
         self.assertEqual(user_partner.nm_id_document_number, 'ADMIN0001')
+        # An archived employee keeps the protection.
+        user_partner.user_ids.active = False
+        Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, user_partner.id, document={
+            'type': 'passport', 'number': 'FORGED002', 'expiry': renewed})
+        self.assertEqual(user_partner.nm_id_document_number, 'ADMIN0001')
+        # A customer with a portal account is a customer: the document is saved.
+        portal_partner = new_test_user(self.env, login='nm_exchange_portal', groups='base.group_portal').partner_id
+        Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, portal_partner.id, document={
+            'type': 'passport', 'number': 'PORTAL001', 'expiry': renewed})
+        self.assertEqual(portal_partner.nm_id_document_number, 'PORTAL001')
+        self.assertIn('****L001', portal_partner.message_ids[0].body)
 
     def test_linked_value_not_shown(self):
         """The quote gives the exchanges of the customer over the period only
@@ -1496,8 +1509,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertLess(html.index(second.name), html.index(third.name))
         for text in ('Exchange Register', 'Cancelled', 'AB1234567', 'NM Register Customer',
                      'Sale of foreign currency', 'Purchase of foreign currency', first.rate_label,
-                     self.main.format(first.commission + third.commission), 'cancelled operations are listed'):
+                     self.main.format(first.commission + third.commission), '1 cancelled operation is listed'):
             self.assertIn(text, html)
+        self.assertNotIn('cancelled operations are listed', html)
         # Another point of sale: nothing.
         other = self.pos_config.copy()
         values = self.env['report.pos_nm_currency_exchange.report_exchange_register']._get_report_values(

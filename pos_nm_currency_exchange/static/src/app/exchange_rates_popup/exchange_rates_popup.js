@@ -3,6 +3,7 @@ import { Component, useProps, proxy, t, onWillStart } from "@odoo/owl";
 import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
+import { ConnectionLostError } from "@web/core/network/rpc";
 
 /**
  * Rate board of the counter (pos.config._nm_rate_board): for each foreign
@@ -29,7 +30,9 @@ export class ExchangeRatesPopup extends Component {
                 ]);
             } catch (error) {
                 this.state.error =
-                    error?.data?.message || error?.message || _t("The exchange rates could not be loaded.");
+                    error instanceof ConnectionLostError
+                        ? _t("The connection to the server was lost: the exchange rates could not be loaded.")
+                        : error?.data?.message || _t("The exchange rates could not be loaded.");
             }
         });
     }

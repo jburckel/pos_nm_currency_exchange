@@ -191,7 +191,11 @@
                             </tr>
                         </tbody>
                     </table>
-                    <p t-if="cancelled_count" class="text-muted">
+                    <p t-if="cancelled_count == 1" class="text-muted">
+                        1 cancelled operation is listed but not counted in the totals: it was reversed by two
+                        opposite statement lines.
+                    </p>
+                    <p t-elif="cancelled_count" class="text-muted">
                         <span t-out="cancelled_count"/> cancelled operations are listed but not counted in the totals:
                         each was reversed by two opposite statement lines.
                     </p>

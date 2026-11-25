@@ -744,12 +744,14 @@ class PosNmExchange(models.Model):
 
     def _nm_save_customer_document(self, partner, document_values):
         """Save the identity document of the operation on its customer, with
-        a message on the contact (masked number). The contact of a user is
-        only changed by a Point of Sale manager: else the document stays on
-        the operation alone."""
+        a message on the contact (masked number). The contact of an internal
+        user, archived or not, is only changed by a Point of Sale manager:
+        else the document stays on the operation alone. A portal or public
+        account does not protect its contact: it is a customer."""
         self.ensure_one()
         partner = partner.sudo()
-        if partner.user_ids and not self.env.user.has_group('point_of_sale.group_pos_manager'):
+        internal_users = partner.with_context(active_test=False).user_ids.filtered(lambda user: not user.share)
+        if internal_users and not self.env.user.has_group('point_of_sale.group_pos_manager'):
             return
         partner.write({partner_field: document_values[field] for field, partner_field, _key in ID_DOCUMENT_FIELDS})
         partner.message_post(

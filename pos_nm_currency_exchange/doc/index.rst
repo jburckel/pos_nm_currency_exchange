@@ -184,10 +184,14 @@ From any screen of the register, open the menu (top right) and press
    to the normal quote;
 4. when the customer must be identified, the **Customer** button turns red
    with the reason: press it and pick the customer (create it if needed).
-   When the identity document is required, its fields appear, prefilled
-   from the contact (the number shows its last 4 characters only): type,
-   number and expiry date are mandatory, and the fields left empty keep
-   the values of the contact;
+   When the identity document is required, its fields appear: type,
+   issuing country and expiry date are prefilled from the contact, and the
+   number field only shows the last 4 characters of the recorded number
+   as a hint. Type, number and expiry date are mandatory. **Nationality**
+   and **Date of birth** are shown empty: left empty, they keep the values
+   of the contact. For the same document (same type, number left empty)
+   the number and the other fields left empty keep the values of the
+   contact too; for another document, type its number;
 5. add a note if useful, then **Confirm**. The cash drawer opens, the
    exchange receipt is printed and a notification sums the operation up.
 
@@ -197,8 +201,11 @@ line is then red, with the refusal).
 
 When the connection drops while confirming, the popup says that the
 operation may have been recorded: confirm again once the connection is
-back. An operation already recorded is not recorded twice, and its receipt
-is printed.
+back. Until then the amounts, currencies, customer, document and note
+cannot be changed. An operation already recorded is not recorded twice,
+and its receipt is printed. When the connection drops while the quote is
+computed, the popup says so and requests the quote again a few seconds
+later.
 
 When the counter cannot work at this point of sale, the **Currency
 Exchange** entry shows the reason instead of the popup: no foreign currency
@@ -310,8 +317,9 @@ documents against any register.
 * With a **Linked operations period**, the operations done (not
   cancelled) by the same customer over the last days, at every point of
   sale of the company, are added, converted to the currency of the point
-  of sale. The popup then shows "With the linked operations of the
-  customer" and the total. Without a customer, only the operation counts:
+  of sale. When this total exceeds a threshold, the popup shows "With
+  the linked operations of the customer" and the total; otherwise the
+  other operations of the customer are not shown. Without a customer, only the operation counts:
   enable **Customer required for every operation** so that the rule always
   applies.
 * Above **Customer required above**, the operation needs a customer.
@@ -321,8 +329,8 @@ documents against any register.
   nationality and date of birth. An expired document is refused.
 
 The server checks these rules again when the operation is recorded. The
-document typed at the register is saved on the contact (tab **Identity
-Document** of the contact form) and a copy is kept on the operation with
+document typed at the register, when it differs from the one recorded,
+is saved on the contact (tab **Identity Document** of the contact form) and a copy is kept on the operation with
 the name of the customer: changing or renaming the contact later does not
 change the operations recorded. The receipt prints the name of the customer
 and the type of document with the last 4 characters of its number only
@@ -331,8 +339,10 @@ and the type of document with the last 4 characters of its number only
 The identity documents are visible to POS Administrators only; in the
 popup, the cashier sees the type, issuing country, expiry date and last 4
 characters of the number of the selected customer. A document changed at
-the register is logged on the contact (the contact of a user is changed by
-a POS Administrator only).
+the register is logged on the contact. The contact of an internal user, even
+archived, is changed by a POS Administrator only (the document then stays
+on the operation); a customer with a portal account is a customer like
+any other.
 
 Reviewing the operations
 ========================

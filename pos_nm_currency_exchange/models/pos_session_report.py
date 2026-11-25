@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models, _
+from odoo import api, fields, models, _
 
 
 class ReportSaleDetails(models.AbstractModel):
@@ -30,6 +30,16 @@ class ReportSaleDetails(models.AbstractModel):
                 domain.append(('config_id', 'in', config_ids))
         return Exchange.search(domain).sorted('id')
 
+    @api.model
+    def _nm_cancelled_label(self, cancelled):
+        """Line of the cancelled operations, listed by name."""
+        if not cancelled:
+            return ''
+        if len(cancelled) == 1:
+            return _('1 cancelled operation: %s', cancelled.name)
+        return _('%(count)s cancelled operations: %(names)s', count=len(cancelled),
+                 names=', '.join(cancelled.mapped('name')))
+
     def _nm_exchange_block(self, all_exchanges):
         # Cancelled operations were reversed: listed apart, out of the totals.
         exchanges = all_exchanges.filtered(lambda e: e.state == 'done')
@@ -41,9 +51,12 @@ class ReportSaleDetails(models.AbstractModel):
         for currency in currencies:
             group = exchanges.filtered(lambda e: e.company_currency_id == currency)
             if len(currencies) > 1:
-                count_label = _('%(count)s operations in %(currency)s', count=len(group), currency=currency.name)
+                if len(group) == 1:
+                    count_label = _('1 operation in %(currency)s', currency=currency.name)
+                else:
+                    count_label = _('%(count)s operations in %(currency)s', count=len(group), currency=currency.name)
             else:
-                count_label = _('%s operations', len(group))
+                count_label = _('1 operation') if len(group) == 1 else _('%s operations', len(group))
             commission = currency.round(sum(group.mapped('commission')))
             rate_margin = currency.round(sum(group.mapped('rate_margin')))
             totals.append({
@@ -59,8 +72,7 @@ class ReportSaleDetails(models.AbstractModel):
             'count': len(exchanges),
             'totals': totals,
             'cancelled_count': len(cancelled),
-            'cancelled_label': _('%(count)s cancelled operations: %(names)s', count=len(cancelled),
-                                 names=', '.join(cancelled.mapped('name'))) if cancelled else '',
+            'cancelled_label': self._nm_cancelled_label(cancelled),
             'operations': [{
                 'name': exchange.name,
                 'session': exchange.session_id.name,

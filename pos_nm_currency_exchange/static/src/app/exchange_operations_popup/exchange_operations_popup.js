@@ -3,6 +3,7 @@ import { Component, useProps, proxy, t, onWillStart } from "@odoo/owl";
 import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
+import { ConnectionLostError } from "@web/core/network/rpc";
 
 /**
  * Exchange operations of the session, the latest first, with a Reprint
@@ -28,7 +29,9 @@ export class ExchangeOperationsPopup extends Component {
                 ]);
             } catch (error) {
                 this.state.error =
-                    error?.data?.message || error?.message || _t("The exchange operations could not be loaded.");
+                    error instanceof ConnectionLostError
+                        ? _t("The connection to the server was lost: the exchange operations could not be loaded.")
+                        : error?.data?.message || _t("The exchange operations could not be loaded.");
             }
         });
     }

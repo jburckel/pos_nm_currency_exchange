@@ -18,6 +18,8 @@ import {
 } from "@pos_nm_multicurrencies/overrides/utils/change_currency";
 
 const { DateTime } = luxon;
+// Milliseconds before a quote lost with the connection is requested again.
+const QUOTE_RETRY_DELAY = 5000;
 
 /**
  * Currency exchange counter: the customer hands notes in one cash currency
@@ -38,7 +40,8 @@ const { DateTime } = luxon;
  * updated, and sent with the operation, which keeps a copy of it: the fields
  * left empty keep the values of the customer.
  *
- * Lost connection: the operation may have been recorded. The inputs are
+ * Lost connection: a quote is requested again a few seconds later, as long
+ * as the inputs do not change. On Confirm, the operation may have been recorded. The inputs are
  * frozen until it is confirmed again with the same identifier (the server
  * then returns the operation already recorded) or discarded.
  */
@@ -324,6 +327,8 @@ export class CurrencyExchangePopup extends Component {
                       partnerId,
                   ]);
             if (sequence === this.quoteSequence) {
+                // A quote requested again after a lost connection.
+                this.state.error = "";
                 if (reverse) {
                     this.state.amountIn = formatAmountInput(quote.amount_in, currencyInId);
                     amountIn = this.amountIn;
@@ -344,7 +349,20 @@ export class CurrencyExchangePopup extends Component {
             }
         } catch (error) {
             if (sequence === this.quoteSequence) {
-                this.state.error = error?.data?.message || error?.message || _t("The quote could not be computed.");
+                if (error instanceof ConnectionLostError) {
+                    // Requested again while the inputs do not change.
+                    this.state.error = _t(
+                        "The connection to the server was lost: the quote will be requested again in a few seconds."
+                    );
+                    this.quoteTimer = setTimeout(() => {
+                        if (sequence === this.quoteSequence) {
+                            this.state.loading = true;
+                            this.fetchQuote();
+                        }
+                    }, QUOTE_RETRY_DELAY);
+                } else {
+                    this.state.error = error?.data?.message || _t("The quote could not be computed.");
+                }
             }
         } finally {
             if (sequence === this.quoteSequence) {
@@ -402,7 +420,9 @@ export class CurrencyExchangePopup extends Component {
             if (this.state.partner?.id === partner.id) {
                 this.state.documentPartnerId = null;
                 this.state.documentWarning =
-                    error?.data?.message || error?.message || _t("The identity document could not be loaded.");
+                    error instanceof ConnectionLostError
+                        ? _t("The connection to the server was lost: the identity document could not be loaded.")
+                        : error?.data?.message || _t("The identity document could not be loaded.");
             }
         }
     }
@@ -475,7 +495,7 @@ export class CurrencyExchangePopup extends Component {
                 // identifier, the inputs can be changed again.
                 this.state.pending = false;
                 this.state.error =
-                    error?.data?.message || error?.message || _t("The operation could not be recorded.");
+                    error?.data?.message || _t("The operation could not be recorded.");
             }
         } finally {
             this.state.saving = false;

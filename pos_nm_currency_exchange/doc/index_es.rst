@@ -192,10 +192,15 @@ pulse **Cambio de divisas**:
    escribir en **Recibido del cliente** vuelve al cálculo normal;
 4. cuando el cliente debe identificarse, el botón **Cliente** se pone rojo
    con el motivo: púlselo y elija el cliente (créelo si es necesario).
-   Cuando se requiere el documento de identidad, aparecen sus campos,
-   rellenados desde el contacto (del número solo se muestran los 4 últimos
-   caracteres): tipo, número y fecha de caducidad son obligatorios, y los
-   campos dejados vacíos conservan los valores del contacto;
+   Cuando se requiere el documento de identidad, aparecen sus campos:
+   tipo, país de expedición y fecha de caducidad se rellenan desde el
+   contacto, y el campo del número solo muestra, como indicación, los 4
+   últimos caracteres del número registrado. Tipo, número y fecha de
+   caducidad son obligatorios. **Nacionalidad** y **Fecha de nacimiento**
+   aparecen vacíos: si se dejan vacíos, conservan los valores del
+   contacto. Para el mismo documento (mismo tipo, número dejado vacío), el
+   número y los demás campos dejados vacíos también conservan los valores
+   del contacto; para otro documento, introduzca su número;
 5. añada una nota si es útil y pulse **Confirmar**. El cajón portamonedas
    se abre, se imprime el recibo de cambio y una notificación resume la
    operación.
@@ -205,8 +210,12 @@ cuando el cajón de la moneda entregada no contiene el importe (la línea
 *En el cajón* aparece entonces en rojo, con el rechazo).
 
 Si la conexión se pierde al confirmar, la ventana indica que la operación
-puede haberse registrado: confirme de nuevo cuando vuelva la conexión. Una
-operación ya registrada no se registra dos veces, y se imprime su recibo.
+puede haberse registrado: confirme de nuevo cuando vuelva la conexión.
+Mientras tanto, importes, monedas, cliente, documento y nota no pueden
+modificarse. Una operación ya registrada no se registra dos veces, y se
+imprime su recibo. Si la conexión se pierde mientras se calcula la
+cotización, la ventana lo indica y vuelve a pedir la cotización unos
+segundos después.
 
 Cuando la ventanilla no puede funcionar en este punto de venta, la entrada
 **Cambio de divisas** muestra el motivo en lugar de la ventana: ninguna
@@ -325,8 +334,9 @@ documentos de identidad en ningún registro.
 * Con un **Periodo de operaciones vinculadas**, se suman las operaciones
   hechas (no canceladas) por el mismo cliente en los últimos días, en
   todos los puntos de venta de la compañía, convertidas a la moneda del
-  punto de venta. La ventana muestra entonces «Con las operaciones
-  vinculadas del cliente» y el total. Sin cliente, solo cuenta la
+  punto de venta. Cuando este total supera un umbral, la ventana muestra
+  «Con las operaciones vinculadas del cliente» y el total; si no, las
+  demás operaciones del cliente no se muestran. Sin cliente, solo cuenta la
   operación: active **Cliente obligatorio para cada operación** para que
   la regla se aplique siempre.
 * Por encima de **Cliente obligatorio a partir de**, la operación requiere
@@ -339,8 +349,9 @@ documentos de identidad en ningún registro.
   rechaza.
 
 El servidor vuelve a comprobar estas reglas al registrar la operación. El
-documento introducido en la caja se guarda en el contacto (pestaña
-**Documento de identidad** del formulario del contacto) y se conserva una
+documento introducido en la caja, cuando difiere del registrado, se
+guarda en el contacto (pestaña **Documento de identidad** del formulario
+del contacto) y se conserva una
 copia en la operación con el nombre del cliente: modificar o renombrar el
 contacto después no cambia las operaciones registradas. El recibo imprime
 el nombre del cliente y el tipo de documento con solo los 4 últimos
@@ -350,8 +361,10 @@ Los documentos de identidad solo son visibles para los administradores
 del Punto de venta; en la ventana, el cajero ve el tipo, el país de
 expedición, la fecha de caducidad y los 4 últimos caracteres del número
 del cliente seleccionado. Un documento modificado en la caja queda
-registrado en el contacto (el contacto de un usuario solo lo modifica un
-administrador del Punto de venta).
+registrado en el contacto. El contacto de un usuario interno, incluso
+archivado, solo lo modifica un administrador del Punto de venta (el
+documento queda entonces en la operación); un cliente con una cuenta de
+portal es un cliente como cualquier otro.
 
 Consultar las operaciones
 =========================

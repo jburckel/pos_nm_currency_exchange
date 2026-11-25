@@ -145,6 +145,10 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                 trigger: ".modal .nm-currency-exchange select.nm-exchange-currency-in[disabled]",
             },
             {
+                content: "the note sent with the operation is frozen too",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-note[readonly]:value(Tour)",
+            },
+            {
                 content: "confirm again: the operation already recorded is returned",
                 trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
                 run: "click",

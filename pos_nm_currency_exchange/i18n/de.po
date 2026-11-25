@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 21:59+0000\n"
-"PO-Revision-Date: 2026-11-25 21:59+0000\n"
+"POT-Creation-Date: 2026-11-25 23:33+0000\n"
+"PO-Revision-Date: 2026-11-25 23:33+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -186,6 +186,33 @@ msgstr "- Lizenz-Nr."
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "1 %(in)s = %(out)s"
 msgstr "1 %(in)s = %(out)s"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid ""
+"1 cancelled operation is listed but not counted in the totals: it was reversed by two\n"
+"                        opposite statement lines."
+msgstr ""
+"1 stornierter Vorgang ist aufgeführt, aber nicht in den Summen gezählt: er wurde durch zwei\n"
+"                        gegenläufige Kontoauszugszeilen storniert."
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "1 cancelled operation: %s"
+msgstr "1 stornierter Vorgang: %s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "1 operation"
+msgstr "1 Vorgang"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
+msgid "1 operation in %(currency)s"
+msgstr "1 Vorgang in %(currency)s"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
@@ -1023,7 +1050,9 @@ msgstr "Vom Kunden vorgelegtes Ausweisdokument, wie mit dem Vorgang erfasst."
 msgid ""
 "Identity document updated by %(user)s with the exchange operation %(name)s: "
 "%(document)s"
-msgstr "Ausweisdokument von %(user)s mit dem Wechselvorgang %(name)s aktualisiert: %(document)s"
+msgstr ""
+"Ausweisdokument von %(user)s mit dem Wechselvorgang %(name)s aktualisiert: "
+"%(document)s"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction
@@ -1291,7 +1320,9 @@ msgstr "Nur ein Kassenmanager kann einen Wechselvorgang stornieren."
 msgid ""
 "Only a Point of Sale manager can change the settings of the currency "
 "exchange counter."
-msgstr "Nur ein Kassenadministrator kann die Einstellungen des Wechselschalters ändern."
+msgstr ""
+"Nur ein Kassenadministrator kann die Einstellungen des Wechselschalters "
+"ändern."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -1347,7 +1378,9 @@ msgstr "POS Geldwechsel"
 msgid ""
 "POS Multi-Currency Cash %(version)s or later is required: update it first "
 "(installed: %(installed)s)."
-msgstr "POS Multi-Currency Cash %(version)s oder neuer ist erforderlich: Aktualisieren Sie es zuerst (installiert: %(installed)s)."
+msgstr ""
+"POS Multi-Currency Cash %(version)s oder neuer ist erforderlich: "
+"Aktualisieren Sie es zuerst (installiert: %(installed)s)."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__passport
@@ -1675,6 +1708,46 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.js:0
+msgid ""
+"The connection to the server was lost: the exchange operations could not be "
+"loaded."
+msgstr ""
+"Die Verbindung zum Server ist abgebrochen: Die Wechselvorgänge konnten nicht"
+" geladen werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.js:0
+msgid ""
+"The connection to the server was lost: the exchange rates could not be "
+"loaded."
+msgstr ""
+"Die Verbindung zum Server ist abgebrochen: Die Wechselkurse konnten nicht "
+"geladen werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"The connection to the server was lost: the identity document could not be "
+"loaded."
+msgstr ""
+"Die Verbindung zum Server ist abgebrochen: Das Ausweisdokument konnte nicht "
+"geladen werden."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+msgid ""
+"The connection to the server was lost: the quote will be requested again in "
+"a few seconds."
+msgstr ""
+"Die Verbindung zum Server ist abgebrochen: Das Angebot wird in einigen "
+"Sekunden erneut angefordert."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
 msgid ""
 "The connection was lost: the operation may have been recorded. Confirm again"
@@ -1894,7 +1967,11 @@ msgid ""
 "before the upgrade to 20.0.2.0.0: the drawer and the commission account are "
 "off by that line, and the operation cannot be cancelled. Correct the drawer "
 "with a cash move."
-msgstr "Die Kontoauszugszeile der Scheine %(legs)s dieses Vorgangs wurde vor der Aktualisierung auf 20.0.2.0.0 gelöscht: Kassenlade und Provisionskonto weichen um diese Zeile ab, und der Vorgang kann nicht storniert werden. Korrigieren Sie die Kassenlade mit einer Bargeldbewegung."
+msgstr ""
+"Die Kontoauszugszeile der Scheine %(legs)s dieses Vorgangs wurde vor der "
+"Aktualisierung auf 20.0.2.0.0 gelöscht: Kassenlade und Provisionskonto "
+"weichen um diese Zeile ab, und der Vorgang kann nicht storniert werden. "
+"Korrigieren Sie die Kassenlade mit einer Bargeldbewegung."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -1946,7 +2023,9 @@ msgstr "Dieser Mitarbeiter darf diese Kasse nicht verwenden."
 msgid ""
 "This operation was already recorded as %s with other amounts: close the "
 "popup and start a new operation."
-msgstr "Dieser Vorgang wurde bereits als %s mit anderen Beträgen erfasst: Schließen Sie das Fenster und beginnen Sie einen neuen Vorgang."
+msgstr ""
+"Dieser Vorgang wurde bereits als %s mit anderen Beträgen erfasst: Schließen "
+"Sie das Fenster und beginnen Sie einen neuen Vorgang."
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
