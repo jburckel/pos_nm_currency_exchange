@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="mail_template_pos_nm_exchange" model="mail.template">
+            <field name="name">Currency Exchange: Send Receipt</field>
+            <field name="model_id" ref="model_pos_nm_exchange"/>
+            <field name="subject">{{ object.company_id.name }} Currency Exchange {{ object.name }}</field>
+            <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
+            <field name="partner_to">{{ object.partner_id.id or '' }}</field>
+            <field name="description">Receipt of a currency exchange operation sent to its customer</field>
+            <field name="report_template_ids" eval="[(4, ref('action_report_pos_nm_exchange'))]"/>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Hello,
+        <br/><br/>
+        Please find attached the receipt of your currency exchange
+        <span style="font-weight: bold;" t-out="object.name or ''">EXC/2026/00001</span>
+        of <t t-out="format_datetime(object.date) or ''">01/01/2026 10:00:00</t>:
+        <t t-out="format_amount(object.amount_in, object.currency_in_id) or ''">$ 100.00</t> received,
+        <t t-out="format_amount(object.amount_out, object.currency_out_id) or ''">90.00 EUR</t> handed back.
+        <br/><br/>
+        Thank you for your visit.
+    </p>
+</div>
+            </field>
+        </record>
+    </data>
+</odoo>

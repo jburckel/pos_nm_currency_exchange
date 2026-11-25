@@ -14,6 +14,7 @@ function stubPrinting() {
             // Keep the generated receipt: its content is checked below.
             posmodel.ticketPrinter.printWithFallback = async ({ iframe }) => {
                 posmodel.nmTourReceiptHtml = iframe?.contentDocument?.body?.innerHTML || "";
+                document.body.classList.add("nm-tour-printed");
                 return { successful: true };
             };
         },
@@ -112,11 +113,66 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                 trigger: ".pos",
                 run: () => {
                     const html = posmodel.nmTourReceiptHtml || "";
-                    if (!html.includes("CURRENCY EXCHANGE") || !html.includes("56.32")) {
-                        throw new Error("Exchange receipt not rendered: " + html.slice(0, 200));
+                    const expected = [
+                        "CURRENCY EXCHANGE",
+                        "56.32",
+                        "Tour Header",
+                        "LIC-TOUR-7",
+                        "Purchase of foreign currency",
+                    ];
+                    if (expected.some((text) => !html.includes(text)) || html.includes("COPY")) {
+                        throw new Error("Exchange receipt not rendered: " + html.slice(0, 400));
+                    }
+                    if (!/\d{2}:\d{2}:\d{2}/.test(html)) {
+                        throw new Error("The time of the operation has no seconds: " + html.slice(0, 400));
+                    }
+                    posmodel.nmTourReceiptHtml = "";
+                    document.body.classList.remove("nm-tour-printed");
+                },
+            },
+            Chrome.clickMenuOption("Exchange Operations"),
+            {
+                content: "the operation of the session is listed",
+                trigger: ".modal .nm-exchange-operations .nm-exchange-operation:contains('EXC/'):contains(/56[.,]32/)",
+            },
+            {
+                content: "print its receipt again",
+                trigger: ".modal .nm-exchange-operations .nm-exchange-reprint:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the receipt is printed again, as a copy",
+                trigger: "body.nm-tour-printed",
+                run: () => {
+                    const html = posmodel.nmTourReceiptHtml || "";
+                    if (!html.includes("COPY") || !html.includes("56.32")) {
+                        throw new Error("Receipt not printed again: " + html.slice(0, 400));
+                    }
+                    document.body.classList.remove("nm-tour-printed");
+                },
+            },
+            Dialog.cancel(),
+            Chrome.clickMenuOption("Exchange Rates"),
+            {
+                content: "the rates of EUR are shown",
+                trigger: ".modal .nm-exchange-rates .nm-exchange-rate-row:contains('EUR') .nm-exchange-buy-amount",
+            },
+            {
+                content: "print the rates",
+                trigger: ".modal .nm-exchange-rates .nm-exchange-rates-print:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the rates are printed",
+                trigger: "body.nm-tour-printed",
+                run: () => {
+                    const html = posmodel.nmTourReceiptHtml || "";
+                    if (!html.includes("EXCHANGE RATES") || !html.includes("EUR")) {
+                        throw new Error("Exchange rates not printed: " + html.slice(0, 400));
                     }
                 },
             },
+            Dialog.cancel(),
             Chrome.clickMenuOption("Close Register"),
             {
                 content: "the closing popup shows the commission of the operation: 1.15",

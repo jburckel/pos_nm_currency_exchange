@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.ExchangeOperationsPopup">
+        <Dialog title.translate="Exchange Operations" size="'lg'" contentClass="'nm-exchange-operations'">
+            <div t-if="!this.state.operations.length" class="text-muted nm-exchange-operations-empty">
+                No exchange operation in this session yet.
+            </div>
+            <table t-else="" class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Operation</th>
+                        <th class="text-end">Received</th>
+                        <th class="text-end">Handed Back</th>
+                        <th>Customer</th>
+                        <th/>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="this.state.operations" t-as="operation" t-key="operation.id"
+                        class="nm-exchange-operation" t-att-class="{'text-muted': operation.cancelled}">
+                        <td>
+                            <t t-out="operation.name"/>
+                            <span t-if="operation.cancelled" class="badge text-bg-danger ms-1">Cancelled</span>
+                        </td>
+                        <td t-out="operation.date"/>
+                        <td t-out="operation.operation_type"/>
+                        <td class="text-end" t-out="operation.amount_in"/>
+                        <td class="text-end" t-out="operation.amount_out"/>
+                        <td t-out="operation.partner_name"/>
+                        <td class="text-end">
+                            <button class="btn btn-secondary nm-exchange-reprint" type="button"
+                                    t-att-disabled="this.state.printing" t-on-click="() => this.reprint(operation)">
+                                <i class="oi me-1" data-icon="print" role="img" aria-hidden="true"/>Reprint
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary btn-lg" t-on-click="() => this.props.close()">Close</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

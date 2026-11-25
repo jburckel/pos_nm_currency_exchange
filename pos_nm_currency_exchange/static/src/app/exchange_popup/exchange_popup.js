@@ -417,14 +417,6 @@ export class CurrencyExchangePopup extends Component {
     }
 
     async printReceipt(receipt) {
-        const printer = this.pos.ticketPrinter;
-        const generator = printer.getGenerator({ models: this.pos.models });
-        const data = {
-            company: generator.company.raw,
-            config: generator.config.raw,
-            image: { logo: generator.config.receiptLogoUrl },
-            extra_data: { ...generator.commonExtraData, ...receipt },
-        };
         // confirm() logged the operation as the drawer action.
         try {
             await this.pos.openCashbox();
@@ -432,8 +424,7 @@ export class CurrencyExchangePopup extends Component {
             this.notification.add(_t("The cash drawer could not be opened."), { type: "warning" });
         }
         try {
-            const iframe = await printer.generateIframe("pos_nm_currency_exchange.pos_exchange_receipt", data);
-            await printer.printWithFallback({ iframe, webFallback: true });
+            await this.pos.nmPrintReceipt("pos_nm_currency_exchange.pos_exchange_receipt", receipt);
         } catch {
             this.notification.add(
                 _t("The receipt of %(name)s could not be printed.", { name: receipt.name }),

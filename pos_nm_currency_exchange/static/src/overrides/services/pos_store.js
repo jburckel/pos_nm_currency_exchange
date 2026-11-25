@@ -5,6 +5,8 @@ import { PosStore } from "@point_of_sale/app/services/pos_store";
 import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
 import { getForeignCashCurrencies } from "@pos_nm_multicurrencies/overrides/utils/change_currency";
 import { CurrencyExchangePopup } from "@pos_nm_currency_exchange/app/exchange_popup/exchange_popup";
+import { ExchangeOperationsPopup } from "@pos_nm_currency_exchange/app/exchange_operations_popup/exchange_operations_popup";
+import { ExchangeRatesPopup } from "@pos_nm_currency_exchange/app/exchange_rates_popup/exchange_rates_popup";
 
 patch(PosStore.prototype, {
     get nmShowExchangeButton() {
@@ -34,6 +36,27 @@ patch(PosStore.prototype, {
             return;
         }
         return makeAwaitable(this.dialog, CurrencyExchangePopup);
+    },
+    nmExchangeOperations() {
+        this.dialog.add(ExchangeOperationsPopup);
+    },
+    nmExchangeRates() {
+        this.dialog.add(ExchangeRatesPopup);
+    },
+    /**
+     * Print a receipt template of the exchange counter on the receipt
+     * printer, with the data computed by the server (``extraData``).
+     */
+    async nmPrintReceipt(template, extraData) {
+        const printer = this.ticketPrinter;
+        const generator = printer.getGenerator({ models: this.models });
+        const iframe = await printer.generateIframe(template, {
+            company: generator.company.raw,
+            config: generator.config.raw,
+            image: { logo: generator.config.receiptLogoUrl },
+            extra_data: { ...generator.commonExtraData, ...extraData },
+        });
+        return printer.printWithFallback({ iframe, webFallback: true });
     },
     // get_closing_control_data returns the exchange operations of the
     // session (nm_exchange_summary): set them aside for the closing popup,

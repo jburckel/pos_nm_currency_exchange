@@ -36,3 +36,10 @@ class ResConfigSettings(models.TransientModel):
         related='pos_config_id.nm_exchange_document_threshold',
         readonly=False,
     )
+    pos_nm_exchange_licence = fields.Char(
+        related='pos_config_id.nm_exchange_licence',
+        readonly=False,
+    )
+
+    def action_nm_print_rate_board(self):
+        return self.pos_config_id.action_nm_print_rate_board()

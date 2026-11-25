@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import math
+
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+from odoo.tools.misc import formatLang
 
 # Also set on the field of the settings: a related field does not copy the
 # domain of its target.
@@ -49,6 +52,11 @@ class PosConfig(models.Model):
         help='Value, in the currency of the point of sale, above which the identity document of '
              'the customer is recorded on the operation (with the linked operations when a period '
              'is set). 0: never required.',
+    )
+    nm_exchange_licence = fields.Char(
+        string='Exchange Licence Number',
+        help='Licence or registration number of the currency exchange activity, printed on the '
+             'exchange receipts and the rate board when set.',
     )
     nm_exchange_count = fields.Integer(string='Exchanges', compute='_compute_nm_exchange_count')
 
@@ -109,6 +117,64 @@ class PosConfig(models.Model):
         if setting.rate_mode == 'fixed':
             return min(setting.fixed_rate, setting.fixed_change_rate or setting.fixed_rate)
         return self._nm_odoo_rate(currency) / (1 + setting.exchange_sell_margin_percent / 100.0)
+
+    def _nm_board_amount(self, currency):
+        """Typical amount of ``currency`` on the rate board: the power of 10
+        nearest to 100 units of the currency of the point of sale (100 USD,
+        10,000 XPF, 1,000,000 VND)."""
+        rate = self._nm_odoo_rate(currency)
+        return 10.0 ** max(0, round(math.log10(100 * rate))) if rate > 0 else 100.0
+
+    def _nm_rate_board(self):
+        """Exchange rates of the counter shown to the customers, for each
+        foreign cash currency, computed by the quote of the counter so that
+        they match the operations exactly:
+
+        - we buy: value of 1 unit of the notes received (cash rate, before
+          the commission) and amount handed back for the typical amount;
+        - we sell: price of 1 unit of the notes handed back (sell rate,
+          before the commission) and amount to pay for the typical amount
+          (reverse quote);
+        - the commission rule of the currency.
+        """
+        self.ensure_one()
+        Exchange = self.env['pos.nm.exchange']
+        main = self.currency_id
+        rows = []
+        for currency in self._nm_get_foreign_cash_currencies().sorted('name'):
+            amount = self._nm_board_amount(currency)
+            buy_unit = 1.0 / self._nm_cash_rate(currency)
+            sell_unit = 1.0 / self._nm_exchange_sell_rate(currency)
+            buy_amount = Exchange._nm_quote(self, currency, amount, main)['amount_out']
+            sell_amount = Exchange._nm_reverse_amount_in(self, main, currency, amount)
+            setting = self._nm_get_currency_setting(currency)
+            rows.append({
+                'currency': currency.name,
+                'currency_id': currency.id,
+                'amount': amount,
+                'amount_formatted': currency.format(amount),
+                'buy_unit': buy_unit,
+                'buy_rate_label': Exchange._nm_rate_label(currency, main, buy_unit),
+                'buy_amount': buy_amount,
+                'buy_amount_formatted': main.format(buy_amount),
+                'sell_unit': sell_unit,
+                'sell_rate_label': Exchange._nm_rate_label(currency, main, sell_unit),
+                'sell_amount': sell_amount,
+                'sell_amount_formatted': main.format(sell_amount),
+                'commission_percent': formatLang(self.env, setting.exchange_commission_percent, digits=2),
+                'commission_fixed': main.format(setting.exchange_commission_fixed),
+                'commission_min': main.format(setting.exchange_commission_min),
+            })
+        return {
+            'config_name': self.name,
+            'licence': self.nm_exchange_licence or '',
+            'date': Exchange._nm_local_datetime(fields.Datetime.now()),
+            'currency': main.name,
+            'rows': rows,
+        }
+
+    def action_nm_print_rate_board(self):
+        return self.env.ref('pos_nm_currency_exchange.action_report_exchange_rates').report_action(self)
 
     def action_nm_view_exchanges(self):
         self.ensure_one()

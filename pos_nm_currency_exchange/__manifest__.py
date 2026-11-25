@@ -46,12 +46,15 @@ Requirements
     "data": [
         "security/ir.access.csv",
         "data/ir_sequence_data.xml",
+        "receipt/pos_exchange_receipt.xml",
+        "report/pos_exchange_reports.xml",
+        "data/mail_template_data.xml",
+        "wizard/pos_exchange_register_wizard.xml",
         "views/pos_exchange_views.xml",
         "views/pos_currency_setting_views.xml",
         "views/pos_session_views.xml",
         "views/res_config_settings.xml",
         "views/res_partner_views.xml",
-        "receipt/pos_exchange_receipt.xml",
     ],
     "assets": {
         "point_of_sale._assets_pos": [

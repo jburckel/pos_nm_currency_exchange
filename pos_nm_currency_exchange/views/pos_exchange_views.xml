@@ -8,6 +8,7 @@
                   decoration-muted="state == 'cancelled'">
                 <field name="name"/>
                 <field name="date"/>
+                <field name="operation_type" optional="hide"/>
                 <field name="config_id" optional="show"/>
                 <field name="session_id" optional="hide"/>
                 <field name="cashier_name" optional="show"/>
@@ -34,6 +35,9 @@
         <field name="arch" type="xml">
             <form string="Currency Exchange" create="false" delete="false">
                 <header>
+                    <button name="action_send_mail" type="object" string="Send by E-mail" class="btn-primary"
+                            invisible="not partner_id"/>
+                    <button name="%(action_report_pos_nm_exchange)d" type="action" string="Print"/>
                     <button name="action_cancel" type="object" string="Cancel Operation"
                             invisible="state != 'done'" groups="point_of_sale.group_pos_manager"
                             confirm="Cancel this operation? Two opposite lines hand the notes received back to the customer and take back the notes handed back, while the session is open."/>
@@ -55,6 +59,7 @@
                     <group>
                         <group string="Operation">
                             <field name="date"/>
+                            <field name="operation_type"/>
                             <field name="session_id"/>
                             <field name="config_id"/>
                             <field name="cashier_name"/>
@@ -91,6 +96,7 @@
                         </group>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -124,12 +130,17 @@
                         domain="[('date', '&gt;=', 'today'), ('date', '&lt;', 'tomorrow')]"/>
                 <filter string="With Customer" name="with_customer" domain="[('partner_id', '!=', False)]"/>
                 <separator/>
+                <filter string="Purchase of foreign currency" name="purchase" domain="[('operation_type', '=', 'purchase')]"/>
+                <filter string="Sale of foreign currency" name="sale" domain="[('operation_type', '=', 'sale')]"/>
+                <filter string="Cross exchange" name="cross" domain="[('operation_type', '=', 'cross')]"/>
+                <separator/>
                 <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
                 <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <group>
                     <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
                     <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
                     <filter string="Cashier" name="group_by_cashier" domain="[]" context="{'group_by': 'cashier_name'}"/>
+                    <filter string="Operation Type" name="group_by_operation_type" domain="[]" context="{'group_by': 'operation_type'}"/>
                     <filter string="Status" name="group_by_state" domain="[]" context="{'group_by': 'state'}"/>
                     <filter string="Received Currency" name="group_by_currency_in" domain="[]" context="{'group_by': 'currency_in_id'}"/>
                     <filter string="Handed Currency" name="group_by_currency_out" domain="[]" context="{'group_by': 'currency_out_id'}"/>
@@ -161,5 +172,72 @@
         parent="point_of_sale.menu_point_of_sale"
         sequence="55"
         action="action_pos_nm_exchange"
+        groups="point_of_sale.group_pos_manager"/>
+
+    <!-- Exchange register: every operation in the order of the references,
+        the cancelled ones included, with the identity documents; exported
+        to Excel by the standard export, printed in PDF by the wizard. -->
+    <record id="view_pos_nm_exchange_register_list" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.register.list</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="Exchange Register" create="false" edit="false" delete="false" default_order="name, id"
+                  decoration-muted="state == 'cancelled'">
+                <header>
+                    <button name="%(action_pos_nm_exchange_register_wizard)d" type="action" string="Print Register"
+                            display="always"/>
+                </header>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="config_id"/>
+                <field name="cashier_name"/>
+                <field name="operation_type"/>
+                <field name="currency_in_id" string="Received Currency"/>
+                <field name="amount_in"/>
+                <field name="currency_out_id" string="Handed Currency"/>
+                <field name="amount_out"/>
+                <field name="rate" optional="hide"/>
+                <field name="rate_label"/>
+                <field name="commission" sum="Commission"/>
+                <field name="rate_margin" sum="Rate Margin"/>
+                <field name="customer_name"/>
+                <field name="id_document_type" optional="show"/>
+                <field name="id_document_number" optional="show"/>
+                <field name="id_document_country_id" optional="hide"/>
+                <field name="id_document_expiry" optional="hide"/>
+                <field name="id_nationality_id" optional="hide"/>
+                <field name="id_birthdate" optional="hide"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-danger="state == 'cancelled'"/>
+                <field name="company_currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_exchange_register" model="ir.actions.act_window">
+        <field name="name">Exchange Register</field>
+        <field name="res_model">pos.nm.exchange</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_pos_nm_exchange_register_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_pos_nm_exchange_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No exchange operation yet
+            </p>
+            <p>
+                Every exchange operation in the order of its reference, the cancelled ones included. Export the list
+                to Excel, or print the register of a period with Print Register.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_pos_nm_exchange_register"
+        name="Exchange Register"
+        parent="point_of_sale.menu_point_rep"
+        sequence="6"
+        action="action_pos_nm_exchange_register"
         groups="point_of_sale.group_pos_manager"/>
 </odoo>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.ExchangeRatesPopup">
+        <Dialog title.translate="Exchange Rates" size="'lg'" contentClass="'nm-exchange-rates'">
+            <div class="text-muted mb-2">
+                <t t-out="this.state.board.date"/>
+                <t t-if="this.state.board.licence"> - Licence No. <t t-out="this.state.board.licence"/></t>
+            </div>
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Currency</th>
+                        <th class="text-end">We buy</th>
+                        <th class="text-end">You receive</th>
+                        <th class="text-end">We sell</th>
+                        <th class="text-end">You pay</th>
+                        <th class="text-end">Commission</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="this.state.board.rows" t-as="row" t-key="row.currency_id" class="nm-exchange-rate-row">
+                        <td class="fw-bold" t-out="row.currency"/>
+                        <td class="text-end nm-exchange-buy-rate" t-out="row.buy_rate_label"/>
+                        <td class="text-end nm-exchange-buy-amount">
+                            <t t-out="row.amount_formatted"/> → <t t-out="row.buy_amount_formatted"/>
+                        </td>
+                        <td class="text-end nm-exchange-sell-rate" t-out="row.sell_rate_label"/>
+                        <td class="text-end nm-exchange-sell-amount">
+                            <t t-out="row.amount_formatted"/> ← <t t-out="row.sell_amount_formatted"/>
+                        </td>
+                        <td class="text-end">
+                            <t t-out="row.commission_percent"/> % + <t t-out="row.commission_fixed"/>,
+                            min. <t t-out="row.commission_min"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="small text-muted">
+                Rates before the commission; the amounts include it and are rounded to the notes and coins.
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary btn-lg nm-exchange-rates-print" t-att-disabled="this.state.printing"
+                        t-on-click="this.print">Print</button>
+                <button class="btn btn-secondary btn-lg" t-on-click="() => this.props.close()">Close</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

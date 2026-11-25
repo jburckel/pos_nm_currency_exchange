@@ -21,6 +21,13 @@ ID_DOCUMENT_FIELDS = [
     ('id_birthdate', 'nm_birthdate', 'birthdate'),
 ]
 
+# The operation from the point of view of the shop.
+OPERATION_TYPES = [
+    ('purchase', 'Purchase of foreign currency'),
+    ('sale', 'Sale of foreign currency'),
+    ('cross', 'Cross exchange'),
+]
+
 
 class PosNmExchange(models.Model):
     """Currency exchange operation at the register: the customer brings
@@ -36,6 +43,7 @@ class PosNmExchange(models.Model):
     realized when the foreign drawers are deposited or revalued.
     """
     _name = 'pos.nm.exchange'
+    _inherit = ['mail.thread']
     _description = 'POS Currency Exchange'
     _order = 'date desc, id desc'
     _check_company_auto = True
@@ -111,6 +119,11 @@ class PosNmExchange(models.Model):
                              help='Rate of the operation in the direction where it is at least 1, '
                                   'commission included.')
     note = fields.Char(string='Note', help='Free note of the cashier, the only field a manager can edit.')
+    operation_type = fields.Selection(
+        OPERATION_TYPES, string='Operation Type', compute='_compute_operation_type', store=True,
+        help='The operation from the point of view of the shop: purchase of foreign currency (foreign '
+             'notes received), sale of foreign currency (foreign notes handed back) or cross exchange '
+             '(two foreign currencies).')
     statement_line_in_id = fields.Many2one('account.bank.statement.line', string='Received Line', readonly=True,
                                            ondelete='restrict', check_company=True)
     statement_line_out_id = fields.Many2one('account.bank.statement.line', string='Handed Line', readonly=True,
@@ -138,6 +151,16 @@ class PosNmExchange(models.Model):
         for exchange in self:
             exchange.rate_label = self._nm_rate_label(exchange.currency_in_id, exchange.currency_out_id, exchange.rate)
 
+    @api.depends('currency_in_id', 'currency_out_id', 'company_currency_id')
+    def _compute_operation_type(self):
+        for exchange in self:
+            if exchange.currency_out_id == exchange.company_currency_id:
+                exchange.operation_type = 'purchase'
+            elif exchange.currency_in_id == exchange.company_currency_id:
+                exchange.operation_type = 'sale'
+            else:
+                exchange.operation_type = 'cross'
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -151,7 +174,14 @@ class PosNmExchange(models.Model):
         if not self.env.su and set(vals) - {'note'}:
             raise UserError(_("An exchange operation cannot be edited, only its note. "
                               "Cancel the operation instead."))
-        return super().write(vals)
+        # Logged in the chatter whatever the optional tracking module, like
+        # the rates of POS Multi-Currency Cash.
+        old_notes = {exchange.id: exchange.note for exchange in self} if 'note' in vals else {}
+        result = super().write(vals)
+        for exchange in self.filtered(lambda e: e.id in old_notes and old_notes[e.id] != e.note):
+            exchange.message_post(body=_("Note: %(old)s -> %(new)s",
+                                         old=old_notes[exchange.id] or '', new=exchange.note or ''))
+        return result
 
     @api.ondelete(at_uninstall=False)
     def _unlink_except_operation(self):
@@ -460,10 +490,14 @@ class PosNmExchange(models.Model):
             raise UserError(error)
 
     @api.model
-    def _nm_quote_records(self, config_id, currency_in_id, currency_out_id):
-        """Point of sale and currencies of a quote asked by the register."""
+    def _nm_check_pos_user(self):
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
             raise AccessError(_("You don't have the access rights to use the exchange counter."))
+
+    @api.model
+    def _nm_quote_records(self, config_id, currency_in_id, currency_out_id):
+        """Point of sale and currencies of a quote asked by the register."""
+        self._nm_check_pos_user()
         config = self.env['pos.config'].browse(int(config_id)).exists()
         currency_in = self.env['res.currency'].browse(int(currency_in_id)).exists()
         currency_out = self.env['res.currency'].browse(int(currency_out_id)).exists()
@@ -528,8 +562,7 @@ class PosNmExchange(models.Model):
         """Register: identity document of the customer selected, to confirm
         or complete it in the popup. Read with sudo: the POS users do not
         read these fields of the contacts otherwise."""
-        if not self.env.user.has_group('point_of_sale.group_pos_user'):
-            raise AccessError(_("You don't have the access rights to use the exchange counter."))
+        self._nm_check_pos_user()
         partner = self._nm_partner(partner_id)
         values = self._nm_document_values(partner)
         return {
@@ -586,8 +619,7 @@ class PosNmExchange(models.Model):
             without it, the document of the customer is used
         :return: the data of the exchange receipt
         """
-        if not self.env.user.has_group('point_of_sale.group_pos_user'):
-            raise AccessError(_("You don't have the access rights to use the exchange counter."))
+        self._nm_check_pos_user()
         if uuid:
             recorded = self.sudo().search([('uuid', '=', uuid), ('session_id', '=', int(session_id))], limit=1)
             if recorded:
@@ -630,7 +662,9 @@ class PosNmExchange(models.Model):
         self._nm_check_drawer(session, currency_out, quote['amount_out'])
         employee, cashier_name, operator = self._nm_operator(config, employee_id)
 
-        exchange = self.sudo().create({
+        # The cashier does not follow the operations: the receipt e-mailed
+        # to the customer is not sent to the cashier too.
+        exchange = self.sudo().with_context(mail_create_nosubscribe=True, mail_create_nolog=True).create({
             'session_id': session.id,
             'partner_id': partner.id,
             'customer_name': partner.name or False,
@@ -731,16 +765,33 @@ class PosNmExchange(models.Model):
             'statement_line_cancel_in_id': reversals[0].id,
             'statement_line_cancel_out_id': reversals[1].id,
         })
-        session.message_post(body=_(
-            "Currency exchange %(name)s cancelled by %(user)s.", name=self.name, user=self.env.user.name))
+        message = _("Currency exchange %(name)s cancelled by %(user)s.", name=self.name, user=self.env.user.name)
+        session.message_post(body=message)
+        self.message_post(body=message)
 
-    def _nm_receipt_data(self):
+    @api.model
+    def _nm_local_datetime(self, value):
+        """``value`` in the time zone of the user, with the seconds."""
+        return fields.Datetime.context_timestamp(self, value).strftime('%Y-%m-%d %H:%M:%S') if value else ''
+
+    def _nm_receipt_data(self, copy=False):
+        """Content of the exchange receipt, printed at the register and in
+        the PDF of the operation.
+
+        :param copy: the receipt is printed again: marked as a copy
+        """
         self.ensure_one()
         company_currency = self.company_currency_id
+        config = self.config_id
         return {
             'id': self.id,
             'name': self.name,
-            'date': fields.Datetime.context_timestamp(self, self.date).strftime('%Y-%m-%d %H:%M'),
+            'date': self._nm_local_datetime(self.date),
+            'operation_type': dict(self._fields['operation_type']._description_selection(self.env)).get(
+                self.operation_type, ''),
+            'licence': config.nm_exchange_licence or '',
+            'receipt_header': config.receipt_header or '',
+            'receipt_footer': config.receipt_footer or '',
             'cashier_name': self.cashier_name or '',
             'partner_name': self.customer_name or '',
             'id_document': self._nm_masked_document(),
@@ -754,6 +805,67 @@ class PosNmExchange(models.Model):
             'commission': company_currency.format(self.commission),
             'rate_label': self.rate_label,
             'note': self.note or '',
+            'cancelled': self.state == 'cancelled',
+            'cancel_date': self._nm_local_datetime(self.cancel_date),
+            'copy': copy,
+        }
+
+    @api.model
+    def get_session_operations(self, session_id):
+        """Register: operations of the session, the latest first, to print
+        their receipt again."""
+        self._nm_check_pos_user()
+        operation_types = dict(self._fields['operation_type']._description_selection(self.env))
+        return [{
+            'id': exchange.id,
+            'name': exchange.name,
+            'date': self._nm_local_datetime(exchange.date),
+            'operation_type': operation_types.get(exchange.operation_type, ''),
+            'partner_name': exchange.customer_name or '',
+            'amount_in': exchange.currency_in_id.format(exchange.amount_in),
+            'amount_out': exchange.currency_out_id.format(exchange.amount_out),
+            'cancelled': exchange.state == 'cancelled',
+        } for exchange in self.search([('session_id', '=', int(session_id))])]
+
+    @api.model
+    def get_receipt(self, exchange_id):
+        """Register: receipt of an operation printed again, as a copy, with
+        its cancellation if it was cancelled since."""
+        self._nm_check_pos_user()
+        exchange = self.browse(int(exchange_id)).exists()
+        if not exchange:
+            raise UserError(_("Unknown exchange operation."))
+        exchange.check_access('read')
+        return exchange._nm_receipt_data(copy=True)
+
+    @api.model
+    def get_rate_board(self, config_id):
+        """Register: exchange rates of the counter (see pos.config._nm_rate_board)."""
+        self._nm_check_pos_user()
+        config = self.env['pos.config'].browse(int(config_id)).exists()
+        if not config:
+            raise UserError(_("Unknown point of sale or currency."))
+        config.check_access('read')
+        return config._nm_rate_board()
+
+    def action_send_mail(self):
+        """E-mail the receipt of the operation (PDF attached) to its customer."""
+        self.ensure_one()
+        template = self.env.ref('pos_nm_currency_exchange.mail_template_pos_nm_exchange', raise_if_not_found=False)
+        return {
+            'name': _('Send Exchange Receipt'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'mail.compose.message',
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'new',
+            'context': {
+                'default_model': self._name,
+                'default_res_ids': self.ids,
+                'default_template_id': template.id if template else False,
+                'default_composition_mode': 'comment',
+                'force_email': True,
+            },
         }
 
     def _nm_masked_document(self):

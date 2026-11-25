@@ -11,13 +11,17 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
 
     def test_pos_currency_exchange_tour(self):
         """50 EUR received at the rate 0.87 (worth 57.47), 2% commission
-        (1.15): 56.32 handed back in the main currency."""
+        (1.15): 56.32 handed back in the main currency. The receipt is
+        printed again from Exchange Operations, the rates from Exchange
+        Rates."""
         foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
         commission_account = self.env['account.account'].create({
             'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})
         self.main_pos_config.write({
             'nm_exchange_enabled': True,
             'nm_exchange_income_account_id': commission_account.id,
+            'nm_exchange_licence': 'LIC-TOUR-7',
+            'receipt_header': 'Tour Header',
         })
         self.env['pos.nm.currency.setting'].create({
             'config_id': self.main_pos_config.id,

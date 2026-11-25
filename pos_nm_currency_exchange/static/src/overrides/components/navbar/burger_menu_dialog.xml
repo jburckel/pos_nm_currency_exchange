@@ -8,6 +8,18 @@
                onClick="() => this.pos.nmCurrencyExchange()"
                btnLabel.translate="Currency Exchange"
             />
+            <t t-if="this.pos.nmShowExchangeButton"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'article'"
+               onClick="() => this.pos.nmExchangeOperations()"
+               btnLabel.translate="Exchange Operations"
+            />
+            <t t-if="this.pos.nmShowExchangeButton"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'show_chart'"
+               onClick="() => this.pos.nmExchangeRates()"
+               btnLabel.translate="Exchange Rates"
+            />
         </xpath>
     </t>
 </templates>

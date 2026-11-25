@@ -1148,3 +1148,202 @@ class TestPosCurrencyExchange(TestPosAccounting):
             self.env['pos.nm.exchange'].with_user(self.pos_user).search_read([], ['id_document_number'])
         self.assertEqual(self.env['pos.nm.exchange'].with_user(self.pos_user).get_customer_document(
             customer.id)['document']['number'], 'SECRET99')
+
+    # ------------------------------------------------------------------
+    # Receipt, reprint, rate board and register
+    # ------------------------------------------------------------------
+
+    def _render(self, report_ref, docids, data=None):
+        html, _format = self.env['ir.actions.report']._render_qweb_html(report_ref, docids, data=data)
+        return html.decode()
+
+    def test_receipt_content(self):
+        """The receipt prints the header and footer of the POS receipts, the
+        licence number, the operation from the point of view of the shop and
+        the time with the seconds; the PDF of the operation has the same
+        content, with the cancellation once cancelled."""
+        self.pos_config.write({
+            'receipt_header': 'NM Header Line',
+            'receipt_footer': 'NM Footer Line',
+            'nm_exchange_licence': 'LIC-2026-42',
+        })
+        chf = self._add_cash_currency('CHF', 0.8, change_rounding=1.0)
+        session = self._open(fx=500.0, main=100.0, counts={chf: 100.0})
+        Exchange = self.env['pos.nm.exchange']
+        sale = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
+        purchase = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'])
+        cross = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, chf.id)['id'])
+        self.assertEqual((sale.operation_type, purchase.operation_type, cross.operation_type),
+                         ('sale', 'purchase', 'cross'))
+
+        receipt = sale._nm_receipt_data()
+        self.assertEqual(receipt['operation_type'], 'Sale of foreign currency')
+        self.assertRegex(receipt['date'], r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$')
+        self.assertEqual(receipt['licence'], 'LIC-2026-42')
+        self.assertEqual((receipt['receipt_header'], receipt['receipt_footer']), ('NM Header Line', 'NM Footer Line'))
+        self.assertFalse(receipt['cancelled'] or receipt['copy'])
+        self.assertEqual(purchase._nm_receipt_data()['operation_type'], 'Purchase of foreign currency')
+        self.assertEqual(cross._nm_receipt_data()['operation_type'], 'Cross exchange')
+
+        html = self._render('pos_nm_currency_exchange.action_report_pos_nm_exchange', sale.ids)
+        for text in ('NM Header Line', 'NM Footer Line', 'LIC-2026-42', 'Sale of foreign currency', sale.name,
+                     receipt['date'], sale.rate_label, self.main.format(3.2)):
+            self.assertIn(text, html)
+        self.assertNotIn('CANCELLED', html)
+
+        sale.action_cancel()
+        html = self._render('pos_nm_currency_exchange.action_report_pos_nm_exchange', sale.ids)
+        self.assertIn('CANCELLED', html)
+        self.assertIn(sale._nm_receipt_data()['cancel_date'], html)
+
+    def test_reprint_rpc(self):
+        """The register lists the operations of the session and prints their
+        receipt again, as a copy, cancelled when cancelled since."""
+        session = self._open(fx=500.0, main=100.0)
+        Exchange = self.env['pos.nm.exchange']
+        first = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
+        second = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'])
+        first.action_cancel()
+        cashier = Exchange.with_user(self.pos_user)
+        operations = cashier.get_session_operations(session.id)
+        self.assertEqual([op['name'] for op in operations], [second.name, first.name])
+        self.assertEqual([op['cancelled'] for op in operations], [False, True])
+        self.assertEqual(operations[0]['operation_type'], 'Purchase of foreign currency')
+        receipt = cashier.get_receipt(first.id)
+        self.assertTrue(receipt['copy'])
+        self.assertTrue(receipt['cancelled'])
+        self.assertEqual(receipt['amount_out'], self.fx.format(176.0))
+        self.assertFalse(cashier.get_receipt(second.id)['cancelled'])
+        with self.assertRaises(UserError):
+            cashier.get_receipt(0)
+
+    def test_send_by_email(self):
+        """Send by E-mail: the composer with the template sends the receipt
+        to the customer, with the PDF attached."""
+        session = self._open(fx=500.0)
+        customer = self.env['res.partner'].create({'name': 'NM Mail Customer', 'email': 'nm.customer@example.com'})
+        Exchange = self.env['pos.nm.exchange']
+        exchange = Exchange.browse(
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)['id'])
+        # Nobody follows the operation: the e-mail goes to the customer only.
+        self.assertFalse(exchange.message_follower_ids)
+        action = exchange.action_send_mail()
+        self.assertEqual(action['res_model'], 'mail.compose.message')
+        composer = self.env['mail.compose.message'].with_context(action['context']).create({})
+        self.assertIn(customer, composer.partner_ids)
+        self.assertEqual(len(composer.attachment_ids), 1)
+        composer.action_send_mail()
+        message = exchange.message_ids.filtered(lambda m: customer in m.partner_ids)
+        self.assertEqual(len(message), 1)
+        self.assertEqual(len(message.attachment_ids), 1)
+        self.assertIn(exchange.name.replace('/', '_'), message.attachment_ids.name)
+
+    def test_chatter_log(self):
+        """The changes of the note and the cancellation are logged on the
+        operation."""
+        session = self._open(fx=500.0, main=100.0)
+        Exchange = self.env['pos.nm.exchange']
+        exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
+        before = len(exchange.message_ids)
+        exchange.note = 'checked'
+        self.env.flush_all()
+        self.assertEqual(len(exchange.message_ids), before + 1)
+        exchange.action_cancel()
+        self.env.flush_all()
+        self.assertEqual(len(exchange.message_ids), before + 2)
+
+    def test_rate_board(self):
+        """The rate board gives, for EUR, the figures of the quote: 1 EUR
+        bought is worth 1 / 2.2 = 0.45 (the value of 1 EUR received),
+        100 EUR bought hand back the amount of their quote; 1 EUR sold is
+        worth 1.1 / 2 = 0.55, 100 EUR sold cost the smallest amount whose
+        quote hands them back."""
+        self.pos_config.nm_exchange_licence = 'LIC-2026-42'
+        board = self.env['pos.nm.exchange'].with_user(self.pos_user).get_rate_board(self.pos_config.id)
+        self.assertEqual(board['licence'], 'LIC-2026-42')
+        row, = board['rows']
+        self.assertEqual(row['currency'], self.fx.name)
+        self.assertEqual(row['amount'], 100.0)
+        self.assertEqual(self.main.round(row['buy_unit']), self._quote(self.fx, 1.0, self.main)['value_in'])
+        self.assertEqual(row['buy_amount'], self._quote(self.fx, 100.0, self.main)['amount_out'])
+        self.assertEqual(row['buy_amount'], 42.45)  # 100 EUR worth 45.45, commission 3
+        Exchange = self.env['pos.nm.exchange']
+        one_unit = Exchange._nm_reverse_amount_in(self.pos_config, self.main, self.fx, 1.0)
+        self.assertEqual(self.main.round(row['sell_unit']), self._quote(self.main, one_unit, self.fx)['value_out'])
+        self.assertEqual(self.main.round(row['sell_unit']), 0.55)
+        self.assertEqual(self._quote(self.main, row['sell_amount'], self.fx)['amount_out'], 100.0)
+        self.assertLess(self._quote(self.main, row['sell_amount'] - 0.01, self.fx)['amount_out'], 100.0)
+        self.assertEqual(row['sell_amount'], 58.0)  # 55 + 3 of commission
+        self.assertEqual(row['commission_fixed'], self.main.format(1.0))
+        self.assertEqual(row['commission_min'], self.main.format(3.0))
+
+        html = self._render('pos_nm_currency_exchange.action_report_exchange_rates', self.pos_config.ids)
+        for text in ('Exchange Rates', 'LIC-2026-42', 'We buy', 'We sell', row['buy_rate_label'],
+                     row['sell_rate_label'], row['buy_amount_formatted'], row['sell_amount_formatted']):
+            self.assertIn(text, html)
+        action = self.env['res.config.settings'].with_context(discard_logo_check=True).create(
+            {'pos_config_id': self.pos_config.id}).action_nm_print_rate_board()
+        self.assertEqual(action['report_name'], 'pos_nm_currency_exchange.report_exchange_rates')
+
+    def test_rate_board_amount(self):
+        """The typical amount is the power of 10 nearest to 100 units of the
+        currency of the point of sale."""
+        xpf = self._add_cash_currency('XPF', 119.33)
+        self.assertEqual(self.pos_config._nm_board_amount(xpf), 10000.0)
+        self.assertEqual(self.pos_config._nm_board_amount(self.fx), 100.0)
+
+    def test_exchange_register(self):
+        """The register lists every operation of the period on the points of
+        sale chosen, in the order of the references, the cancelled ones
+        included with their status, with the frozen identity document and
+        the totals per currency of the operations done."""
+        self.pos_config.write({'nm_exchange_document_threshold': 50.0})
+        session = self._open(fx=500.0, main=100.0)
+        Exchange = self.env['pos.nm.exchange']
+        customer = self.env['res.partner'].create({'name': 'NM Register Customer'})
+        first = Exchange.browse(Exchange.create_from_ui(
+            session.id, self.main.id, 100.0, self.fx.id, customer.id, document=self._document())['id'])
+        second = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 22.0, self.main.id)['id'])
+        third = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 44.0, self.main.id)['id'])
+        second.action_cancel()
+
+        now = fields.Datetime.now()
+        wizard = self.env['pos.nm.exchange.register.wizard'].create({
+            'date_start': now - timedelta(hours=1),
+            'date_stop': now + timedelta(hours=1),
+            'config_ids': self.pos_config.ids,
+        })
+        action = wizard.with_context(discard_logo_check=True).action_print()
+        self.assertEqual(action['report_name'], 'pos_nm_currency_exchange.report_exchange_register')
+        values = self.env['report.pos_nm_currency_exchange.report_exchange_register']._get_report_values(
+            [], action['data'])
+        self.assertEqual([op['name'] for op in values['operations']], [first.name, second.name, third.name])
+        self.assertEqual([op['cancelled'] for op in values['operations']], [False, True, False])
+        self.assertEqual(values['operations'][0]['document_number'], 'AB1234567')
+        self.assertEqual(values['operations'][0]['customer'], 'NM Register Customer')
+        self.assertEqual(values['operations'][0]['operation_type'], 'Sale of foreign currency')
+        self.assertEqual(values['cancelled_count'], 1)
+        totals = {total['currency']: total for total in values['totals']}
+        # Done: 100 main for 176 EUR, 44 EUR for 17 main (worth 20, commission 3).
+        self.assertEqual(totals[self.fx.name]['amount_in'], self.fx.format(44.0))
+        self.assertEqual(totals[self.fx.name]['amount_out'], self.fx.format(176.0))
+        self.assertEqual(totals[self.main.name]['amount_in'], self.main.format(100.0))
+        self.assertEqual(totals[self.main.name]['amount_out'], self.main.format(17.0))
+        self.assertEqual(totals[self.main.name]['commission'], self.main.format(first.commission + third.commission))
+        self.assertEqual(totals[self.fx.name]['commission'], '')
+
+        html = self._render('pos_nm_currency_exchange.action_report_exchange_register', [], data=action['data'])
+        self.assertLess(html.index(first.name), html.index(second.name))
+        self.assertLess(html.index(second.name), html.index(third.name))
+        for text in ('Exchange Register', 'Cancelled', 'AB1234567', 'NM Register Customer',
+                     'Sale of foreign currency', 'Purchase of foreign currency', first.rate_label,
+                     self.main.format(first.commission + third.commission), 'cancelled operations are listed'):
+            self.assertIn(text, html)
+        # Another point of sale: nothing.
+        other = self.pos_config.copy()
+        values = self.env['report.pos_nm_currency_exchange.report_exchange_register']._get_report_values(
+            [], {**action['data'], 'config_ids': other.ids})
+        self.assertFalse(values['operations'])
+        # The list of the register shows the cancelled operations too.
+        register = self.env.ref('pos_nm_currency_exchange.action_pos_nm_exchange_register')
+        self.assertNotIn('search_default_done', register.context or '')
