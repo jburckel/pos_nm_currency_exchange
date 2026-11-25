@@ -27,6 +27,7 @@ class PosSession(models.Model):
             'res_model': 'pos.nm.exchange',
             'view_mode': 'list,form',
             'domain': [('session_id', '=', self.id)],
+            'context': {'search_default_done': 1},
         }
 
     def _nm_exchange_summary(self):

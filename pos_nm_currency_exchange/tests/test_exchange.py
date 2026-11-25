@@ -415,6 +415,9 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(session.nm_exchange_count, 1)
         self.assertEqual(session.nm_exchange_commission, 3.0)
         self.assertEqual(self.pos_config.nm_exchange_count, 1)
+        # The buttons open the operations done, as they count them.
+        for action in (session.action_nm_view_exchanges(), self.pos_config.action_nm_view_exchanges()):
+            self.assertEqual(action['context'].get('search_default_done'), 1)
         # Once only, and the reversal lines are protected too.
         with self.assertRaises(UserError):
             exchange.action_cancel()

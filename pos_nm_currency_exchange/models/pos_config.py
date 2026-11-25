@@ -65,5 +65,7 @@ class PosConfig(models.Model):
             'res_model': 'pos.nm.exchange',
             'view_mode': 'list,form,pivot',
             'domain': [('config_id', '=', self.id)],
-            'context': {'default_config_id': self.id},
+            # Like the count of the button: the cancelled operations are
+            # one filter away.
+            'context': {'default_config_id': self.id, 'search_default_done': 1},
         }
