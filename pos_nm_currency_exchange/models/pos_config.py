@@ -125,6 +125,14 @@ class PosConfig(models.Model):
         rate = self._nm_odoo_rate(currency)
         return 10.0 ** max(0, round(math.log10(100 * rate))) if rate > 0 else 100.0
 
+    def _nm_format_percent(self, percent):
+        """``percent`` with its 4 decimals at most, without trailing zeros
+        beyond the second one (0.125, 2.50)."""
+        digits = 4
+        while digits > 2 and round(percent, digits - 1) == round(percent, digits):
+            digits -= 1
+        return formatLang(self.env, percent, digits=digits)
+
     def _nm_rate_board(self):
         """Exchange rates of the counter shown to the customers, for each
         foreign cash currency, computed by the quote of the counter so that
@@ -161,7 +169,7 @@ class PosConfig(models.Model):
                 'sell_rate_label': Exchange._nm_rate_label(currency, main, sell_unit),
                 'sell_amount': sell_amount,
                 'sell_amount_formatted': main.format(sell_amount),
-                'commission_percent': formatLang(self.env, setting.exchange_commission_percent, digits=2),
+                'commission_percent': self._nm_format_percent(setting.exchange_commission_percent),
                 'commission_fixed': main.format(setting.exchange_commission_fixed),
                 'commission_min': main.format(setting.exchange_commission_min),
             })

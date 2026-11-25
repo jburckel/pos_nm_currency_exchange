@@ -1276,6 +1276,10 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(row['sell_amount'], 58.0)  # 55 + 3 of commission
         self.assertEqual(row['commission_fixed'], self.main.format(1.0))
         self.assertEqual(row['commission_min'], self.main.format(3.0))
+        self.assertEqual(row['commission_percent'], '2.00')
+        # The 4 decimals of the percentage are kept: 0.125 does not read 0.13.
+        self.setting.exchange_commission_percent = 0.125
+        self.assertEqual(self.pos_config._nm_rate_board()['rows'][0]['commission_percent'], '0.125')
 
         html = self._render('pos_nm_currency_exchange.action_report_exchange_rates', self.pos_config.ids)
         for text in ('Exchange Rates', 'LIC-2026-42', 'We buy', 'We sell', row['buy_rate_label'],
@@ -1347,3 +1351,34 @@ class TestPosCurrencyExchange(TestPosAccounting):
         # The list of the register shows the cancelled operations too.
         register = self.env.ref('pos_nm_currency_exchange.action_pos_nm_exchange_register')
         self.assertNotIn('search_default_done', register.context or '')
+
+    def test_manager_back_office(self):
+        """A Point of Sale manager, not an administrator, e-mails the
+        receipt, edits the note, prints the receipt, the rate board and the
+        register."""
+        session = self._open(fx=500.0)
+        customer = self.env['res.partner'].create({'name': 'NM Manager Customer', 'email': 'nm.mgr@example.com'})
+        Exchange = self.env['pos.nm.exchange']
+        exchange = Exchange.browse(
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)['id'])
+        manager = new_test_user(self.env, login='nm_exchange_manager', groups='point_of_sale.group_pos_manager',
+                                email='nm.manager@example.com')
+        exchange = exchange.with_user(manager)
+        exchange.note = 'checked'
+        action = exchange.action_send_mail()
+        composer = self.env['mail.compose.message'].with_user(manager).with_context(action['context']).create({})
+        composer.action_send_mail()
+        message = exchange.message_ids.filtered(lambda m: customer in m.partner_ids)
+        self.assertEqual(len(message.attachment_ids), 1)
+        report = self.env['ir.actions.report'].with_user(manager)
+        html = report._render_qweb_html('pos_nm_currency_exchange.action_report_pos_nm_exchange', exchange.ids)[0]
+        self.assertIn(exchange.name, html.decode())
+        html = report._render_qweb_html('pos_nm_currency_exchange.action_report_exchange_rates',
+                                        self.pos_config.ids)[0]
+        self.assertIn('We buy', html.decode())
+        now = fields.Datetime.now()
+        wizard = self.env['pos.nm.exchange.register.wizard'].with_user(manager).create({
+            'date_start': now - timedelta(hours=1), 'date_stop': now + timedelta(hours=1)})
+        data = wizard.action_print()['data']
+        html = report._render_qweb_html('pos_nm_currency_exchange.action_report_exchange_register', [], data=data)[0]
+        self.assertIn(exchange.name, html.decode())
