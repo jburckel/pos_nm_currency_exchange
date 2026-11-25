@@ -3,7 +3,7 @@
 import math
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tools.misc import formatLang
 
 # Also set on the field of the settings: a related field does not copy the
@@ -66,6 +66,17 @@ class PosConfig(models.Model):
         for config in self:
             config.nm_exchange_count = counts.get(config, 0)
 
+    def write(self, vals):
+        # The POS users write the point of sale (from the register), but the
+        # settings of the counter control them: identification thresholds,
+        # commission account. Only the managers change them.
+        if not self.env.su and any(name.startswith('nm_exchange_') for name in vals) \
+                and not self.env.user.has_group('point_of_sale.group_pos_manager') \
+                and not self.env.user.has_group('base.group_system'):
+            raise AccessError(_("Only a Point of Sale manager can change the settings of the currency exchange "
+                                "counter."))
+        return super().write(vals)
+
     @api.constrains('nm_exchange_customer_threshold', 'nm_exchange_document_threshold', 'nm_exchange_linked_days')
     def _check_nm_exchange_customer_threshold(self):
         for config in self:
@@ -86,6 +97,8 @@ class PosConfig(models.Model):
         if read_records:
             # The register tells the cashier why the counter cannot be used.
             read_records[0]['_nm_exchange_account_set'] = bool(config.nm_exchange_income_account_id)
+            read_records[0]['_nm_id_document_types'] = self.env['pos.nm.exchange']._fields[
+                'id_document_type']._description_selection(self.env)
         return read_records
 
     def _nm_exchange_currencies(self):
@@ -169,9 +182,11 @@ class PosConfig(models.Model):
                 'sell_rate_label': Exchange._nm_rate_label(currency, main, sell_unit),
                 'sell_amount': sell_amount,
                 'sell_amount_formatted': main.format(sell_amount),
-                'commission_percent': self._nm_format_percent(setting.exchange_commission_percent),
-                'commission_fixed': main.format(setting.exchange_commission_fixed),
-                'commission_min': main.format(setting.exchange_commission_min),
+                'commission_label': _(
+                    "%(percent)s %% + %(fixed)s, min. %(min)s",
+                    percent=self._nm_format_percent(setting.exchange_commission_percent),
+                    fixed=main.format(setting.exchange_commission_fixed),
+                    min=main.format(setting.exchange_commission_min)),
             })
         return {
             'config_name': self.name,

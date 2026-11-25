@@ -11,9 +11,10 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
 
     def test_pos_currency_exchange_tour(self):
         """50 EUR received at the rate 0.87 (worth 57.47), 2% commission
-        (1.15): 56.32 handed back in the main currency. The receipt is
-        printed again from Exchange Operations, the rates from Exchange
-        Rates."""
+        (1.15): 56.32 handed back in the main currency. The response of the
+        first Confirm is lost: Confirm again returns the operation recorded,
+        once. The receipt is printed again from Exchange Operations, the
+        rates from Exchange Rates."""
         foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
         commission_account = self.env['account.account'].create({
             'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})
@@ -59,7 +60,8 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
     def test_pos_currency_exchange_reverse_tour(self):
         """XPF (no decimals, 119.33 for 1 main, 5 XPF coins) besides EUR, no
         commission: 25000 XPF typed in the popup give 209.50; the customer
-        then wants 10000 XPF: 83.81 received (10001 XPF rounded down to 5)."""
+        then wants 9998 XPF: 83.81 received (10001 XPF rounded down to 5),
+        10000 XPF handed back and shown as such."""
         foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
         xpf = self.env.ref('base.XPF')
         xpf.active = True

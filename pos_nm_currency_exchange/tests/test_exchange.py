@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import importlib.util
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -9,7 +10,9 @@ from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import new_test_user, tagged
 from odoo.tools import mute_logger
+from odoo.tools.misc import file_path
 from odoo.addons.point_of_sale.tests.test_pos_accounting import TestPosAccounting
+from odoo.addons.pos_nm_currency_exchange import _nm_check_parent_version
 
 
 @tagged('post_install', '-at_install')
@@ -271,7 +274,7 @@ class TestPosCurrencyExchange(TestPosAccounting):
     def test_exchange_operation(self):
         session = self._open(fx=500.0)
         Exchange = self.env['pos.nm.exchange']
-        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, False, 'tourist')
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, False, note='tourist')
         exchange = Exchange.browse(receipt['id'])
         self.assertTrue(exchange.name.startswith('EXC/'))
         self.assertEqual(exchange.state, 'done')
@@ -777,9 +780,19 @@ class TestPosCurrencyExchange(TestPosAccounting):
         Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
         receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, uuid='nm-uuid-1')
         lines = session.bank_statement_line_ids
-        # Even when the cashier changed the amount before confirming again.
-        again = Exchange.create_from_ui(session.id, self.main.id, 50.0, self.fx.id, uuid='nm-uuid-1')
+        again = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, uuid='nm-uuid-1',
+                                        amount_out=176.0)
         self.assertEqual(again, receipt)
+        # Not when the cashier changed the popup in between: another amount,
+        # currency, amount handed back or customer is another operation.
+        for args, kwargs in (
+            ((self.main.id, 50.0, self.fx.id), {}),
+            ((self.fx.id, 100.0, self.main.id), {}),
+            ((self.main.id, 100.0, self.fx.id), {'amount_out': 175.0}),
+            ((self.main.id, 100.0, self.fx.id, self.partner_id), {}),
+        ):
+            with self.assertRaisesRegex(UserError, 'already recorded as %s' % receipt['name']):
+                Exchange.create_from_ui(session.id, *args, uuid='nm-uuid-1', **kwargs)
         self.assertEqual(len(session.nm_exchange_ids), 1)
         self.assertEqual(session.nm_exchange_ids.uuid, 'nm-uuid-1')
         self.assertEqual(session.bank_statement_line_ids, lines)
@@ -1095,11 +1108,19 @@ class TestPosCurrencyExchange(TestPosAccounting):
         # The personal data is not copied with the contact.
         self.assertFalse(customer.copy().nm_id_document_number)
 
-        # The register prefills the document of the customer.
-        loaded = Exchange.get_customer_document(customer.id)
-        self.assertEqual(loaded['document']['number'], 'AB1234567')
-        self.assertEqual(loaded['document']['birthdate'], '1980-05-17')
-        self.assertIn('passport', dict(loaded['types']))
+        # The change is logged on the customer, with the masked number.
+        message = customer.message_ids[0]
+        self.assertIn(receipt['name'], message.body)
+        self.assertIn('Passport ****4567', message.body)
+        self.assertNotIn('AB1234567', message.body)
+        # The register prefills the document of the customer, masked, without
+        # the personal data.
+        loaded = Exchange.get_customer_document(self.pos_config.id, customer.id)
+        self.assertEqual(loaded, {
+            'type': 'passport', 'number_masked': '****4567', 'country_id': self.env.ref('base.fr').id,
+            'expiry': self._document()['expiry']})
+        types = self.pos_config._load_pos_data_read(self.pos_config, self.pos_config)[0]['_nm_id_document_types']
+        self.assertIn('passport', dict(types))
         # Without a document sent, the one of the customer is used.
         second = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)
         self.assertEqual(second['id_document'], 'Passport ****4567')
@@ -1146,8 +1167,141 @@ class TestPosCurrencyExchange(TestPosAccounting):
             Partner.browse(customer.id).write({'nm_id_document_number': 'FORGED'})
         with self.assertRaises(AccessError):
             self.env['pos.nm.exchange'].with_user(self.pos_user).search_read([], ['id_document_number'])
-        self.assertEqual(self.env['pos.nm.exchange'].with_user(self.pos_user).get_customer_document(
-            customer.id)['document']['number'], 'SECRET99')
+        # The register only reads the end of the number, at a point of sale
+        # whose counter asks for identity documents.
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        with self.assertRaisesRegex(UserError, 'does not ask for identity documents'):
+            Exchange.get_customer_document(self.pos_config.id, customer.id)
+        self.pos_config.nm_exchange_document_threshold = 1000.0
+        self.assertEqual(Exchange.get_customer_document(self.pos_config.id, customer.id)['number_masked'], '****ET99')
+        self.pos_config.nm_exchange_enabled = False
+        with self.assertRaisesRegex(UserError, 'disabled'):
+            Exchange.get_customer_document(self.pos_config.id, customer.id)
+
+    def test_identity_document_confirmed(self):
+        """The register sends the document with the fields left empty that it
+        does not show: the number, nationality and date of birth recorded on
+        the customer are kept for the same document. A new document keeps
+        only the personal data. The contact of a user is changed by a
+        manager only."""
+        self.pos_config.write({'nm_exchange_document_threshold': 50.0})
+        session = self._open(fx=10000.0)
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        customer = self.env['res.partner'].create({'name': 'NM Returning Customer', **{
+            'nm_id_document_type': 'passport', 'nm_id_document_number': 'AB1234567',
+            'nm_id_document_expiry': fields.Date.today() - timedelta(days=1),
+            'nm_nationality_id': self.env.ref('base.fr').id, 'nm_birthdate': '1980-05-17'}})
+        renewed = str(fields.Date.today() + timedelta(days=30))
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id, document={
+            'type': 'passport', 'number': '', 'expiry': renewed})
+        exchange = Exchange.browse(receipt['id']).with_user(self.env.user)
+        self.assertEqual(exchange.id_document_number, 'AB1234567')
+        self.assertEqual(exchange.id_birthdate, fields.Date.to_date('1980-05-17'))
+        self.assertEqual(str(customer.nm_id_document_expiry), renewed)
+        # The same document again: the contact is not written or logged.
+        messages = customer.message_ids
+        Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id, document={
+            'type': 'passport', 'number': '', 'expiry': renewed})
+        self.assertEqual(customer.message_ids, messages)
+        # Another document: its number is required, its expiry is not taken
+        # from the passport.
+        with self.assertRaisesRegex(UserError, 'type and the number'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id, document={
+                'type': 'id_card', 'number': '', 'expiry': renewed})
+        with self.assertRaisesRegex(UserError, 'expiry date'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id, document={
+                'type': 'id_card', 'number': 'ID-998877'})
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id, document={
+            'type': 'id_card', 'number': 'ID-998877', 'expiry': renewed})
+        self.assertEqual(receipt['id_document'], 'Identity Card ****8877')
+        self.assertEqual(customer.nm_id_document_number, 'ID-998877')
+        self.assertEqual(customer.nm_nationality_id, self.env.ref('base.fr'))
+
+        # The contact of a user: the cashier does not overwrite it.
+        user_partner = new_test_user(self.env, login='nm_exchange_employee', groups='base.group_user').partner_id
+        user_partner.write({'nm_id_document_type': 'passport', 'nm_id_document_number': 'ADMIN0001',
+                            'nm_id_document_expiry': renewed})
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, user_partner.id, document={
+            'type': 'passport', 'number': 'FORGED001', 'expiry': renewed})
+        self.assertEqual(receipt['id_document'], 'Passport ****D001')
+        self.assertEqual(user_partner.nm_id_document_number, 'ADMIN0001')
+
+    def test_linked_value_not_shown(self):
+        """The quote gives the exchanges of the customer over the period only
+        when they make the customer or the document required."""
+        self.pos_config.write({'nm_exchange_document_threshold': 1000.0, 'nm_exchange_linked_days': 7})
+        session = self._open(fx=10000.0)
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        customer = self.env['res.partner'].create({'name': 'NM Private Volume'})
+        Exchange.create_from_ui(session.id, self.main.id, 500.0, self.fx.id, customer.id)
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 10.0, self.fx.id, customer.id)
+        self.assertFalse(quote['document_required'])
+        self.assertEqual(quote['linked_value'], 10.0)
+        self.assertNotIn('threshold_exceeded', quote)
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 600.0, self.fx.id, customer.id)
+        self.assertTrue(quote['document_required'])
+        self.assertEqual(quote['linked_value'], 1100.0)
+
+    def _run_migration(self, name):
+        path = file_path(f'pos_nm_currency_exchange/migrations/20.0.2.0.0/{name}.py')
+        spec = importlib.util.spec_from_file_location('odoo.addons.pos_nm_currency_exchange.nm_migration', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.migrate(self.env.cr, '20.0.1.1.0')
+        self.env.invalidate_all()
+
+    def test_migration_missing_leg(self):
+        """An operation of 20.0.1.x whose handed-back line was deleted is
+        reported once on upgrade, on the operation."""
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
+        self.env.flush_all()
+        self.env.cr.execute("UPDATE pos_nm_exchange SET statement_line_out_id = NULL WHERE id = %s", [exchange.id])
+        self.env.invalidate_all()
+        before = len(exchange.message_ids)
+        with self.assertLogs('odoo.addons.pos_nm_currency_exchange', level='WARNING'):
+            self._run_migration('post-migrate')
+        self.assertEqual(len(exchange.message_ids), before + 1)
+        self.assertIn('handed back', exchange.message_ids[0].body)
+        # Run again: still logged, not posted twice.
+        with self.assertLogs('odoo.addons.pos_nm_currency_exchange', level='WARNING'):
+            self._run_migration('post-migrate')
+        self.assertEqual(len(exchange.message_ids), before + 1)
+
+    def test_migration_sell_margin(self):
+        """A negative cash rate margin keeps its sell rate: -2 % handed back
+        0.98 of the rate of Odoo, the sell margin 2.04 % does too."""
+        self.setting.margin_percent = -2.0
+        self.env.flush_all()
+        self.env.cr.execute("UPDATE pos_nm_currency_setting SET exchange_sell_margin_percent = NULL WHERE id = %s",
+                            [self.setting.id])
+        self._run_migration('pre-migrate')
+        self.assertAlmostEqual(self.setting.exchange_sell_margin_percent, 2.0408, places=4)
+        self.assertAlmostEqual(self.pos_config._nm_exchange_sell_rate(self.fx), 2.0 * 0.98, places=6)
+
+    def test_parent_version_guard(self):
+        """Installing or upgrading on POS Multi-Currency Cash older than
+        20.0.2.1.0 is refused: the register would not load."""
+        _nm_check_parent_version(self.env)
+        self.env.cr.execute(
+            "UPDATE ir_module_module SET latest_version = '20.0.2.0.0' WHERE name = 'pos_nm_multicurrencies'")
+        with self.assertRaisesRegex(UserError, '20.0.2.1.0 or later'):
+            _nm_check_parent_version(self.env)
+
+    def test_counter_settings_access(self):
+        """The POS users read the point of sale but do not change the
+        settings of the counter: they control the cashiers."""
+        manager = new_test_user(
+            self.env, login='nm_exchange_manager', groups='point_of_sale.group_pos_manager',
+            company_id=self.company.id)
+        for vals in ({'nm_exchange_document_threshold': 0.0}, {'nm_exchange_customer_always': False},
+                     {'nm_exchange_linked_days': 0}, {'nm_exchange_income_account_id': self.profit_account.id},
+                     {'nm_exchange_enabled': False}):
+            with self.assertRaises(AccessError):
+                self.pos_config.with_user(self.pos_user).write(vals)
+        self.pos_config.with_user(manager).write({'nm_exchange_document_threshold': 500.0})
+        self.assertEqual(self.pos_config.nm_exchange_document_threshold, 500.0)
 
     # ------------------------------------------------------------------
     # Receipt, reprint, rate board and register
@@ -1274,16 +1428,17 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(self._quote(self.main, row['sell_amount'], self.fx)['amount_out'], 100.0)
         self.assertLess(self._quote(self.main, row['sell_amount'] - 0.01, self.fx)['amount_out'], 100.0)
         self.assertEqual(row['sell_amount'], 58.0)  # 55 + 3 of commission
-        self.assertEqual(row['commission_fixed'], self.main.format(1.0))
-        self.assertEqual(row['commission_min'], self.main.format(3.0))
-        self.assertEqual(row['commission_percent'], '2.00')
+        # One sentence, translated as a whole.
+        self.assertEqual(row['commission_label'], '2.00 %% + %s, min. %s' % (
+            self.main.format(1.0), self.main.format(3.0)))
         # The 4 decimals of the percentage are kept: 0.125 does not read 0.13.
         self.setting.exchange_commission_percent = 0.125
-        self.assertEqual(self.pos_config._nm_rate_board()['rows'][0]['commission_percent'], '0.125')
+        self.assertTrue(self.pos_config._nm_rate_board()['rows'][0]['commission_label'].startswith('0.125 % +'))
 
         html = self._render('pos_nm_currency_exchange.action_report_exchange_rates', self.pos_config.ids)
         for text in ('Exchange Rates', 'LIC-2026-42', 'We buy', 'We sell', row['buy_rate_label'],
-                     row['sell_rate_label'], row['buy_amount_formatted'], row['sell_amount_formatted']):
+                     row['sell_rate_label'], row['buy_amount_formatted'], row['sell_amount_formatted'],
+                     ', min. '):
             self.assertIn(text, html)
         action = self.env['res.config.settings'].with_context(discard_logo_check=True).create(
             {'pos_config_id': self.pos_config.id}).action_nm_print_rate_board()

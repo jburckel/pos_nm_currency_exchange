@@ -87,10 +87,7 @@
                                     <td class="text-end">
                                         <span t-out="row['amount_formatted']"/> &#8592; <span t-out="row['sell_amount_formatted']"/>
                                     </td>
-                                    <td class="text-end">
-                                        <span t-out="row['commission_percent']"/> % + <span t-out="row['commission_fixed']"/>,
-                                        min. <span t-out="row['commission_min']"/>
-                                    </td>
+                                    <td class="text-end" t-out="row['commission_label']"/>
                                 </tr>
                             </tbody>
                         </table>

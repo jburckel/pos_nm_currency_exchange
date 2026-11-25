@@ -194,8 +194,10 @@ rechts) und tippen Sie auf **Geldwechsel**:
 4. wenn der Kunde erfasst werden muss, wird die Schaltfläche **Kunde** rot
    mit dem Grund: Tippen Sie darauf und wählen Sie den Kunden (legen Sie
    ihn bei Bedarf an). Wenn das Ausweisdokument erforderlich ist,
-   erscheinen seine Felder, vorausgefüllt aus dem Kontakt: Art, Nummer und
-   Ablaufdatum sind Pflichtfelder;
+   erscheinen seine Felder, vorausgefüllt aus dem Kontakt (von der Nummer
+   nur die letzten 4 Zeichen): Art, Nummer und Ablaufdatum sind
+   Pflichtfelder, und leer gelassene Felder behalten die Werte des
+   Kontakts;
 5. fügen Sie bei Bedarf eine Notiz hinzu und tippen Sie auf
    **Bestätigen**. Die Kassenschublade öffnet sich, der Wechselbeleg wird
    gedruckt und eine Benachrichtigung fasst den Vorgang zusammen.
@@ -346,7 +348,10 @@ druckt den Namen des Kunden und die Dokumentart mit nur den letzten
 4 Zeichen der Nummer (zum Beispiel „Reisepass \*\*\*\*4567“).
 
 Die Ausweisdokumente sind nur für Kassenadministratoren sichtbar; der
-Kassierer sieht das Dokument des gewählten Kunden im Fenster.
+Kassierer sieht im Fenster Art, Ausstellungsland, Ablaufdatum und die
+letzten 4 Zeichen der Nummer des gewählten Kunden. Ein an der Kasse
+geändertes Dokument wird im Kontakt protokolliert (den Kontakt eines
+Benutzers ändert nur ein Kassenadministrator).
 
 Die Vorgänge prüfen
 ===================
@@ -457,9 +462,11 @@ Aktualisierung von 20.0.1.x
 ===========================
 
 * Aktualisieren Sie zuerst POS Multi-Currency Cash auf 20.0.2.1.0 oder
-  neuer.
+  neuer: Sonst werden Installation und Aktualisierung verweigert.
 * Die **Wechsel-Verkaufsmarge** jeder Währung wird auf ihre
-  Kassenkurs-Marge gesetzt (0, wenn negativ): Die ausgezahlten Scheine
+  Kassenkurs-Marge gesetzt (eine negative Marge wird zur Verkaufsmarge,
+  die denselben Verkaufskurs ergibt, 2,04 % für -2 %): Die ausgezahlten
+  Scheine
   werden nun zum Verkaufskurs bewertet, zugunsten des Geschäfts. Prüfen
   Sie die Margen und die Kurstafel, bevor Sie die Kassen öffnen.
 * Die bereits erfassten Vorgänge erhalten Benutzer, Status, Kurs,
@@ -470,6 +477,12 @@ Aktualisierung von 20.0.1.x
   werden: Verwenden Sie **Vorgang stornieren**.
 * Die Schublade der Währung der Kasse wird nun geprüft: Zählen Sie ihren
   Anfangsbestand.
+* Schließen Sie nach der Aktualisierung die Sitzungen oder laden Sie jede
+  Kasse neu: Eine Kasse mit der vorherigen Version kann keine Vorgänge
+  erfassen.
+* Ein Vorgang, dessen Kontoauszugszeile mit 20.0.1.x gelöscht wurde, wird
+  im Serverprotokoll und durch eine Nachricht im Vorgang gemeldet:
+  Korrigieren Sie die Kassenlade mit einer Bargeldbewegung.
 
 Bekannte Einschränkungen
 ========================

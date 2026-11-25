@@ -112,10 +112,7 @@
                                     </tr>
                                     <tr>
                                         <td class="text-start">Commission</td>
-                                        <td class="text-end font-monospace">
-                                            <span t-out="row['commission_percent']"/> % + <span t-out="row['commission_fixed']"/>,
-                                            min. <span t-out="row['commission_min']"/>
-                                        </td>
+                                        <td class="text-end font-monospace" t-out="row['commission_label']"/>
                                     </tr>
                                 </tbody>
                             </table>

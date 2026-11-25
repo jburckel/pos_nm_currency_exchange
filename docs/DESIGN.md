@@ -117,7 +117,7 @@ drawer revaluation, counts per cashier).
 
 ## Migration 20.0.2.0.0
 
-- pre: Exchange Sell Margin = Cash Rate Margin (0 if negative); user of the
+- pre: Exchange Sell Margin = Cash Rate Margin (-m / (1 + m/100) when negative: same sell rate); user of the
   operations = their creator.
 - post: status done, rate recomputed, rate margin at the rate of Odoo of the day of
   each operation, customer name, linked value, reference sequence `no_gap`. The

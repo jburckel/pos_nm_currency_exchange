@@ -1,10 +1,11 @@
 import { Dialog } from "@web/core/dialog/dialog";
-import { Component, useProps, proxy, t, onWillUnmount } from "@odoo/owl";
+import { Component, useProps, proxy, signal, t, onWillUnmount } from "@odoo/owl";
 import { usePos } from "@point_of_sale/app/hooks/pos_hook";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 import { ConnectionLostError } from "@web/core/network/rpc";
 import { formatCurrency } from "@web/core/currency";
+import { formatDate } from "@web/core/l10n/dates";
 import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
 import { PartnerList } from "@point_of_sale/app/screens/partner_list/partner_list";
 import { uuidv4 } from "@point_of_sale/utils";
@@ -32,9 +33,14 @@ const { DateTime } = luxon;
  *
  * Identification: the quote says whether a customer and an identity
  * document are required (the operation alone, or with the operations of the
- * customer over the linked operations period). The document of the customer
- * selected is loaded to be confirmed or completed, and sent with the
- * operation, which keeps a copy of it.
+ * customer over the linked operations period). The document recorded on the
+ * customer is then loaded, the end of its number only, to be confirmed or
+ * updated, and sent with the operation, which keeps a copy of it: the fields
+ * left empty keep the values of the customer.
+ *
+ * Lost connection: the operation may have been recorded. The inputs are
+ * frozen until it is confirmed again with the same identifier (the server
+ * then returns the operation already recorded) or discarded.
  */
 export class CurrencyExchangePopup extends Component {
     static template = "pos_nm_currency_exchange.CurrencyExchangePopup";
@@ -43,6 +49,7 @@ export class CurrencyExchangePopup extends Component {
         getPayload: t.function().optional(),
         close: t.function(),
     });
+    amountOutRef = signal.ref();
 
     setup() {
         super.setup();
@@ -57,16 +64,27 @@ export class CurrencyExchangePopup extends Component {
             amountIn: "",
             // Amount typed in the "handed back" field: reverse quote.
             amountOut: "",
+            // Amount actually handed back by the reverse quote, shown once the
+            // field is left; the amount typed stays the request.
+            amountOutShown: "",
             reverse: false,
             note: "",
             partner: null,
             document: this.emptyDocument(),
-            documentTypes: [],
+            // Document recorded on the customer (masked number), loaded once
+            // the quote requires it.
+            storedDocument: null,
+            documentPartnerId: null,
+            documentWarning: "",
             quote: null,
             loading: false,
             error: "",
+            // The response of Confirm was lost: inputs frozen until confirmed
+            // again or discarded.
+            pending: false,
             saving: false,
         });
+        this.documentTypes = this.pos.config._nm_id_document_types || [];
         this.quoteTimer = null;
         this.quoteSequence = 0;
         // Sent with the operation: confirmed again after a lost response,
@@ -96,7 +114,7 @@ export class CurrencyExchangePopup extends Component {
      */
     get amountOutValue() {
         if (this.state.reverse) {
-            return this.state.amountOut;
+            return this.state.amountOutShown || this.state.amountOut;
         }
         return this.state.quote ? formatAmountInput(this.state.quote.amount_out, this.state.currencyOutId) : "";
     }
@@ -150,16 +168,30 @@ export class CurrencyExchangePopup extends Component {
             return "";
         }
         const { type, number, expiry } = this.state.document;
-        if (!type || !number.trim()) {
+        if (!type || (!number.trim() && !this.storedNumberMasked)) {
             return _t("Enter the type and the number of the identity document of the customer.");
         }
         if (!expiry) {
             return _t("Enter the expiry date of the identity document of the customer.");
         }
         if (expiry < DateTime.now().toISODate()) {
-            return _t("The identity document of the customer expired on %s: it cannot be accepted.", expiry);
+            return _t(
+                "The identity document of the customer expired on %s: it cannot be accepted.",
+                formatDate(DateTime.fromISO(expiry))
+            );
         }
         return "";
+    }
+    /**
+     * End of the number recorded on the customer, kept when no number is
+     * typed for the same type of document.
+     */
+    get documentNumberLabel() {
+        return _t("Document number");
+    }
+    get storedNumberMasked() {
+        const stored = this.state.storedDocument;
+        return stored && stored.type === this.state.document.type ? stored.number_masked : "";
     }
     /**
      * The operations of the customer over the linked operations period
@@ -192,6 +224,9 @@ export class CurrencyExchangePopup extends Component {
         return { type: "", number: "", country_id: false, expiry: "", nationality_id: false, birthdate: "" };
     }
 
+    amountPlaceholder(currencyId) {
+        return formatAmountInput(0, currencyId);
+    }
     format(amount, currency) {
         return formatCurrency(amount, currency.id);
     }
@@ -232,7 +267,7 @@ export class CurrencyExchangePopup extends Component {
      */
     onAmountOutBlur() {
         if (this.state.reverse && this.isQuoteCurrent) {
-            this.state.amountOut = formatAmountInput(this.state.quote.amount_out, this.state.currencyOutId);
+            this.state.amountOutShown = formatAmountInput(this.state.quote.amount_out, this.state.currencyOutId);
         }
     }
     onAmountBlur() {
@@ -255,7 +290,10 @@ export class CurrencyExchangePopup extends Component {
         this.state.error = "";
         this.state.loading = false;
         if (this.state.reverse) {
+            // The request is the amount typed, not the one rounded for
+            // other currencies.
             this.state.amountIn = "";
+            this.state.amountOutShown = "";
         }
         const amount = this.state.reverse ? this.amountOut : this.amountIn;
         if (!(amount > 0) || this.state.currencyInId === this.state.currencyOutId) {
@@ -289,12 +327,20 @@ export class CurrencyExchangePopup extends Component {
                 if (reverse) {
                     this.state.amountIn = formatAmountInput(quote.amount_in, currencyInId);
                     amountIn = this.amountIn;
+                    // Being typed: shown once the field is left.
+                    if (document.activeElement !== this.amountOutRef()) {
+                        this.state.amountOutShown = formatAmountInput(quote.amount_out, currencyOutId);
+                    }
                 }
                 // The inputs of the quote: Confirm only for these.
                 this.state.quote = {
                     ...quote,
                     key: this.quoteKey(currencyInId, currencyOutId, amountIn, partnerId),
                 };
+                const partner = this.state.partner;
+                if (quote.document_required && partner && this.state.documentPartnerId !== partner.id) {
+                    this.loadDocument(partner);
+                }
             }
         } catch (error) {
             if (sequence === this.quoteSequence) {
@@ -311,36 +357,53 @@ export class CurrencyExchangePopup extends Component {
         const partner = await makeAwaitable(this.pos.dialog, PartnerList, {
             partner: this.state.partner || undefined,
         });
-        if (partner) {
+        // The same customer again keeps the document typed.
+        if (partner && partner.id !== this.state.partner?.id) {
             this.state.partner = partner;
-            this.state.document = this.emptyDocument();
+            this.resetDocument();
             // The operations of the customer may require the document.
             this.scheduleQuote();
-            await this.loadDocument(partner);
         }
     }
     clearCustomer() {
         this.state.partner = null;
-        this.state.document = this.emptyDocument();
+        this.resetDocument();
         this.scheduleQuote();
     }
+    resetDocument() {
+        this.state.document = this.emptyDocument();
+        this.state.storedDocument = null;
+        this.state.documentPartnerId = null;
+        this.state.documentWarning = "";
+    }
     /**
-     * Identity document recorded on the customer, to confirm or complete.
+     * Identity document recorded on the customer, to confirm or update. When
+     * it cannot be loaded, the cashier types it; the next quote tries again.
      */
     async loadDocument(partner) {
+        this.state.documentPartnerId = partner.id;
         try {
-            const { document, types } = await this.pos.data.call("pos.nm.exchange", "get_customer_document", [
+            const stored = await this.pos.data.call("pos.nm.exchange", "get_customer_document", [
+                this.pos.config.id,
                 partner.id,
             ]);
             if (this.state.partner?.id === partner.id) {
-                this.state.documentTypes = types;
-                this.state.document = {
-                    ...this.emptyDocument(),
-                    ...Object.fromEntries(Object.entries(document).filter(([, value]) => value)),
-                };
+                this.state.storedDocument = stored;
+                this.state.documentWarning = "";
+                // Unless the cashier already typed it.
+                const { type, number, country_id, expiry } = this.state.document;
+                if (!type && !number && !country_id && !expiry) {
+                    this.state.document.type = stored.type || "";
+                    this.state.document.country_id = stored.country_id;
+                    this.state.document.expiry = stored.expiry || "";
+                }
             }
         } catch (error) {
-            this.state.error = error?.data?.message || error?.message || _t("The identity document could not be loaded.");
+            if (this.state.partner?.id === partner.id) {
+                this.state.documentPartnerId = null;
+                this.state.documentWarning =
+                    error?.data?.message || error?.message || _t("The identity document could not be loaded.");
+            }
         }
     }
     onDocumentInput(key, ev) {
@@ -367,14 +430,16 @@ export class CurrencyExchangePopup extends Component {
                         this.amountIn,
                         this.state.currencyOutId,
                         this.state.partner ? this.state.partner.id : false,
-                        this.state.note.trim() || false,
-                        // The cashier is decided by the server: the user, and
-                        // with pos_hr the employee logged in, checked there.
-                        (this.pos.config.module_pos_hr && this.pos.accessRight.loggedCashier?.id) || false,
-                        // Refused by the server when the quote changed since.
-                        this.state.quote.amount_out,
                     ],
                     {
+                        note: this.state.note.trim() || false,
+                        // The cashier is decided by the server: the user, and
+                        // with pos_hr the employee logged in, checked there.
+                        employee_id: (this.pos.config.module_pos_hr && this.pos.accessRight.loggedCashier?.id) || false,
+                        // Refused by the server when the quote changed since.
+                        amount_out: this.state.quote.amount_out,
+                        // Confirmed again after a lost response: the operation
+                        // already recorded is returned, not recorded twice.
                         uuid: this.uuid,
                         // Saved on the customer, frozen on the operation.
                         document: this.documentRequired ? this.state.document : undefined,
@@ -404,10 +469,11 @@ export class CurrencyExchangePopup extends Component {
             this.props.close();
         } catch (error) {
             if (error instanceof ConnectionLostError) {
-                this.state.error = _t(
-                    "The connection was lost: the operation may have been recorded. Confirm again once the connection is back: an operation already recorded is not recorded twice."
-                );
+                this.state.pending = true;
             } else {
+                // Refused by the server: nothing was recorded with this
+                // identifier, the inputs can be changed again.
+                this.state.pending = false;
                 this.state.error =
                     error?.data?.message || error?.message || _t("The operation could not be recorded.");
             }

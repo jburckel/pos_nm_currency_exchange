@@ -9,9 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [20.0.2.0.0] - 2026-11-25
 
-Requires `pos_nm_multicurrencies` 20.0.2.1.0 or later. Upgrade with
+Requires `pos_nm_multicurrencies` 20.0.2.1.0 or later (the installation and
+the upgrade are refused otherwise). Upgrade with
 `-u pos_nm_currency_exchange`: the migration fills the new fields of the
-existing operations (see *Upgrade* below).
+existing operations (see *Upgrade* below). Close the sessions, or reload
+every register, after the upgrade: a register still running 20.0.1.x
+cannot record operations.
 
 ### Upgrade: what changes for your counter
 - **The notes handed back are priced at a sell rate, in favour of the
@@ -19,8 +22,10 @@ existing operations (see *Upgrade* below).
   so with a Cash Rate Margin the counter sold foreign notes *below* the
   market (margin 10 %, rate 2.0: 100 received in the POS currency gave
   213 EUR worth 106.50; now 176 EUR worth 88). The new *Exchange Sell
-  Margin (%)* of each currency is set to its Cash Rate Margin on upgrade
-  (0 if negative): check it in *Cash Currencies*. With fixed rates, the
+  Margin (%)* of each currency is set to its Cash Rate Margin on upgrade;
+  a negative Cash Rate Margin, which already sold the notes above the
+  rate of Odoo, becomes the sell margin that keeps that sell rate (-2 %
+  becomes 2.04 %): check it in *Cash Currencies*. With fixed rates, the
   notes are handed back at the lower of the Fixed Rate and the Fixed
   Change Rate.
 - **Operations can no longer be deleted or edited** (only their note, by a
@@ -109,7 +114,9 @@ existing operations (see *Upgrade* below).
   quote; *Confirm* waits for the quote of the amounts shown.
 - Confirming again after a lost connection could record the operation
   twice; the register now sends an identifier and the server records it
-  once.
+  once. After a lost connection the popup freezes the amounts, currencies
+  and customer, keeps *Confirm* enabled to confirm again, and the server
+  refuses an identifier already recorded with other amounts.
 - *Discard* and *Escape* closed the popup while the operation was being
   recorded.
 - The drawer opening was logged twice; a failed drawer opening no longer
@@ -117,12 +124,31 @@ existing operations (see *Upgrade* below).
 - The amount to receive of a reverse quote now follows the coins used by
   the warning of the popup (Payment Rounding, else Change Rounding kept as
   rounding).
+- Reverse quote: the *Handed back* field could keep the amount typed
+  instead of the amount actually handed back; the quote summary now shows
+  a *Handed back* line, and *Swap* asks for the amount typed in the other
+  currency, not the one rounded for the first.
+- *Exchange Rates* and *Exchange Operations* show an error in the popup
+  when they cannot be loaded, instead of a connection error dialog.
+- The expiry date of a refused document, the amount placeholders and the
+  commission rule of the rate board follow the language of the user.
 
 ### Security
 - Access rights: POS users read the operations, POS Administrators edit the
   note only, nobody deletes; multi-company record rule on the operations.
-- The register cannot record an operation for another employee than the
-  one logged in, nor for a customer the cashier cannot read.
+- The register cannot record an operation for an employee who is not
+  allowed on the point of sale, nor for a customer the cashier cannot
+  read.
+- Only POS Administrators change the settings of the counter (thresholds,
+  linked operations period, commission account, licence), also through
+  RPC.
+- The register reads the identity document of a customer only at a point
+  of sale whose counter asks for documents, and only its type, issuing
+  country, expiry date and the last 4 characters of its number. A
+  document changed at the register is logged on the contact; the contact
+  of a user is changed by a POS Administrator only.
+- The quote shows the exchanges of a customer over the linked operations
+  period only when they make the customer or the document required.
 - The identity fields of contacts and operations are restricted to POS
   Administrators; cashiers see them only in the popup.
 - The identity document of a contact is not copied when the contact is
@@ -135,7 +161,10 @@ existing operations (see *Upgrade* below).
   the rate of Odoo of the day of each operation (the operations made
   before show the loss of the old pricing on the notes handed back);
   *Customer Name* filled from the contact; reference sequence switched to
-  "no gap". The migration can run twice safely.
+  "no gap". Operations one of whose statement lines was deleted with
+  20.0.1.x are reported in the server log and by a message on the
+  operation (correct the drawer with a cash move). The migration can run
+  twice safely.
 
 ## [20.0.1.1.0] - 2026-09-29
 

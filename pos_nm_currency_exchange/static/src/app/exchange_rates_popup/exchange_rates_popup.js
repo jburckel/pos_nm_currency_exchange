@@ -21,13 +21,23 @@ export class ExchangeRatesPopup extends Component {
         super.setup();
         this.pos = usePos();
         this.notification = useService("notification");
-        this.state = proxy({ board: null, printing: false });
+        this.state = proxy({ board: null, error: "", printing: false });
         onWillStart(async () => {
-            this.state.board = await this.pos.data.call("pos.nm.exchange", "get_rate_board", [this.pos.config.id]);
+            try {
+                this.state.board = await this.pos.data.call("pos.nm.exchange", "get_rate_board", [
+                    this.pos.config.id,
+                ]);
+            } catch (error) {
+                this.state.error =
+                    error?.data?.message || error?.message || _t("The exchange rates could not be loaded.");
+            }
         });
     }
 
     async print() {
+        if (!this.state.board || this.state.printing) {
+            return;
+        }
         this.state.printing = true;
         try {
             await this.pos.nmPrintReceipt("pos_nm_currency_exchange.pos_exchange_rates_receipt", this.state.board);

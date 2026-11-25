@@ -7,35 +7,39 @@
                     <div class="col-12 col-md-5">
                         <label class="form-label">Received from the customer</label>
                         <div class="input-group">
-                            <select class="form-select form-select-lg nm-exchange-currency-in" t-on-change="this.onCurrencyInChange">
+                            <select class="form-select form-select-lg nm-exchange-currency-in" t-att-disabled="this.state.pending"
+                                    t-on-change="this.onCurrencyInChange">
                                 <option t-foreach="this.currencies" t-as="currency" t-key="currency.id"
                                         t-att-value="currency.id" t-att-selected="currency.id === this.state.currencyInId"
                                         t-out="currency.name"/>
                             </select>
-                            <input type="text" class="form-control form-control-lg nm-exchange-amount-in" placeholder="0.00"
-                                   t-att-value="this.state.amountIn"
+                            <input type="text" class="form-control form-control-lg nm-exchange-amount-in"
+                                   t-att-placeholder="this.amountPlaceholder(this.state.currencyInId)"
+                                   t-att-value="this.state.amountIn" t-att-readonly="this.state.pending"
                                    t-att-class="{'is-invalid': this.state.amountIn and !this.pos.isValidFloat(this.state.amountIn)}"
                                    t-on-input="this.onAmountInput" t-on-blur="this.onAmountBlur"
                                    t-on-focus="(ev) => ev.target.select()"/>
                         </div>
                     </div>
                     <div class="col-12 col-md-2 d-flex align-items-end justify-content-center">
-                        <button class="btn btn-secondary btn-lg nm-exchange-swap" type="button" title="Swap the currencies" t-on-click="this.swap">
+                        <button class="btn btn-secondary btn-lg nm-exchange-swap" type="button" title="Swap the currencies"
+                                t-att-disabled="this.state.pending" t-on-click="this.swap">
                             <i class="oi" data-icon="swap_horiz" role="img" aria-label="Swap"/>
                         </button>
                     </div>
                     <div class="col-12 col-md-5">
                         <label class="form-label">Handed back to the customer</label>
                         <div class="input-group">
-                            <select class="form-select form-select-lg nm-exchange-currency-out" t-on-change="this.onCurrencyOutChange">
+                            <select class="form-select form-select-lg nm-exchange-currency-out" t-att-disabled="this.state.pending"
+                                    t-on-change="this.onCurrencyOutChange">
                                 <option t-foreach="this.currencies" t-as="currency" t-key="currency.id"
                                         t-att-value="currency.id" t-att-selected="currency.id === this.state.currencyOutId"
                                         t-out="currency.name"/>
                             </select>
                             <input type="text" class="form-control form-control-lg text-end fw-bolder nm-exchange-amount-out"
                                    title="Type the amount the customer wants: the amount to receive is computed"
-                                   t-att-placeholder="this.state.loading ? '...' : '0.00'"
-                                   t-att-value="this.amountOutValue"
+                                   t-att-placeholder="this.state.loading ? '...' : this.amountPlaceholder(this.state.currencyOutId)"
+                                   t-att-value="this.amountOutValue" t-att-readonly="this.state.pending" t-ref="this.amountOutRef"
                                    t-att-class="{'is-invalid': this.state.reverse and this.state.amountOut and !this.pos.isValidFloat(this.state.amountOut)}"
                                    t-on-input="this.onAmountOutInput" t-on-blur="this.onAmountOutBlur"
                                    t-on-focus="(ev) => ev.target.select()"/>
@@ -46,6 +50,7 @@
                     <div class="d-flex justify-content-between"><span>Rate</span><span class="nm-exchange-rate" t-out="this.state.quote.rate_label"/></div>
                     <div class="d-flex justify-content-between"><span>Value of the notes received</span><span t-out="this.state.quote.value_in_formatted"/></div>
                     <div class="d-flex justify-content-between"><span>Commission</span><span class="nm-exchange-commission" t-out="this.state.quote.commission_formatted"/></div>
+                    <div class="d-flex justify-content-between fw-bold text-body"><span>Handed back</span><span class="nm-exchange-handed-back" t-out="this.state.quote.amount_out_formatted"/></div>
                     <div t-if="this.hasLinkedOperations" class="d-flex justify-content-between nm-exchange-linked">
                         <span>With the linked operations of the customer</span><span t-out="this.state.quote.linked_value_formatted"/>
                     </div>
@@ -59,28 +64,35 @@
                 </div>
                 <div t-if="this.coinStepWarning" class="alert alert-warning py-2 mb-0 nm-exchange-step-warning" role="alert" t-out="this.coinStepWarning"/>
                 <div t-if="this.errorMessage" class="alert alert-danger py-2 mb-0 nm-exchange-error" role="alert" t-out="this.errorMessage"/>
+                <div t-if="this.state.pending" class="alert alert-warning py-2 mb-0 nm-exchange-retry" role="alert">
+                    The connection was lost: the operation may have been recorded. Confirm again once the connection is back: an operation already recorded is not recorded twice.
+                </div>
                 <div class="d-flex gap-2 align-items-center">
                     <button class="btn btn-secondary btn-lg nm-exchange-customer" type="button" t-on-click="this.selectCustomer"
+                            t-att-disabled="this.state.pending"
                             t-att-class="{'btn-outline-danger': this.customerRequired}">
                         <i class="oi me-1" data-icon="person" role="img" aria-hidden="true"/>
                         <t t-out="this.customerLabel"/>
                     </button>
-                    <button t-if="this.state.partner" class="btn btn-link" type="button" t-on-click="this.clearCustomer">Clear</button>
+                    <button t-if="this.state.partner" class="btn btn-link" type="button" t-att-disabled="this.state.pending"
+                            t-on-click="this.clearCustomer">Clear</button>
                     <span t-if="this.customerRequired" class="text-danger small nm-exchange-customer-required" t-out="this.customerRequiredMessage"/>
                 </div>
                 <div t-if="this.documentRequired" class="d-flex flex-column gap-2 nm-exchange-document">
                     <div class="fw-bold">Identity document of the customer</div>
-                    <div class="row g-2">
+                    <div t-if="this.state.documentWarning" class="text-warning small nm-exchange-document-warning" t-out="this.state.documentWarning"/>
+                    <fieldset class="row g-2" t-att-disabled="this.state.pending">
                         <div class="col-12 col-md-5">
                             <select class="form-select nm-exchange-document-type" t-on-change="(ev) => this.onDocumentInput('type', ev)">
                                 <option value="" t-att-selected="!this.state.document.type">Document type</option>
-                                <option t-foreach="this.state.documentTypes" t-as="documentType" t-key="documentType[0]"
+                                <option t-foreach="this.documentTypes" t-as="documentType" t-key="documentType[0]"
                                         t-att-value="documentType[0]" t-att-selected="documentType[0] === this.state.document.type"
                                         t-out="documentType[1]"/>
                             </select>
                         </div>
                         <div class="col-12 col-md-7">
-                            <input type="text" class="form-control nm-exchange-document-number" placeholder="Document number"
+                            <input type="text" class="form-control nm-exchange-document-number"
+                                   t-att-placeholder="this.storedNumberMasked or this.documentNumberLabel"
                                    t-att-value="this.state.document.number" t-on-input="(ev) => this.onDocumentInput('number', ev)"/>
                         </div>
                         <div class="col-12 col-md-6">
@@ -109,6 +121,9 @@
                             <input type="date" class="form-control nm-exchange-document-birthdate"
                                    t-att-value="this.state.document.birthdate" t-on-change="(ev) => this.onDocumentInput('birthdate', ev)"/>
                         </div>
+                    </fieldset>
+                    <div t-if="this.state.storedDocument" class="small text-muted nm-exchange-document-stored">
+                        The fields left empty keep the values recorded on the customer.
                     </div>
                     <div t-if="this.documentError" class="text-danger small nm-exchange-document-error" t-out="this.documentError"/>
                 </div>

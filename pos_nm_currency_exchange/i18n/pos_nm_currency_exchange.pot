@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 21:59+0000\n"
-"PO-Revision-Date: 2026-11-25 21:59+0000\n"
+"POT-Creation-Date: 2026-11-25 23:11+0000\n"
+"PO-Revision-Date: 2026-11-25 23:11+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -109,6 +109,12 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %% + %(fixed)s, min. %(min)s"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_session_report.py:0
 msgid "%s operations"
 msgstr ""
@@ -121,28 +127,6 @@ msgstr ""
 #. module: pos_nm_currency_exchange
 #: model:ir.actions.report,print_report_name:pos_nm_currency_exchange.action_report_exchange_rates
 msgid "'Exchange Rates %s' % object.name"
-msgstr ""
-
-#. module: pos_nm_currency_exchange
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
-msgid ""
-",\n"
-"                                            min."
-msgstr ""
-
-#. module: pos_nm_currency_exchange
-#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
-msgid ""
-",\n"
-"                                        min."
-msgstr ""
-
-#. module: pos_nm_currency_exchange
-#. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
-msgid ""
-",\n"
-"                            min."
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -604,7 +588,7 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
 msgid "Document number"
 msgstr ""
 
@@ -856,6 +840,12 @@ msgid "Handed Value"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "Handed back"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "Handed back (%s)"
@@ -925,6 +915,14 @@ msgstr ""
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_type
 msgid ""
 "Identity document shown by the customer, as recorded with the operation."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"Identity document updated by %(user)s with the exchange operation %(name)s: "
+"%(document)s"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1160,6 +1158,14 @@ msgid "Only a Point of Sale manager can cancel an exchange operation."
 msgstr ""
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid ""
+"Only a Point of Sale manager can change the settings of the currency "
+"exchange counter."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
@@ -1205,6 +1211,14 @@ msgstr ""
 #: model:ir.model,name:pos_nm_currency_exchange.model_pos_nm_exchange
 #: model:ir.module.module,shortdesc:base.module_pos_nm_currency_exchange
 msgid "POS Currency Exchange"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/__init__.py:0
+msgid ""
+"POS Multi-Currency Cash %(version)s or later is required: update it first "
+"(installed: %(installed)s)."
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1518,7 +1532,7 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
 msgid ""
 "The connection was lost: the operation may have been recorded. Confirm again"
 " once the connection is back: an operation already recorded is not recorded "
@@ -1571,6 +1585,18 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.js:0
+msgid "The exchange operations could not be loaded."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.js:0
+msgid "The exchange rates could not be loaded."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.js:0
 msgid "The exchange rates could not be printed."
 msgstr ""
@@ -1579,6 +1605,12 @@ msgstr ""
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_currency_setting.py:0
 msgid "The exchange sell margin cannot be negative."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "The fields left empty keep the values recorded on the customer."
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1694,6 +1726,16 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
+#: code:addons/pos_nm_currency_exchange/migrations/20.0.2.0.0/post-migrate.py:0
+msgid ""
+"The statement line of the notes %(legs)s of this operation was deleted "
+"before the upgrade to 20.0.2.0.0: the drawer and the commission account are "
+"off by that line, and the operation cannot be cancelled. Correct the drawer "
+"with a cash move."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid ""
 "The statement lines of the operation %s are missing: it cannot be reversed."
@@ -1703,6 +1745,12 @@ msgstr ""
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "There is no cash payment method for this PoS Session"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid "This Point of Sale does not ask for identity documents."
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1724,6 +1772,14 @@ msgstr ""
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "This employee is not allowed to use this Point of Sale."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
+msgid ""
+"This operation was already recorded as %s with other amounts: close the "
+"popup and start a new operation."
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1929,8 +1985,20 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
+#: code:addons/pos_nm_currency_exchange/migrations/20.0.2.0.0/post-migrate.py:0
+msgid "handed back (%s)"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "id"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/migrations/20.0.2.0.0/post-migrate.py:0
+msgid "received (%s)"
 msgstr ""
 
 #. module: pos_nm_currency_exchange

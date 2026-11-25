@@ -58,6 +58,7 @@ Requirements
     "installable": True,
     "auto_install": False,
     "depends": ["pos_nm_multicurrencies"],
+    "pre_init_hook": "pre_init_hook",
     "data": [
         "security/ir.access.csv",
         "data/ir_sequence_data.xml",

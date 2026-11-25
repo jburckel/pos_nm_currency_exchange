@@ -193,8 +193,9 @@ pulse **Cambio de divisas**:
 4. cuando el cliente debe identificarse, el botón **Cliente** se pone rojo
    con el motivo: púlselo y elija el cliente (créelo si es necesario).
    Cuando se requiere el documento de identidad, aparecen sus campos,
-   rellenados desde el contacto: tipo, número y fecha de caducidad son
-   obligatorios;
+   rellenados desde el contacto (del número solo se muestran los 4 últimos
+   caracteres): tipo, número y fecha de caducidad son obligatorios, y los
+   campos dejados vacíos conservan los valores del contacto;
 5. añada una nota si es útil y pulse **Confirmar**. El cajón portamonedas
    se abre, se imprime el recibo de cambio y una notificación resume la
    operación.
@@ -346,8 +347,11 @@ el nombre del cliente y el tipo de documento con solo los 4 últimos
 caracteres de su número (por ejemplo «Pasaporte \*\*\*\*4567»).
 
 Los documentos de identidad solo son visibles para los administradores
-del Punto de venta; el cajero ve el documento del cliente seleccionado en
-la ventana.
+del Punto de venta; en la ventana, el cajero ve el tipo, el país de
+expedición, la fecha de caducidad y los 4 últimos caracteres del número
+del cliente seleccionado. Un documento modificado en la caja queda
+registrado en el contacto (el contacto de un usuario solo lo modifica un
+administrador del Punto de venta).
 
 Consultar las operaciones
 =========================
@@ -454,9 +458,12 @@ Notas contables
 Actualizar desde 20.0.1.x
 =========================
 
-* Actualice primero POS Multi-Currency Cash a 20.0.2.1.0 o posterior.
+* Actualice primero POS Multi-Currency Cash a 20.0.2.1.0 o posterior: de
+  lo contrario, la instalación y la actualización se rechazan.
 * El **Margen de venta de cambio** de cada moneda toma el valor de su
-  Margen del tipo de caja (0 si es negativo): los billetes entregados se
+  Margen del tipo de caja (un margen negativo se convierte en el margen de
+  venta que mantiene el mismo tipo de venta, 2,04 % para -2 %): los
+  billetes entregados se
   valoran ahora al tipo de venta, a favor del comercio. Compruebe los
   márgenes y la tabla de tipos antes de abrir las cajas.
 * Las operaciones ya registradas reciben su usuario, estado, tipo, margen
@@ -467,6 +474,12 @@ Actualizar desde 20.0.1.x
   ya no se pueden eliminar: use **Cancelar la operación**.
 * El cajón de la moneda del punto de venta ahora se comprueba: cuente su
   importe de apertura.
+* Cierre las sesiones, o recargue cada caja, después de la actualización:
+  una caja que sigue con la versión anterior no puede registrar
+  operaciones.
+* Una operación cuya línea de extracto se eliminó con 20.0.1.x se indica
+  en el registro del servidor y con un mensaje en la operación: corrija el
+  cajón con un movimiento de efectivo.
 
 Limitaciones conocidas
 ======================

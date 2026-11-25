@@ -20,11 +20,16 @@ export class ExchangeOperationsPopup extends Component {
         super.setup();
         this.pos = usePos();
         this.notification = useService("notification");
-        this.state = proxy({ operations: [], printing: false });
+        this.state = proxy({ operations: [], error: "", printing: false });
         onWillStart(async () => {
-            this.state.operations = await this.pos.data.call("pos.nm.exchange", "get_session_operations", [
-                this.pos.session.id,
-            ]);
+            try {
+                this.state.operations = await this.pos.data.call("pos.nm.exchange", "get_session_operations", [
+                    this.pos.session.id,
+                ]);
+            } catch (error) {
+                this.state.error =
+                    error?.data?.message || error?.message || _t("The exchange operations could not be loaded.");
+            }
         });
     }
 

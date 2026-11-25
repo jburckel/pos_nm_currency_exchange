@@ -5,6 +5,7 @@ import * as Dialog from "@point_of_sale/../tests/generic_helpers/dialog_util";
 import * as PartnerList from "@point_of_sale/../tests/pos/tours/utils/partner_list_util";
 import * as ProductScreen from "@point_of_sale/../tests/pos/tours/utils/product_screen_util";
 import { registry } from "@web/core/registry";
+import { ConnectionLostError } from "@web/core/network/rpc";
 
 function stubPrinting() {
     return {
@@ -16,6 +17,28 @@ function stubPrinting() {
                 posmodel.nmTourReceiptHtml = iframe?.contentDocument?.body?.innerHTML || "";
                 document.body.classList.add("nm-tour-printed");
                 return { successful: true };
+            };
+        },
+    };
+}
+
+/**
+ * The next create_from_ui is recorded by the server but its response is
+ * lost, as when the connection drops right after the commit.
+ */
+function loseNextConfirmResponse() {
+    return {
+        content: "lose the response of the next confirmation",
+        trigger: ".modal .nm-currency-exchange",
+        run: () => {
+            const call = posmodel.data.call.bind(posmodel.data);
+            posmodel.data.call = async (model, method, ...args) => {
+                const result = await call(model, method, ...args);
+                if (method === "create_from_ui") {
+                    posmodel.data.call = call;
+                    throw new ConnectionLostError("/web/dataset/call_kw");
+                }
+                return result;
             };
         },
     };
@@ -94,12 +117,35 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                 trigger: ".modal .nm-currency-exchange .nm-exchange-commission:contains(/1[.,]15/)",
             },
             {
+                content: "the amount handed back is in the summary",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-handed-back:contains(/56[.,]32/)",
+            },
+            {
                 content: "add a note",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-note",
                 run: "edit Tour",
             },
+            loseNextConfirmResponse(),
             {
                 content: "confirm the operation",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the lost connection is explained",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-retry",
+            },
+            {
+                content: "the amounts and currencies are frozen",
+                trigger:
+                    ".modal .nm-currency-exchange input.nm-exchange-amount-in[readonly]:value(50)",
+            },
+            {
+                content: "the currency received cannot be changed",
+                trigger: ".modal .nm-currency-exchange select.nm-exchange-currency-in[disabled]",
+            },
+            {
+                content: "confirm again: the operation already recorded is returned",
                 trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
                 run: "click",
             },
@@ -281,13 +327,26 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeReverseTour", {
             },
             selectCurrency("out", "XPF"),
             {
-                content: "the customer wants 10000 XPF",
+                content: "the customer wants 9998 XPF, not a multiple of the 5 XPF coins",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out",
-                run: "edit 10000",
+                run: "edit 9998",
+            },
+            {
+                content: "leave the field at once, before the quote",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-note",
+                run: "click",
             },
             {
                 content: "the amount to receive is computed: 83.81",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in:value(83.81)",
+            },
+            {
+                content: "the field shows the amount actually handed back: 10000",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out:value(/^10000$/)",
+            },
+            {
+                content: "the summary shows it too",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-handed-back:contains(/10[,.\u00a0\u202f ]?000/)",
             },
             {
                 content: "the reverse quote is explained",
@@ -353,8 +412,12 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
             },
             PartnerList.clickPartner("Partner Test 1"),
             {
-                content: "the document of the customer is prefilled",
-                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-number:value(X1234567)",
+                content: "the document of the customer is prefilled, the end of its number only",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-number[placeholder='****4567']",
+            },
+            {
+                content: "its type is selected",
+                trigger: ".modal .nm-currency-exchange select.nm-exchange-document-type:value(passport)",
             },
             {
                 content: "the expired document is refused",

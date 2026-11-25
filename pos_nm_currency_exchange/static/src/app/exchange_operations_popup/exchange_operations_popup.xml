@@ -2,7 +2,8 @@
 <templates id="template" xml:space="preserve">
     <t t-name="pos_nm_currency_exchange.ExchangeOperationsPopup">
         <Dialog title.translate="Exchange Operations" size="'lg'" contentClass="'nm-exchange-operations'">
-            <div t-if="!this.state.operations.length" class="text-muted nm-exchange-operations-empty">
+            <div t-if="this.state.error" class="alert alert-danger nm-exchange-operations-error" role="alert" t-out="this.state.error"/>
+            <div t-elif="!this.state.operations.length" class="text-muted nm-exchange-operations-empty">
                 No exchange operation in this session yet.
             </div>
             <table t-else="" class="table table-sm align-middle">

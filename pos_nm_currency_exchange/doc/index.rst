@@ -185,7 +185,9 @@ From any screen of the register, open the menu (top right) and press
 4. when the customer must be identified, the **Customer** button turns red
    with the reason: press it and pick the customer (create it if needed).
    When the identity document is required, its fields appear, prefilled
-   from the contact: type, number and expiry date are mandatory;
+   from the contact (the number shows its last 4 characters only): type,
+   number and expiry date are mandatory, and the fields left empty keep
+   the values of the contact;
 5. add a note if useful, then **Confirm**. The cash drawer opens, the
    exchange receipt is printed and a notification sums the operation up.
 
@@ -326,8 +328,11 @@ change the operations recorded. The receipt prints the name of the customer
 and the type of document with the last 4 characters of its number only
 (for instance "Passport \*\*\*\*4567").
 
-The identity documents are visible to POS Administrators only; the cashier
-sees the document of the selected customer in the popup.
+The identity documents are visible to POS Administrators only; in the
+popup, the cashier sees the type, issuing country, expiry date and last 4
+characters of the number of the selected customer. A document changed at
+the register is logged on the contact (the contact of a user is changed by
+a POS Administrator only).
 
 Reviewing the operations
 ========================
@@ -431,9 +436,11 @@ Accounting Notes
 Upgrading from 20.0.1.x
 =======================
 
-* Update POS Multi-Currency Cash to 20.0.2.1.0 or later first.
+* Update POS Multi-Currency Cash to 20.0.2.1.0 or later first: the
+  installation and the upgrade are refused otherwise.
 * The **Exchange Sell Margin** of each currency is set to its Cash Rate
-  Margin (0 when negative): the notes handed back are now priced at the
+  Margin (a negative margin becomes the sell margin that keeps the same
+  sell rate, 2.04 % for -2 %): the notes handed back are now priced at the
   sell rate, in favour of the shop. Check the margins and the rate board
   before opening the registers.
 * The operations already recorded get their user, status, rate, rate
@@ -444,6 +451,11 @@ Upgrading from 20.0.1.x
   deleted: use **Cancel Operation**.
 * The drawer of the currency of the point of sale is now checked: count
   its opening amount.
+* Close the sessions, or reload every register, after the upgrade: a
+  register still running the previous version cannot record operations.
+* An operation one of whose statement lines was deleted with 20.0.1.x is
+  reported in the server log and by a message on the operation: correct
+  the drawer with a cash move.
 
 Known Limitations
 =================

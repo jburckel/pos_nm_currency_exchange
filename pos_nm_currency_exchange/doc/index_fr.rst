@@ -196,8 +196,10 @@ droite) et appuyez sur **Opération de change** :
 4. lorsque le client doit être identifié, le bouton **Client** devient
    rouge avec la raison : appuyez dessus et choisissez le client (créez-le
    si besoin). Lorsque la pièce d'identité est requise, ses champs
-   apparaissent, préremplis depuis le contact : type, numéro et date
-   d'expiration sont obligatoires ;
+   apparaissent, préremplis depuis le contact (le numéro n'en montre que
+   les 4 derniers caractères) : type, numéro et date d'expiration sont
+   obligatoires, et les champs laissés vides gardent les valeurs du
+   contact ;
 5. ajoutez une note si utile, puis **Confirmer**. Le tiroir-caisse
    s'ouvre, le ticket de change s'imprime et une notification résume
    l'opération.
@@ -347,7 +349,11 @@ du client et le type de pièce avec seulement les 4 derniers caractères de
 son numéro (par exemple « Passeport \*\*\*\*4567 »).
 
 Les pièces d'identité ne sont visibles que des administrateurs du Point de
-Vente ; le caissier voit la pièce du client sélectionné dans la fenêtre.
+Vente ; dans la fenêtre, le caissier voit le type, le pays d'émission, la
+date d'expiration et les 4 derniers caractères du numéro du client
+sélectionné. Une pièce modifiée à la caisse est tracée sur le contact (le
+contact d'un utilisateur n'est modifié que par un administrateur du Point
+de Vente).
 
 Consulter les opérations
 ========================
@@ -458,9 +464,10 @@ Mise à jour depuis 20.0.1.x
 ===========================
 
 * Mettez d'abord à jour POS Multi-Currency Cash en 20.0.2.1.0 ou plus
-  récent.
+  récent : l'installation et la mise à jour sont refusées sinon.
 * La **Marge de vente de change** de chaque devise prend la valeur de sa
-  Marge du taux de caisse (0 si elle est négative) : les billets rendus
+  Marge du taux de caisse (une marge négative devient la marge de vente
+  qui garde le même taux de vente, 2,04 % pour -2 %) : les billets rendus
   sont désormais valorisés au taux de vente, en faveur du commerce.
   Vérifiez les marges et le tableau des taux avant d'ouvrir les caisses.
 * Les opérations déjà enregistrées reçoivent leur utilisateur, leur
@@ -472,6 +479,12 @@ Mise à jour depuis 20.0.1.x
   plus être supprimées : utilisez **Annuler l'opération**.
 * Le tiroir de la devise du point de vente est désormais vérifié : comptez
   son montant d'ouverture.
+* Fermez les sessions, ou rechargez chaque caisse, après la mise à jour :
+  une caisse encore sur la version précédente ne peut pas enregistrer
+  d'opération.
+* Une opération dont une ligne de relevé a été supprimée avec 20.0.1.x est
+  signalée dans le journal du serveur et par un message sur l'opération :
+  corrigez le tiroir par un mouvement d'espèces.
 
 Limites connues
 ===============
