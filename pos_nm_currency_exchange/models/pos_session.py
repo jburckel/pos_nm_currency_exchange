@@ -48,6 +48,17 @@ class PosSession(models.Model):
             } for exchange in exchanges.sorted('id')],
         }
 
+    def _nm_expected_cash(self, currency):
+        """Notes expected in the drawer of ``currency`` (the currency of the
+        point of sale included), computed by the closing control: opening,
+        cash payments and change of the session, cash moves and exchanges."""
+        self.ensure_one()
+        data = self.get_closing_control_data()
+        if currency == self.currency_id:
+            return data['default_cash_details'].get('amount', 0.0)
+        return next((detail['amount'] for detail in data['multicurrency_details']
+                     if detail['currency_id'] == currency.id), 0.0)
+
     def get_closing_control_data(self):
         data = super().get_closing_control_data()
         if self.config_id.nm_exchange_enabled:

@@ -17,9 +17,10 @@
                 <field name="amount_in" string=" "/>
                 <field name="currency_out_id" string="Handed Back"/>
                 <field name="amount_out" string=" "/>
-                <field name="rate" optional="hide"/>
+                <field name="rate_label" optional="hide"/>
                 <field name="value_in" sum="Received Value" optional="hide"/>
                 <field name="commission" sum="Commission"/>
+                <field name="rate_margin" sum="Rate Margin" optional="show"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
                        decoration-danger="state == 'cancelled'" optional="show"/>
                 <field name="company_currency_id" column_invisible="True"/>
@@ -69,8 +70,9 @@
                             <field name="currency_out_id"/>
                             <field name="amount_out"/>
                             <field name="value_out"/>
-                            <field name="rate"/>
+                            <field name="rate_label"/>
                             <field name="commission"/>
+                            <field name="rate_margin"/>
                         </group>
                     </group>
                 </sheet>
@@ -87,6 +89,7 @@
                 <field name="state" type="col"/>
                 <field name="currency_in_id" type="col"/>
                 <field name="commission" type="measure"/>
+                <field name="rate_margin" type="measure"/>
                 <field name="value_in" type="measure"/>
             </pivot>
         </field>

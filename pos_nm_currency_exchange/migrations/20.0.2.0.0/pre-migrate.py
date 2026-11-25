@@ -2,10 +2,24 @@
 
 
 def migrate(cr, version):
-    """20.0.2.0.0: the operations record the user who made them. Fill the
-    new column from the creator before the ORM creates it, else it would
-    take its default, the user running the upgrade. Safe to run again."""
+    """20.0.2.0.0: fill the new columns before the ORM creates them, else
+    they would take their default. Safe to run again.
+
+    - The operations record the user who made them: the creator.
+    - The exchange sell margin of a currency starts at its cash rate margin
+      (never below 0): the counter now sells the notes at the rate of Odoo
+      less this margin instead of plus the margin.
+    - The rate margin of the operations is left empty here and computed by
+      the post-migration.
+    """
     if not version:
         return
     cr.execute("ALTER TABLE pos_nm_exchange ADD COLUMN IF NOT EXISTS user_id int4")
     cr.execute("UPDATE pos_nm_exchange SET user_id = create_uid WHERE user_id IS NULL")
+    cr.execute("ALTER TABLE pos_nm_currency_setting ADD COLUMN IF NOT EXISTS exchange_sell_margin_percent numeric")
+    cr.execute("""
+        UPDATE pos_nm_currency_setting
+           SET exchange_sell_margin_percent = GREATEST(COALESCE(margin_percent, 0), 0)
+         WHERE exchange_sell_margin_percent IS NULL
+    """)
+    cr.execute("ALTER TABLE pos_nm_exchange ADD COLUMN IF NOT EXISTS rate_margin numeric")

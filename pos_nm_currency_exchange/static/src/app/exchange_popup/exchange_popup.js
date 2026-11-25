@@ -183,6 +183,8 @@ export class CurrencyExchangePopup extends Component {
                 // The cashier is decided by the server: the user, and with
                 // pos_hr the employee logged in, checked there.
                 (this.pos.config.module_pos_hr && this.pos.accessRight.loggedCashier?.id) || false,
+                // Refused by the server when the quote changed since.
+                this.state.quote.amount_out,
             ]);
             await this.pos.logEmployeeMessage(
                 _t("Currency exchange %(name)s: %(received)s for %(handed)s", {

@@ -57,6 +57,30 @@ class PosConfig(models.Model):
         self.ensure_one()
         return self.currency_id | self._nm_get_foreign_cash_currencies()
 
+    def _nm_odoo_rate(self, currency, date=None):
+        """Units of ``currency`` for one unit of the POS currency at the rate
+        of Odoo of the day, without any margin: the market value."""
+        self.ensure_one()
+        date = date or fields.Date.context_today(self)
+        return self.env['res.currency']._get_conversion_rate(self.currency_id, currency, self.company_id, date)
+
+    def _nm_exchange_sell_rate(self, currency):
+        """Units of the foreign ``currency`` handed back by the exchange
+        counter for one unit of the POS currency, always in favour of the
+        counter.
+
+        Rate of Odoo: the rate of Odoo less the exchange sell margin, the
+        mirror of the cash rate of the notes received (the rate of Odoo plus
+        the margin of POS Multi-Currency Cash).
+        Fixed cash rate: the lower of the fixed rate and the fixed change
+        rate, the lower rate handing back fewer notes.
+        """
+        self.ensure_one()
+        setting = self._nm_get_currency_setting(currency)
+        if setting.rate_mode == 'fixed':
+            return min(setting.fixed_rate, setting.fixed_change_rate or setting.fixed_rate)
+        return self._nm_odoo_rate(currency) / (1 + setting.exchange_sell_margin_percent / 100.0)
+
     def action_nm_view_exchanges(self):
         self.ensure_one()
         return {

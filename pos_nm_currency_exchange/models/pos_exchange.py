@@ -3,6 +3,7 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, UserError
 from odoo.fields import Domain
+from odoo.tools import float_round
 from odoo.tools.misc import formatLang
 
 
@@ -12,10 +13,12 @@ class PosNmExchange(models.Model):
 
     Two statement lines of the cash journal of the session, like a cash in
     and a cash out of POS Multi-Currency Cash: the notes received (in their
-    currency, at the cash rate of the point of sale) and the notes handed
-    back (in their currency, at the change rate). Both use the commission
-    income account as counterpart: the difference between the two values is
-    the commission, which lands on that account.
+    currency, at the cash rate of the point of sale, the buy rate) and the
+    notes handed back (in their currency, at the sell rate of the counter).
+    Both use the commission income account as counterpart: the difference
+    between the two values is the commission, which lands on that account.
+    The spread between these rates and the rate of Odoo is the rate margin,
+    realized when the foreign drawers are deposited or revalued.
     """
     _name = 'pos.nm.exchange'
     _description = 'POS Currency Exchange'
@@ -45,18 +48,31 @@ class PosNmExchange(models.Model):
     amount_in = fields.Monetary(string='Received', currency_field='currency_in_id', readonly=True,
                                 help='Notes received from the customer.')
     value_in = fields.Monetary(string='Received Value', currency_field='company_currency_id', readonly=True,
-                               help='Value of the notes received at the cash rate of the point of sale.')
+                               help='Value of the notes received at the cash rate of the point of sale '
+                                    '(the rate of Odoo with the cash rate margin, or the fixed rate).')
     currency_out_id = fields.Many2one('res.currency', string='Handed Currency', required=True, readonly=True)
     amount_out = fields.Monetary(string='Handed Back', currency_field='currency_out_id', readonly=True,
                                  help='Notes handed to the customer.')
     value_out = fields.Monetary(string='Handed Value', currency_field='company_currency_id', readonly=True,
-                                help='Value of the notes handed back at the change rate of the point of sale.')
+                                help='Value of the notes handed back at the sell rate of the counter (the '
+                                     'rate of Odoo less the exchange sell margin, or the lower fixed rate).')
     commission = fields.Monetary(string='Commission', currency_field='company_currency_id', readonly=True,
                                  help='Received value minus handed value: the commission of the counter, '
                                       'rounding of the notes handed back included.')
-    rate = fields.Float(string='Rate', digits=(16, 6), readonly=True,
+    rate_margin = fields.Monetary(
+        string='Rate Margin', currency_field='company_currency_id', readonly=True,
+        help='Margin earned on the rates: the value of the notes received at the rate of Odoo of '
+             'the day less the received value, plus the handed value less the value of the notes '
+             'handed back at the rate of Odoo. Realized when the foreign notes are deposited or '
+             'revalued; the commission plus the rate margin is the income of the operation.')
+    # 12 decimals: the rate of 1 VND or 1 IDR in euros has 4 or 5 zeros
+    # after the decimal point.
+    rate = fields.Float(string='Rate', digits=(16, 12), readonly=True,
                         help='Units of the handed currency for one unit of the received currency, '
                              'commission included.')
+    rate_label = fields.Char(string='Rate Applied', compute='_compute_rate_label',
+                             help='Rate of the operation in the direction where it is at least 1, '
+                                  'commission included.')
     note = fields.Char(string='Note', help='Free note of the cashier, the only field a manager can edit.')
     statement_line_in_id = fields.Many2one('account.bank.statement.line', string='Received Line', readonly=True,
                                            ondelete='restrict', check_company=True)
@@ -72,6 +88,11 @@ class PosNmExchange(models.Model):
         'account.bank.statement.line', string='Handed Reversal Line', readonly=True, copy=False,
         ondelete='restrict', check_company=True,
         help='Statement line taking back the notes handed to the customer.')
+
+    @api.depends('rate', 'currency_in_id', 'currency_out_id')
+    def _compute_rate_label(self):
+        for exchange in self:
+            exchange.rate_label = self._nm_rate_label(exchange.currency_in_id, exchange.currency_out_id, exchange.rate)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -132,15 +153,36 @@ class PosNmExchange(models.Model):
         return _('1 %(in)s = %(out)s', **{'in': base.name, 'out': amount})
 
     @api.model
+    def _nm_market_value(self, config, currency, amount, date=None):
+        """Value in the POS currency of ``amount`` in ``currency`` at the rate
+        of Odoo, without margin."""
+        if currency == config.currency_id:
+            return amount
+        rate = config._nm_odoo_rate(currency, date)
+        return config.currency_id.round(amount / rate) if rate else 0.0
+
+    @api.model
+    def _nm_rate_margin(self, config, currency_in, amount_in, value_in, currency_out, amount_out, value_out,
+                        date=None):
+        """Margin earned on the rates of an operation: the notes received are
+        worth more at the rate of Odoo than their received value, the notes
+        handed back less than their handed value."""
+        return config.currency_id.round(
+            self._nm_market_value(config, currency_in, amount_in, date) - value_in
+            + value_out - self._nm_market_value(config, currency_out, amount_out, date))
+
+    @api.model
     def _nm_quote(self, config, currency_in, amount_in, currency_out):
         """Amounts of an operation: value received, commission, value and
         notes handed back.
 
         The notes received are valued at the cash rate of the point of sale
-        (what the customer pays), the notes handed back at the change rate
-        (what the register hands back), the notes handed back are rounded
-        down to the change rounding of their currency and the remainder
-        stays in the commission.
+        (the buy rate), the notes handed back at the sell rate of the counter.
+        The notes handed back are rounded once, down, to the smallest coin or
+        note of their currency: the change rounding of a foreign currency,
+        the cash rounding of the point of sale for its own currency, else the
+        rounding of the currency. The remainder stays in the commission,
+        which is never below the configured one.
         """
         company_currency = config.currency_id
         amount_in = currency_in.round(amount_in or 0.0)
@@ -152,21 +194,22 @@ class PosNmExchange(models.Model):
         commission = setting._nm_exchange_commission(value_in) if setting else 0.0
         value_out = company_currency.round(max(0.0, value_in - commission))
         if currency_out == company_currency:
-            amount_out = value_out
+            rate_out = 1.0
+            step = config.rounding_method.rounding if config.cash_rounding else 0.0
         else:
-            rate_out = config._nm_cash_rate(currency_out, change=True)
-            amount_out = currency_out.round(value_out * rate_out)
-            step = setting.change_rounding if setting and setting.currency_id == currency_out else 0.0
-            if step:
-                amount_out = currency_out.round(int(amount_out / step + 1e-9) * step)
-            value_out = company_currency.round(amount_out / rate_out) if rate_out else 0.0
-        commission = company_currency.round(value_in - value_out)
+            rate_out = config._nm_exchange_sell_rate(currency_out)
+            step = config._nm_get_currency_setting(currency_out).change_rounding
+        amount_out = float_round(value_out * rate_out, precision_rounding=max(step, currency_out.rounding),
+                                 rounding_method='DOWN')
+        value_out = company_currency.round(amount_out / rate_out) if rate_out else 0.0
         return {
             'amount_in': amount_in,
             'value_in': value_in,
             'amount_out': amount_out,
             'value_out': value_out,
-            'commission': commission,
+            'commission': company_currency.round(value_in - value_out),
+            'rate_margin': self._nm_rate_margin(
+                config, currency_in, amount_in, value_in, currency_out, amount_out, value_out),
             'rate': (amount_out / amount_in) if amount_in else 0.0,
             'customer_required': bool(config.nm_exchange_customer_threshold)
             and company_currency.compare_amounts(value_in, config.nm_exchange_customer_threshold) > 0,
@@ -185,6 +228,22 @@ class PosNmExchange(models.Model):
             raise UserError(_("The currency exchange counter is disabled on this Point of Sale."))
 
     @api.model
+    def _nm_check_quote(self, quote, currency_out):
+        if currency_out.compare_amounts(quote['amount_out'], 0.0) <= 0:
+            raise UserError(_("The amount is too small for an exchange operation in %s: once the commission is "
+                              "deducted, no note can be handed back.", currency_out.name))
+
+    @api.model
+    def _nm_check_drawer(self, session, currency, amount):
+        """Refuse to hand back more notes than the drawer of ``currency``
+        holds, as counted by the closing control."""
+        available = session._nm_expected_cash(currency)
+        if currency.compare_amounts(amount, available) > 0:
+            raise UserError(_(
+                "The drawer of %(currency)s holds %(balance)s: %(amount)s cannot be handed back.",
+                currency=currency.name, balance=currency.format(available), amount=currency.format(amount)))
+
+    @api.model
     def get_quote(self, config_id, currency_in_id, amount_in, currency_out_id):
         """Register: amounts of the operation for the popup."""
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
@@ -196,6 +255,7 @@ class PosNmExchange(models.Model):
             raise UserError(_("Unknown point of sale or currency."))
         self._nm_check_operation(config, currency_in, amount_in, currency_out)
         quote = self._nm_quote(config, currency_in, float(amount_in), currency_out)
+        self._nm_check_quote(quote, currency_out)
         quote.update({
             'amount_in_formatted': currency_in.format(quote['amount_in']),
             'amount_out_formatted': currency_out.format(quote['amount_out']),
@@ -232,13 +292,16 @@ class PosNmExchange(models.Model):
 
     @api.model
     def create_from_ui(self, session_id, currency_in_id, amount_in, currency_out_id, partner_id=None,
-                       note=None, employee_id=None):
+                       note=None, employee_id=None, amount_out=None):
         """Register: record the operation and post its two statement lines.
 
         The POS users can only read the operations: the operation is created
         here, with sudo, once every check has passed.
 
         :param employee_id: employee logged in at the register (pos_hr)
+        :param amount_out: notes to hand back shown to the cashier by the
+            quote: the operation is refused when the rates or the commission
+            changed since
         :return: the data of the exchange receipt
         """
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
@@ -261,20 +324,18 @@ class PosNmExchange(models.Model):
         if not cash_pm:
             raise UserError(_("There is no cash payment method for this PoS Session"))
         quote = self._nm_quote(config, currency_in, float(amount_in), currency_out)
-        if currency_out.compare_amounts(quote['amount_out'], 0.0) <= 0:
-            raise UserError(_("The amount is too small for an exchange operation in %s.", currency_out.name))
+        self._nm_check_quote(quote, currency_out)
+        if amount_out is not None and currency_out.compare_amounts(quote['amount_out'], float(amount_out)):
+            raise UserError(_(
+                "The quote changed: %(amount)s is now handed back instead of %(quoted)s. Check the amount "
+                "again before confirming.",
+                amount=currency_out.format(quote['amount_out']), quoted=currency_out.format(float(amount_out))))
         partner = self.env['res.partner'].browse(int(partner_id)).exists() if partner_id else self.env['res.partner']
         if quote['customer_required'] and not partner:
             raise UserError(_(
                 "A customer must be identified for an exchange operation above %s.",
                 config.currency_id.format(config.nm_exchange_customer_threshold)))
-        if currency_out != config.currency_id:
-            balance = config._nm_currency_balance(currency_out)
-            if currency_out.compare_amounts(quote['amount_out'], balance) > 0:
-                raise UserError(_(
-                    "The drawer of %(currency)s holds %(balance)s: %(amount)s cannot be handed back.",
-                    currency=currency_out.name, balance=currency_out.format(balance),
-                    amount=currency_out.format(quote['amount_out'])))
+        self._nm_check_drawer(session, currency_out, quote['amount_out'])
         employee, cashier_name, operator = self._nm_operator(config, employee_id)
 
         exchange = self.sudo().create({
@@ -285,7 +346,8 @@ class PosNmExchange(models.Model):
             'currency_in_id': currency_in.id,
             'currency_out_id': currency_out.id,
             'note': note or False,
-            **{key: quote[key] for key in ('amount_in', 'value_in', 'amount_out', 'value_out', 'commission', 'rate')},
+            **{key: quote[key] for key in (
+                'amount_in', 'value_in', 'amount_out', 'value_out', 'commission', 'rate_margin', 'rate')},
         })
         label_in = _('%(name)s: %(amount)s received', name=exchange.name, amount=currency_in.format(quote['amount_in']))
         label_out = _('%(name)s: %(amount)s handed back', name=exchange.name, amount=currency_out.format(quote['amount_out']))
@@ -349,14 +411,7 @@ class PosNmExchange(models.Model):
         if not self.statement_line_in_id or not self.statement_line_out_id:
             raise UserError(_("The statement lines of the operation %s are missing: it cannot be reversed.",
                               self.name))
-        config = session.config_id
-        if self.currency_in_id != config.currency_id:
-            balance = config._nm_currency_balance(self.currency_in_id)
-            if self.currency_in_id.compare_amounts(self.amount_in, balance) > 0:
-                raise UserError(_(
-                    "The drawer of %(currency)s holds %(balance)s: %(amount)s cannot be handed back.",
-                    currency=self.currency_in_id.name, balance=self.currency_in_id.format(balance),
-                    amount=self.currency_in_id.format(self.amount_in)))
+        self._nm_check_drawer(session, self.currency_in_id, self.amount_in)
         cash_pm = session._nm_cash_payment_method()
         if not cash_pm:
             raise UserError(_("There is no cash payment method for this PoS Session"))
@@ -400,10 +455,7 @@ class PosNmExchange(models.Model):
             'amount_out': self.currency_out_id.format(self.amount_out),
             'value_in': company_currency.format(self.value_in),
             'commission': company_currency.format(self.commission),
-            # From the amounts: the stored rate keeps 6 decimals only.
-            'rate_label': self._nm_rate_label(
-                self.currency_in_id, self.currency_out_id,
-                (self.amount_out / self.amount_in) if self.amount_in else 0.0),
+            'rate_label': self.rate_label,
             'note': self.note or '',
         }
 

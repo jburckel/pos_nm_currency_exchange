@@ -47,4 +47,5 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
         self.assertAlmostEqual(self.main_pos_config._nm_currency_balance(foreign_currency), 150.0, places=2)
         data = session.get_closing_control_data()
         self.assertEqual(data['nm_exchange_summary']['count'], 1)
-        self.assertAlmostEqual(data['default_cash_details']['amount'], -56.32, places=2)
+        # 100 counted in the main drawer at opening less the 56.32 handed back.
+        self.assertAlmostEqual(data['default_cash_details']['amount'], 43.68, places=2)

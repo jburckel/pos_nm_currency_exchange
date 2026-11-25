@@ -14,6 +14,17 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
     steps: () =>
         [
             {
+                content: "fill the counted amount of the main currency at opening: the drawer hands back the notes",
+                trigger:
+                    ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) .cash-input-sub-section input",
+                run: "edit 100",
+            },
+            {
+                content: "wait for the debounced input of the main currency",
+                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(100)",
+                run: () => new Promise((resolve) => setTimeout(resolve, 500)),
+            },
+            {
                 content: "fill the counted amount of the foreign currency at opening",
                 trigger: ".nm-multicurrency-opening-section input",
                 run: "edit 100",
