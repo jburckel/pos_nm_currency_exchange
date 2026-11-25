@@ -42,10 +42,12 @@ is under `tools/screenshots/`.
 
 ## Banner and icon
 
-`tools/branding/build_branding.py` renders `banner.png` (1440 x 600) and `icon.png`
-(512 x 512) with headless Chrome, in the style of `pos_nm_multicurrencies` (blue
-gradient, faded currency symbols, white Open Sans text). The first image of the
-manifest is the banner of the store page.
+`tools/make_banner.js` renders `banner.png` (1200 x 600) from `tools/banner.html`:
+see the *Banner* section of the README. Its card carries the figures of
+`screenshot_exchange_popup.png`, the first screenshot of the page and of the
+manifest: change them together. `tools/branding/build_branding.py` renders
+`icon.png` (512 x 512) with headless Chrome. The first image of the manifest is
+the banner of the store page.
 
 ## Store page layout
 

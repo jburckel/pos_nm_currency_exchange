@@ -1,5 +1,6 @@
-"""Banner and icon of pos_nm_currency_exchange, in the Natimai Solutions style of
-pos_nm_multicurrencies (blue gradient, faded currency symbols, white text).
+"""Icon of pos_nm_currency_exchange, in the Natimai Solutions style of
+pos_nm_multicurrencies. The banner is rendered by tools/make_banner.js from
+tools/banner.html.
 
 Rendered with headless Chrome from HTML, with Open Sans (close to the Segoe UI of the
 parent banner). Usage::
@@ -34,30 +35,6 @@ ARROWS = """<svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" fill="n
     <path d="M8 24 H88 M68 6 L88 24 L68 42"/>
     <path d="M92 56 H12 M32 38 L12 56 L32 74"/>
 </svg>"""
-
-BANNER = f"""<!doctype html><html><head><meta charset="utf-8"><style>
-{FONT_FACES}
-html, body {{ margin: 0; }}
-.banner {{
-    position: relative; width: 1440px; height: 600px; overflow: hidden;
-    background: linear-gradient(160deg, rgb(59, 92, 166) 0%, rgb(34, 137, 185) 55%, rgb(22, 159, 194) 100%);
-    font-family: 'NM', sans-serif; color: #fff;
-}}
-.sym {{ position: absolute; font-weight: 700; color: rgba(255, 255, 255, 0.09); line-height: 1; }}
-.content {{ position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }}
-h1 {{ margin: 0; font-size: 92px; font-weight: 700; line-height: 1.18; letter-spacing: -0.5px; }}
-p {{ margin: 34px 0 0; font-size: 38px; font-weight: 400; }}
-</style></head><body><div class="banner">
-<span class="sym" style="left: 160px; top: 4px; font-size: 170px;">&pound;</span>
-<span class="sym" style="left: 30px; top: 400px; font-size: 230px;">&yen;</span>
-<span class="sym" style="left: 1080px; top: 140px; font-size: 420px;">&euro;</span>
-<span class="sym" style="left: 1335px; top: 380px; font-size: 220px;">$</span>
-<span class="sym" style="left: 440px; top: 470px; width: 190px;">{ARROWS}</span>
-<div class="content">
-    <h1>POS Currency<br/>Exchange Counter</h1>
-    <p>Buy and sell foreign notes at your Point of Sale</p>
-</div>
-</div></body></html>"""
 
 ICON = f"""<!doctype html><html><head><meta charset="utf-8"><style>
 {FONT_FACES}
@@ -94,7 +71,6 @@ def render(page, html, selector, path):
 
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=CHROME, headless=True)
-    page = browser.new_page(viewport={"width": 1440, "height": 600}, device_scale_factor=1)
-    render(page, BANNER, ".banner", OUT / "banner.png")
+    page = browser.new_page(viewport={"width": 512, "height": 512}, device_scale_factor=1)
     render(page, ICON, ".icon", OUT / "icon.png")
     browser.close()

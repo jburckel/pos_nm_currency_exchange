@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!-- The banner of the store page, 1200 x 600. Rendered to
+     pos_nm_currency_exchange/static/description/banner.png by
+     tools/make_banner.js.
+     The size is not free: the cover at the top of the module page on
+     apps.odoo.com is a CSS background in a 2:1 frame (background-size:
+     cover), which crops any other ratio at the centre - a 1440 x 600 picture
+     loses about 120 px on each side there. The description below shows the
+     picture about 780 px wide, so no text here is under 18 px.
+     The card on the right is taken from the exchange popup
+     (screenshot_exchange_popup.png): its title, the two sides of the
+     operation with their labels, the value of the notes received and the
+     commission, word for word. Removed: the Rate line (its label changed in
+     20.0.1.0.1 and would differ from the capture), the Customer button, the
+     note typed by the cashier and the buttons. No reference and no date:
+     the same picture must stay right next to the capture of every version.
+     Keep the two in step when the demo data of the screenshots changes. -->
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1200px; height: 600px; overflow: hidden;
+    font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: #1F2A44;
+    background: linear-gradient(120deg, #F4F7FC 0%, #E9F0FA 55%, #DDF3F9 100%);
+    display: flex; align-items: center;
+  }
+  .pitch { width: 658px; padding-left: 64px; white-space: nowrap; }
+  .module {
+    font-size: 21px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #4A6BB5;
+  }
+  h1 {
+    margin-top: 18px; font-size: 54px; line-height: 1.1; font-weight: 800;
+    letter-spacing: -0.02em; color: #1F2A44;
+  }
+  h1 em { font-style: normal; color: #4A6BB5; }
+  .sub { margin-top: 26px; font-size: 25px; line-height: 1.4; color: #44506B; }
+  .brand { margin-top: 30px; }
+  .brand img { height: 92px; width: 92px; mix-blend-mode: multiply; }
+
+  .card {
+    width: 478px; background: #FFFFFF; border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(31, 42, 68, 0.18), 0 2px 6px rgba(31, 42, 68, 0.08);
+    padding: 28px 30px 24px; border-top: 6px solid #1FB9DC;
+  }
+  .card .head { display: flex; justify-content: space-between; align-items: center; }
+  .card .who { font-size: 18px; line-height: 1.35; color: #5B6783; }
+  .card .who b { font-size: 22px; color: #1F2A44; font-weight: 600; }
+  .card .amount { font-size: 40px; font-weight: 800; color: #1F2A44; }
+  .label {
+    margin-top: 18px; font-size: 18px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #8791A8;
+  }
+  .sentence {
+    margin-top: 8px; font-size: 25px; line-height: 1.38; font-weight: 500;
+    color: #1F2A44;
+  }
+  .sentence mark { background: #DDF3F9; color: inherit; padding: 1px 6px; border-radius: 6px; white-space: nowrap; }
+  table { margin-top: 18px; width: 100%; border-collapse: collapse; font-size: 18px; }
+  td { padding: 8px 0; white-space: nowrap; border-top: 1px solid #E6EAF2; color: #44506B; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+  <div class="pitch">
+    <div class="module">POS Currency Exchange</div>
+    <h1>Your <em>commission</em><br/>on every exchange</h1>
+    <p class="sub">Receipt, both drawers, closing control.<br/>Odoo Community &amp; Enterprise.</p>
+    <div class="brand">
+      <img src="../pos_nm_currency_exchange/static/description/Logo-SQ.png" alt="Natimai Solutions"/>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head">
+      <div class="who"><b>Currency Exchange</b></div>
+      <div class="amount">91.00 &euro;</div>
+    </div>
+    <div class="label">Handed back to the customer</div>
+    <p class="sentence">EUR <mark>91.00 &euro;</mark></p>
+    <table>
+      <tr><td>Received from the customer</td><td class="num">USD 100.00</td></tr>
+      <tr><td>Value of the notes received</td><td class="num">$ 100.00</td></tr>
+      <tr><td>Commission</td><td class="num">$ 3.03</td></tr>
+    </table>
+  </div>
+</body>
+</html>
