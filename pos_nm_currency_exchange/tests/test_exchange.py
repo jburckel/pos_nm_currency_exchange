@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from datetime import timedelta
 from unittest.mock import patch
 
+from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import new_test_user, tagged
 from odoo.addons.point_of_sale.tests.test_pos_accounting import TestPosAccounting
@@ -312,6 +314,7 @@ class TestPosCurrencyExchange(TestPosAccounting):
         summary = data['nm_exchange_summary']
         self.assertEqual(summary['count'], 1)
         self.assertEqual(summary['commission'], 3.2)
+        self.assertEqual(summary['rate_margin'], 8.8)
         self.assertEqual(summary['operations'][0]['name'], exchange.name)
         self.assertEqual(session.nm_exchange_count, 1)
         self.assertEqual(session.nm_exchange_commission, 3.2)
@@ -324,7 +327,8 @@ class TestPosCurrencyExchange(TestPosAccounting):
         # Report block.
         report = self.env['report.point_of_sale.report_saledetails'].get_sale_details(session_ids=session.ids)
         self.assertEqual(report['nm_exchange']['count'], 1)
-        self.assertEqual(report['nm_exchange']['commission'], 3.2)
+        self.assertEqual(report['nm_exchange']['totals'][0]['commission'], 3.2)
+        self.assertEqual(report['nm_exchange']['totals'][0]['rate_margin'], 8.8)
         values = self.env['report.point_of_sale.report_saledetails']._get_report_values(session.ids)
         self.assertIn('nm_exchange', values)
         # Position report sees the drawer at 324.
@@ -549,7 +553,11 @@ class TestPosCurrencyExchange(TestPosAccounting):
         report = self.env['report.point_of_sale.report_saledetails'].get_sale_details(session_ids=session.ids)
         self.assertEqual(report['nm_exchange']['count'], 1)
         self.assertEqual(report['nm_exchange']['cancelled_count'], 1)
-        self.assertEqual(report['nm_exchange']['commission'], 3.0)
+        self.assertIn(exchange.name, report['nm_exchange']['cancelled_label'])
+        self.assertEqual([op['name'] for op in report['nm_exchange']['operations']], [kept.name])
+        self.assertEqual(len(report['nm_exchange']['totals']), 1)
+        self.assertEqual(report['nm_exchange']['totals'][0]['count'], 1)
+        self.assertEqual(report['nm_exchange']['totals'][0]['commission'], 3.0)
         # Not once the session is closed.
         with self.assertRaisesRegex(UserError, 'closed session'):
             kept.action_cancel()
@@ -757,3 +765,108 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertFalse(Exchange.search([('session_id', '=', session.id)]))
         receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, amount_out=184.0)
         self.assertEqual(Exchange.browse(receipt['id']).amount_out, 184.0)
+
+    # ------------------------------------------------------------------
+    # Sales Details report and closing
+    # ------------------------------------------------------------------
+
+    def _sale_details(self, hours_before=1, hours_after=1, **kwargs):
+        """Sales Details by period around now, as the wizard calls it."""
+        now = fields.Datetime.now()
+        return self.env['report.point_of_sale.report_saledetails'].get_sale_details(
+            fields.Datetime.to_string(now - timedelta(hours=hours_before)),
+            fields.Datetime.to_string(now + timedelta(hours=hours_after)), **kwargs)
+
+    def test_report_by_period(self):
+        """Without sessions, the report takes the operations of the period on
+        its points of sale: those of an open session without any order, not
+        those of the same session made before the period."""
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        earlier = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
+        earlier.sudo().date = fields.Datetime.now() - timedelta(days=1)
+        exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'])
+
+        report = self._sale_details(config_ids=self.pos_config.ids)
+        block = report['nm_exchange']
+        self.assertEqual([op['name'] for op in block['operations']], [exchange.name])
+        self.assertEqual(block['totals'][0]['commission'], 3.0)
+        self.assertEqual(block['totals'][0]['rate_margin'], 10.0)
+        # Without points of sale: every point of sale.
+        self.assertEqual(self._sale_details()['nm_exchange']['count'], 1)
+        # The day before: the earlier operation only.
+        report = self._sale_details(hours_before=25, hours_after=-23, config_ids=self.pos_config.ids)
+        self.assertEqual([op['name'] for op in report['nm_exchange']['operations']], [earlier.name])
+        # A period without operation, or another point of sale: no block.
+        self.assertNotIn('nm_exchange', self._sale_details(hours_before=-1, hours_after=2))
+        other_config = self.pos_config.copy({'name': 'NM Other Shop'})
+        self.assertNotIn('nm_exchange', self._sale_details(config_ids=other_config.ids))
+        # Printed from the session: all the operations of the session.
+        report = self.env['report.point_of_sale.report_saledetails'].get_sale_details(session_ids=session.ids)
+        self.assertEqual(report['nm_exchange']['count'], 2)
+
+        # Once the session is closed, with exchanges only.
+        self._close(session, main=3.0, fx=544.0)
+        self.assertEqual(self._sale_details(config_ids=self.pos_config.ids)['nm_exchange']['count'], 1)
+
+    def test_report_currencies(self):
+        """Commissions of points of sale in different currencies are totalled
+        per currency, never added together."""
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)
+        xpf = self.setup_other_currency('XPF', rates=[('1900-01-01', 119.0)])
+        journal = self.env['account.journal'].create({
+            'name': 'NM XPF Sales', 'code': 'NMXPF', 'type': 'general', 'currency_id': xpf.id})
+        xpf_config = self.env['pos.config'].create({
+            'name': 'NM XPF Shop', 'journal_id': journal.id, 'payment_method_ids': [(6, 0, [])]})
+        xpf_session = self.env['pos.session'].create({'config_id': xpf_config.id, 'user_id': self.env.uid})
+        self.assertEqual(xpf_session.currency_id, xpf)
+        Exchange.sudo().create({
+            'session_id': xpf_session.id, 'currency_in_id': self.fx.id, 'currency_out_id': xpf.id,
+            'amount_in': 100.0, 'amount_out': 11400.0, 'value_in': 12000.0, 'value_out': 11400.0,
+            'commission': 600.0, 'rate_margin': 100.0})
+
+        block = self._sale_details(config_ids=(self.pos_config | xpf_config).ids)['nm_exchange']
+        self.assertEqual(block['count'], 2)
+        totals = {total['currency']: total for total in block['totals']}
+        self.assertEqual(set(totals), {self.main.name, xpf.name})
+        self.assertEqual(totals[self.main.name]['commission'], 3.2)
+        self.assertEqual(totals[xpf.name]['commission'], 600.0)
+        self.assertEqual(totals[xpf.name]['rate_margin'], 100.0)
+        self.assertIn(xpf.name, totals[xpf.name]['count_label'])
+        # One point of sale: its own currency only.
+        block = self._sale_details(config_ids=xpf_config.ids)['nm_exchange']
+        self.assertEqual([total['currency'] for total in block['totals']], [xpf.name])
+
+    def test_report_rendering(self):
+        """The block is printed in the Sales Details of the session."""
+        session = self._open(fx=500.0)
+        Exchange = self.env['pos.nm.exchange']
+        exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
+        cancelled = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 50.0, self.fx.id)['id'])
+        cancelled.action_cancel()
+        html, _format = self.env['ir.actions.report']._render_qweb_html(
+            'point_of_sale.sale_details_report', session.ids)
+        html = html.decode()
+        self.assertIn('id="nm_exchange"', html)
+        self.assertIn(exchange.name, html)
+        self.assertIn(self.main.format(3.2), html)
+        self.assertIn(self.main.format(8.8), html)
+        self.assertIn('Rate Margin', html)
+        self.assertIn('1 operations', html)
+        self.assertIn('cancelled operations: %s' % cancelled.name, html)
+
+    def test_closing_after_counter_disabled(self):
+        """The closing popup lists the operations even when the counter was
+        disabled during the session."""
+        session = self._open(fx=500.0)
+        self.env['pos.nm.exchange'].create_from_ui(session.id, self.main.id, 100.0, self.fx.id)
+        self.pos_config.nm_exchange_enabled = False
+        summary = session.get_closing_control_data()['nm_exchange_summary']
+        self.assertEqual(summary['count'], 1)
+        self.assertEqual(summary['commission'], 3.2)
+        self.assertEqual(summary['rate_margin'], 8.8)
+        # Nothing to show for a session without operation.
+        self._close(session, main=100.0, fx=324.0)
+        self.assertNotIn('nm_exchange_summary', self._open(fx=324.0).get_closing_control_data())

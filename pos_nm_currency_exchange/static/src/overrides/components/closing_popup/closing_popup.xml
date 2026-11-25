@@ -7,6 +7,10 @@
                     <span>Currency Exchange</span>
                     <span class="nm-exchange-closing-commission" t-out="this.pos.formatCurrency(this.nmExchangeSummary.commission)"/>
                 </div>
+                <div class="d-flex align-items-center justify-content-between text-muted border-start ps-2 nm-exchange-closing-rate-margin">
+                    <span>Rate Margin</span>
+                    <span t-out="this.pos.formatCurrency(this.nmExchangeSummary.rate_margin)"/>
+                </div>
                 <div class="d-flex align-items-center justify-content-between text-muted border-start ps-2">
                     <span>Operations</span>
                     <span t-out="this.nmExchangeSummary.count"/>

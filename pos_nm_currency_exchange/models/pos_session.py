@@ -39,6 +39,7 @@ class PosSession(models.Model):
             'count': len(exchanges),
             'cancelled_count': len(self.nm_exchange_ids) - len(exchanges),
             'commission': self.currency_id.round(sum(exchanges.mapped('commission'))),
+            'rate_margin': self.currency_id.round(sum(exchanges.mapped('rate_margin'))),
             'operations': [{
                 'name': exchange.name,
                 'amount_in': exchange.currency_in_id.format(exchange.amount_in),
@@ -61,6 +62,7 @@ class PosSession(models.Model):
 
     def get_closing_control_data(self):
         data = super().get_closing_control_data()
-        if self.config_id.nm_exchange_enabled:
+        # The counter may have been disabled since the operations were done.
+        if self.config_id.nm_exchange_enabled or self.nm_exchange_ids:
             data['nm_exchange_summary'] = self._nm_exchange_summary()
         return data

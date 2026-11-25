@@ -10,7 +10,7 @@
                         icon="attach_money" invisible="not nm_exchange_count">
                     <div class="o_stat_info">
                         <span class="o_stat_value"><field name="nm_exchange_commission" widget="monetary"/></span>
-                        <span class="o_stat_text">Exchange Commissions</span>
+                        <span class="o_stat_text">Exchanges: <field name="nm_exchange_count"/></span>
                     </div>
                 </button>
             </xpath>
@@ -30,6 +30,7 @@
                             <th class="text-end">Received</th>
                             <th class="text-end">Handed Back</th>
                             <th class="text-end">Commission</th>
+                            <th class="text-end">Rate Margin</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,28 +39,17 @@
                             <td><span t-out="operation['session']"/></td>
                             <td class="text-end"><span t-out="operation['amount_in']"/></td>
                             <td class="text-end"><span t-out="operation['amount_out']"/></td>
-                            <td class="text-end">
-                                <span t-if="currency['position']">
-                                    <span t-out="operation['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/><span t-out="currency['symbol']"/>
-                                </span>
-                                <span t-else="">
-                                    <span t-out="currency['symbol']"/><span t-out="operation['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
-                                </span>
-                            </td>
+                            <td class="text-end"><span t-out="operation['commission']"/></td>
+                            <td class="text-end"><span t-out="operation['rate_margin']"/></td>
                         </tr>
-                        <tr class="fw-bold border-top">
-                            <td class="ps-2" colspan="4"><span t-out="nm_exchange['count_label']"/></td>
-                            <td class="text-end">
-                                <span t-if="currency['position']">
-                                    <span t-out="nm_exchange['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/><span t-out="currency['symbol']"/>
-                                </span>
-                                <span t-else="">
-                                    <span t-out="currency['symbol']"/><span t-out="nm_exchange['commission']" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
-                                </span>
-                            </td>
+                        <!-- One total per currency of the points of sale. -->
+                        <tr t-foreach="nm_exchange['totals']" t-as="total" class="fw-bold border-top nm-exchange-total">
+                            <td class="ps-2" colspan="4"><span t-out="total['count_label']"/></td>
+                            <td class="text-end"><span t-out="total['commission_formatted']"/></td>
+                            <td class="text-end"><span t-out="total['rate_margin_formatted']"/></td>
                         </tr>
                         <tr t-if="nm_exchange.get('cancelled_count')" class="text-muted">
-                            <td class="ps-2" colspan="5"><span t-out="nm_exchange['cancelled_label']"/></td>
+                            <td class="ps-2" colspan="6"><span t-out="nm_exchange['cancelled_label']"/></td>
                         </tr>
                     </tbody>
                 </table>
