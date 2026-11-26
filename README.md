@@ -18,17 +18,25 @@ Odoo 20 module: a currency exchange counter inside the Point of Sale, built on
 ## Branches
 
 `20.0` is the first and main branch: the module needs `pos_nm_multicurrencies`
-20.0 and the native foreign-currency cash payments of Odoo 20.
+20.0.2.1.0 or later and the native foreign-currency cash payments of Odoo 20.
 
 ## Status
 
-Version 20.0.1.0.0: exchange operation from the register menu between any two
-cash currencies of the point of sale, commission per currency (percentage,
-fixed part, minimum), exchange receipt, two statement lines on the cash journal
-of the session visible in the closing control, the Currency Position report
-and the session report, identification of the customer above a threshold,
-list and pivot of the operations. See
-[`pos_nm_currency_exchange/CHANGELOG.md`](pos_nm_currency_exchange/CHANGELOG.md).
+Version 20.0.2.0.0: exchange operation from the register menu between any two
+cash currencies of the point of sale, with a reverse quote (amount handed back
+typed, amount to receive computed) and the balance of the drawer; buy rate (cash
+rate of the parent) and sell rate (Exchange Sell Margin) in favour of the shop,
+rate margin of every operation; commission per currency (percentage, fixed part,
+minimum) with the notes handed back rounded down to the coins (cash rounding of
+the point of sale for its own currency); drawer check in every currency;
+receipt with the header and footer of the point of sale and the licence number,
+reprint, PDF and e-mail; rate board (register, receipt printer, PDF); customer
+identification with thresholds, linked operations and identity document;
+cancellation by a manager while the session is open, read-only operations,
+gapless references; exchange register (list, Excel, PDF per period); closing
+control, Currency Position and Sales Details. See
+[`pos_nm_currency_exchange/CHANGELOG.md`](pos_nm_currency_exchange/CHANGELOG.md)
+and [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Tooling
 
@@ -42,6 +50,21 @@ python tools/build_doc_pdf.py          # all languages
 Same chain as the parent module: docutils (RST to HTML, `tools/doc_pdf.css`
 embedded) then headless Chrome (HTML to PDF). Set `CHROME=<path>` when Chrome is
 not in the usual places.
+
+### Translations
+
+`i18n/pos_nm_currency_exchange.pot` is exported by Odoo from a database where
+the module is up to date (a config file giving the database and the addons path):
+
+```
+odoo-bin -c <config> -u pos_nm_currency_exchange --stop-after-init
+odoo-bin i18n export -c <config> pos_nm_currency_exchange -o pos_nm_currency_exchange/i18n/pos_nm_currency_exchange.pot
+```
+
+`fr.po`, `de.po`, `es.po` and `en.po` follow the template entry for entry, every
+message translated; check them with `msgfmt -c --statistics -o /dev/null <file>`.
+The UI terms of the guides (`doc/index_<lang>.rst`) are the translations of the
+interface, of this module and of POS Multi-Currency Cash.
 
 ### Screenshots
 

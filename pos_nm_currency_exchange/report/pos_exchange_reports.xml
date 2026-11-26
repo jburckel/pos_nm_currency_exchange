@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_exchange_register" model="report.paperformat">
+        <field name="name">Exchange Register (A4 landscape)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">20</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">15</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <!-- Receipt of an operation, with the same content as at the register. -->
+    <record id="action_report_pos_nm_exchange" model="ir.actions.report">
+        <field name="name">Exchange Receipt</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pos_nm_currency_exchange.report_exchange_receipt</field>
+        <field name="print_report_name">'Exchange %s' % object.name.replace('/', '_')</field>
+        <field name="binding_model_id" ref="model_pos_nm_exchange"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_exchange_receipt">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="extra_data" t-value="o._nm_receipt_data()"/>
+                    <div class="page">
+                        <div class="row justify-content-center">
+                            <div class="col-6">
+                                <t t-call="pos_nm_currency_exchange.pos_exchange_receipt_body"/>
+                                <div t-if="extra_data.get('receipt_footer')" class="w-100 text-center mt-3" style="white-space:pre-line"
+                                     t-out="extra_data['receipt_footer']"/>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Rate board of a point of sale, to display at the counter. -->
+    <record id="action_report_exchange_rates" model="ir.actions.report">
+        <field name="name">Exchange Rates</field>
+        <field name="model">pos.config</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pos_nm_currency_exchange.report_exchange_rates</field>
+        <field name="print_report_name">'Exchange Rates %s' % object.name</field>
+        <field name="binding_model_id" ref="point_of_sale.model_pos_config"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_exchange_rates">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <t t-set="board" t-value="o._nm_rate_board()"/>
+                    <div class="page">
+                        <h2>Exchange Rates</h2>
+                        <p>
+                            <span t-out="board['config_name']"/> - <span t-out="board['date']"/>
+                            <t t-if="board['licence']"><br/>Licence No. <span t-out="board['licence']"/></t>
+                        </p>
+                        <table class="table table-sm o_main_table nm-exchange-rate-board">
+                            <thead>
+                                <tr>
+                                    <th>Currency</th>
+                                    <th class="text-end">We buy</th>
+                                    <th class="text-end">You receive</th>
+                                    <th class="text-end">We sell</th>
+                                    <th class="text-end">You pay</th>
+                                    <th class="text-end">Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="board['rows']" t-as="row">
+                                    <td><strong t-out="row['currency']"/></td>
+                                    <td class="text-end" t-out="row['buy_rate_label']"/>
+                                    <td class="text-end">
+                                        <span t-out="row['amount_formatted']"/> &#8594; <span t-out="row['buy_amount_formatted']"/>
+                                    </td>
+                                    <td class="text-end" t-out="row['sell_rate_label']"/>
+                                    <td class="text-end">
+                                        <span t-out="row['amount_formatted']"/> &#8592; <span t-out="row['sell_amount_formatted']"/>
+                                    </td>
+                                    <td class="text-end" t-out="row['commission_label']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="text-muted">
+                            We buy: value of 1 unit of the notes you bring, and what you receive for them. We sell: price of
+                            1 unit of the notes you take, and what you pay for them. Rates before the commission; the amounts
+                            include it and are rounded to the notes and coins.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Exchange register of a period (wizard). -->
+    <record id="action_report_exchange_register" model="ir.actions.report">
+        <field name="name">Exchange Register</field>
+        <field name="model">pos.nm.exchange</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pos_nm_currency_exchange.report_exchange_register</field>
+        <field name="paperformat_id" ref="paperformat_exchange_register"/>
+        <field name="group_ids" eval="[(4, ref('point_of_sale.group_pos_manager'))]"/>
+    </record>
+
+    <template id="report_exchange_register">
+        <t t-call="web.html_container">
+            <t t-call="web.internal_layout">
+                <div class="page small">
+                    <h2>Exchange Register</h2>
+                    <p>
+                        <span t-out="date_start"/> - <span t-out="date_stop"/><br/>
+                        Points of sale: <span t-out="config_names"/>
+                    </p>
+                    <table class="table table-sm nm-exchange-register">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Date</th>
+                                <th>Point of Sale</th>
+                                <th>Cashier</th>
+                                <th>Operation</th>
+                                <th class="text-end">Received</th>
+                                <th class="text-end">Handed Back</th>
+                                <th class="text-end">Rate</th>
+                                <th class="text-end">Commission</th>
+                                <th class="text-end">Rate Margin</th>
+                                <th>Customer</th>
+                                <th>Identity Document</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="operations" t-as="operation" t-att-class="'text-muted' if operation['cancelled'] else ''">
+                                <td t-out="operation['name']"/>
+                                <td t-out="operation['date']"/>
+                                <td t-out="operation['config']"/>
+                                <td t-out="operation['cashier']"/>
+                                <td t-out="operation['operation_type']"/>
+                                <td class="text-end" t-out="operation['amount_in']"/>
+                                <td class="text-end" t-out="operation['amount_out']"/>
+                                <td class="text-end" t-out="operation['rate']"/>
+                                <td class="text-end" t-out="operation['commission']"/>
+                                <td class="text-end" t-out="operation['rate_margin']"/>
+                                <td t-out="operation['customer']"/>
+                                <td>
+                                    <t t-if="operation['document_type']">
+                                        <span t-out="operation['document_type']"/> <span t-out="operation['document_number']"/>
+                                        <t t-if="operation['document_country']"><br/><span t-out="operation['document_country']"/></t>
+                                        <t t-if="operation['document_expiry']"><br/>Expires <span t-out="operation['document_expiry']"/></t>
+                                        <t t-elif="operation['document_no_expiry']"><br/>No expiry date</t>
+                                    </t>
+                                </td>
+                                <td t-out="operation['state']"/>
+                            </tr>
+                            <tr t-if="not operations">
+                                <td colspan="13">No exchange operation over this period.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h4>Totals per currency</h4>
+                    <table class="table table-sm w-auto nm-exchange-register-totals">
+                        <thead>
+                            <tr>
+                                <th>Currency</th>
+                                <th class="text-end">Operations</th>
+                                <th class="text-end">Received</th>
+                                <th class="text-end">Handed Back</th>
+                                <th class="text-end">Balance</th>
+                                <th class="text-end">Commission</th>
+                                <th class="text-end">Rate Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="totals" t-as="total">
+                                <td t-out="total['currency']"/>
+                                <td class="text-end" t-out="total['count']"/>
+                                <td class="text-end" t-out="total['amount_in']"/>
+                                <td class="text-end" t-out="total['amount_out']"/>
+                                <td class="text-end" t-out="total['balance']"/>
+                                <td class="text-end" t-out="total['commission']"/>
+                                <td class="text-end" t-out="total['rate_margin']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p t-if="cancelled_count == 1" class="text-muted">
+                        1 cancelled operation is listed but not counted in the totals: it was reversed by two
+                        opposite statement lines.
+                    </p>
+                    <p t-elif="cancelled_count" class="text-muted">
+                        <span t-out="cancelled_count"/> cancelled operations are listed but not counted in the totals:
+                        each was reversed by two opposite statement lines.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

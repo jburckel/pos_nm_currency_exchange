@@ -11,11 +11,13 @@ class PosSession(models.Model):
     nm_exchange_commission = fields.Monetary(
         string='Exchange Commissions', currency_field='currency_id', compute='_compute_nm_exchange_count')
 
-    @api.depends('nm_exchange_ids.commission')
+    @api.depends('nm_exchange_ids.commission', 'nm_exchange_ids.state')
     def _compute_nm_exchange_count(self):
+        # Cancelled operations were reversed: they count for nothing.
         for session in self:
-            session.nm_exchange_count = len(session.nm_exchange_ids)
-            session.nm_exchange_commission = sum(session.nm_exchange_ids.mapped('commission'))
+            exchanges = session.nm_exchange_ids.filtered(lambda e: e.state == 'done')
+            session.nm_exchange_count = len(exchanges)
+            session.nm_exchange_commission = sum(exchanges.mapped('commission'))
 
     def action_nm_view_exchanges(self):
         self.ensure_one()
@@ -25,15 +27,19 @@ class PosSession(models.Model):
             'res_model': 'pos.nm.exchange',
             'view_mode': 'list,form',
             'domain': [('session_id', '=', self.id)],
+            'context': {'search_default_done': 1},
         }
 
     def _nm_exchange_summary(self):
-        """Operations of the session for the closing popup and the report."""
+        """Operations of the session for the closing popup and the report;
+        the cancelled ones are only counted apart."""
         self.ensure_one()
-        exchanges = self.nm_exchange_ids
+        exchanges = self.nm_exchange_ids.filtered(lambda e: e.state == 'done')
         return {
             'count': len(exchanges),
+            'cancelled_count': len(self.nm_exchange_ids) - len(exchanges),
             'commission': self.currency_id.round(sum(exchanges.mapped('commission'))),
+            'rate_margin': self.currency_id.round(sum(exchanges.mapped('rate_margin'))),
             'operations': [{
                 'name': exchange.name,
                 'amount_in': exchange.currency_in_id.format(exchange.amount_in),
@@ -43,8 +49,20 @@ class PosSession(models.Model):
             } for exchange in exchanges.sorted('id')],
         }
 
+    def _nm_expected_cash(self, currency):
+        """Notes expected in the drawer of ``currency`` (the currency of the
+        point of sale included), computed by the closing control: opening,
+        cash payments and change of the session, cash moves and exchanges."""
+        self.ensure_one()
+        data = self.get_closing_control_data()
+        if currency == self.currency_id:
+            return data['default_cash_details'].get('amount', 0.0)
+        return next((detail['amount'] for detail in data['multicurrency_details']
+                     if detail['currency_id'] == currency.id), 0.0)
+
     def get_closing_control_data(self):
         data = super().get_closing_control_data()
-        if self.config_id.nm_exchange_enabled:
+        # The counter may have been disabled since the operations were done.
+        if self.config_id.nm_exchange_enabled or self.nm_exchange_ids:
             data['nm_exchange_summary'] = self._nm_exchange_summary()
         return data

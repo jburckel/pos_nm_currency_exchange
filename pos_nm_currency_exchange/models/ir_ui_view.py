@@ -7,5 +7,9 @@ class IrUiView(models.Model):
     @api.model
     def _get_xml_ids_to_load(self):
         # The receipt templates rendered in the register are loaded by key:
-        # add the exchange receipt to the core list.
-        return super()._get_xml_ids_to_load() + ['pos_nm_currency_exchange.pos_exchange_receipt']
+        # add the exchange receipts to the core list.
+        return super()._get_xml_ids_to_load() + [
+            'pos_nm_currency_exchange.pos_exchange_receipt_body',
+            'pos_nm_currency_exchange.pos_exchange_receipt',
+            'pos_nm_currency_exchange.pos_exchange_rates_receipt',
+        ]

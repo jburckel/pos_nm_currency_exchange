@@ -33,11 +33,17 @@ LAYOUT = {
     "screenshot_exchange_popup.png": {"ratio": 1.45},
     "screenshot_exchange_commissions.png": {"ratio": 1.45},
     # Receipt beside the closing popup: white margins of the frame removed.
-    "screenshot_exchange_receipt.png": {"ratio": 0.9, "trim": True},
-    "screenshot_exchange_closing.png": {"ratio": 0.9},
+    "screenshot_exchange_receipt.png": {"ratio": 0.8, "trim": True},
+    "screenshot_exchange_closing.png": {"ratio": 0.8},
+    # Rate board beside the identity document of the exchange popup.
+    "screenshot_exchange_rates.png": {"ratio": 1.45},
+    "screenshot_exchange_document.png": {"ratio": 1.45},
     # Full-width views: the empty part of the screen is cut.
     "screenshot_exchange_list.png": {"crop": 450},
     "screenshot_exchange_pivot.png": {"crop": 400},
+    "screenshot_exchange_cancelled.png": {"crop": 620},
+    # Rate board in PDF, full width.
+    "screenshot_exchange_rates_pdf.png": {"ratio": 2.6},
 }
 
 

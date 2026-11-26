@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <field name="max_difference" position="after">
                 <field name="company_currency_id" column_invisible="True"/>
+                <field name="exchange_sell_margin_percent" readonly="rate_mode == 'fixed'" optional="show"/>
                 <field name="exchange_commission_percent" optional="show"/>
                 <field name="exchange_commission_fixed" optional="show"/>
                 <field name="exchange_commission_min" optional="hide"/>
@@ -22,6 +23,7 @@
             <xpath expr="//field[@name='max_difference']/.." position="after">
                 <group string="Currency Exchange">
                     <field name="company_currency_id" invisible="1"/>
+                    <field name="exchange_sell_margin_percent" invisible="rate_mode == 'fixed'"/>
                     <field name="exchange_commission_percent"/>
                     <field name="exchange_commission_fixed"/>
                     <field name="exchange_commission_min"/>

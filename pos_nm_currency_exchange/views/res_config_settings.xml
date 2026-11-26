@@ -17,13 +17,38 @@
                                 <field name="pos_nm_exchange_income_account_id" class="col-lg-6" options="{'no_create': True}"/>
                             </div>
                             <div class="row mt8">
+                                <label string="Exchange licence number" for="pos_nm_exchange_licence" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_licence" class="col-lg-6"/>
+                            </div>
+                            <div class="row mt8">
                                 <label string="Customer required above" for="pos_nm_exchange_customer_threshold" class="col-lg-5 o_light_label"/>
                                 <field name="pos_nm_exchange_customer_threshold" class="col-lg-3"/>
                             </div>
+                            <div class="row mt8">
+                                <label string="Customer required for every operation" for="pos_nm_exchange_customer_always" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_customer_always" class="col-lg-1"/>
+                            </div>
+                            <div class="row mt8">
+                                <label string="Identity document required above" for="pos_nm_exchange_document_threshold" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_document_threshold" class="col-lg-3"/>
+                            </div>
+                            <div class="row mt8">
+                                <label string="Linked operations period (days)" for="pos_nm_exchange_linked_days" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_linked_days" class="col-lg-3"/>
+                            </div>
+                            <div class="text-muted mt8">
+                                Thresholds at 0: never required. With a linked operations period, the value compared to the
+                                thresholds is the operation plus the operations of the same customer over that many days, at every
+                                Point of Sale of the company.
+                            </div>
+                            <div class="mt8">
+                                <button name="action_nm_print_rate_board" type="object" string="Print Exchange Rates"
+                                        icon="east" class="btn-link"/>
+                            </div>
                         </div>
                         <div class="text-muted mt8" invisible="not pos_nm_exchange_enabled">
-                            The commissions are set per currency in Cash Currencies (percentage, fixed part, minimum).
-                            The notes handed back follow the change rate and the change rounding of their currency.
+                            The commissions and the sell margin are set per currency in Cash Currencies.
+                            The notes handed back are rounded down to the coins and notes of their currency.
                         </div>
                     </setting>
                 </block>

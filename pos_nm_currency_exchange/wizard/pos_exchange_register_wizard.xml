@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_nm_exchange_register_wizard" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.register.wizard.form</field>
+        <field name="model">pos.nm.exchange.register.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Exchange Register">
+                <group>
+                    <field name="date_start"/>
+                    <field name="date_stop"/>
+                    <field name="config_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button name="action_print" string="Print" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_exchange_register_wizard" model="ir.actions.act_window">
+        <field name="name">Exchange Register</field>
+        <field name="res_model">pos.nm.exchange.register.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

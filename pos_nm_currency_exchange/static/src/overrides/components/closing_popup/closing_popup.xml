@@ -7,6 +7,10 @@
                     <span>Currency Exchange</span>
                     <span class="nm-exchange-closing-commission" t-out="this.pos.formatCurrency(this.nmExchangeSummary.commission)"/>
                 </div>
+                <div class="d-flex align-items-center justify-content-between text-muted border-start ps-2 nm-exchange-closing-rate-margin">
+                    <span>Rate Margin</span>
+                    <span t-out="this.pos.formatCurrency(this.nmExchangeSummary.rate_margin)"/>
+                </div>
                 <div class="d-flex align-items-center justify-content-between text-muted border-start ps-2">
                     <span>Operations</span>
                     <span t-out="this.nmExchangeSummary.count"/>
@@ -15,6 +19,10 @@
                      class="d-flex justify-content-between small text-muted border-start ps-4">
                     <span><t t-out="operation.name"/>: <t t-out="operation.amount_in"/> &#8594; <t t-out="operation.amount_out"/><span t-if="operation.cashier_name" class="ms-1 fst-italic">(<t t-out="operation.cashier_name"/>)</span></span>
                     <span t-out="this.pos.formatCurrency(operation.commission)"/>
+                </div>
+                <div t-if="this.nmExchangeSummary.cancelled_count" class="d-flex align-items-center justify-content-between text-muted border-start ps-2 nm-exchange-closing-cancelled">
+                    <span>Cancelled operations</span>
+                    <span t-out="this.nmExchangeSummary.cancelled_count"/>
                 </div>
             </div>
         </xpath>

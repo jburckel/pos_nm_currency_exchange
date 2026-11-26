@@ -14,31 +14,48 @@ is under `tools/screenshots/`.
    (`pkill -f "http-port=806[9]"`) before running a test suite, the tours bind the
    same port.
 2. **Data**: `odoo-bin shell -c odoo.conf -d shots --no-http < tools/screenshots/shots_data.py`
-   enables the counter on the point of sale with the Other Income account and a
-   500 threshold, sets the commissions of EUR (2 % + 1, minimum 3) and GBP (1.5 %,
-   minimum 2), opens the session with counts if needed and records four operations
-   (USD to EUR with a customer, GBP to USD, EUR to USD with a customer, USD to GBP).
-   It ends with `env.cr.commit()` and prints the ids.
-3. **Captures**: `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers python tools/screenshots/shots_capture.py
-   <config_id> <session_id> <eur_setting_id>` with Playwright and the headless Chromium
-   of `/opt/pw-browsers/chromium-*/chrome-linux/chrome`, viewport 1440 x 900, login
-   admin on `/web/login`.
+   enables the counter on the point of sale with the Other Income account, a customer
+   required above 250, an identity document above 400 with 7 days of linked operations,
+   the licence number and a receipt header and footer; sets the sell margin of EUR (2 %)
+   and the commissions of EUR (2 % + 1, minimum 3) and GBP (1.5 %, minimum 2); gives
+   Olivia Bennett a passport; opens the session with the counts the opening popup
+   proposes (main-currency notes only, no opening difference) and a cash in of 1,000 to
+   the main drawer; records six operations (USD to EUR with a customer, GBP to USD, EUR
+   to USD with a customer, USD to GBP, EUR to USD for Olivia Bennett with her passport,
+   USD to EUR) and cancels the last one. It ends with `env.cr.commit()` and prints the
+   ids. Run it once on a fresh copy of the database: the captures record one more
+   operation (the popup is confirmed), so start again from a copy to redo them.
+3. **Captures**: `python tools/screenshots/shots_capture.py <config_id> <session_id>
+   <eur_setting_id> <cancelled_id>` with Playwright for Python (`pip install playwright`
+   in a virtualenv, no `playwright install` needed) and the headless Chromium of
+   `$CHROME` (default `/usr/local/bin/chromium`), viewport 1440 x 900, login admin on
+   `/web/login`.
    - back-office by action URL (`/odoo/action-<xmlid>`, `?view_type=pivot`,
-     `/odoo/action-<xmlid>/<id>` for a form); the settings block is a clip of the
-     heading and its container; the currency setting form is its `.o_form_sheet`;
-     the report block is the `#nm_exchange` element of the HTML report;
+     `/odoo/action-<xmlid>/<id>` for a form); the list and the pivot at 1680 px wide
+     (every column at full width); the settings block is a clip of the heading and its
+     container; the currency setting form is its `.o_form_sheet`; the cancelled
+     operation is its `.o_form_renderer` (form and chatter); the report blocks are the
+     `#nm_exchange` element of the Sales Details report and the `.page` of the Exchange
+     Register report of the month (`/report/html/...?options=` with the dates) and
+     the `.page` of the Exchange Rates report of the point of sale
+     (`/report/html/pos_nm_currency_exchange.report_exchange_rates/<config_id>`,
+     1200 px wide, with a white padding added around the page);
    - register: `/pos/ui/<config_id>?from_backend=True`, `printWithFallback` of the
      ticket printer replaced to keep the receipt frame, burger menu > Currency
      Exchange, USD to EUR, 100 typed, popup captured as `.modal-content`, Confirm,
-     then the receipt shown from `#receipt-iframe-container`, then burger menu >
-     Close Register for the closing popup.
+     then the receipt shown from `#receipt-iframe-container`; burger menu > Exchange
+     Rates for the rate board; Currency Exchange again, 300 EUR to USD for Olivia
+     Bennett (linked operations above the threshold: the identity document is asked),
+     Discard; then burger menu > Close Register in a 1600 px high viewport for the
+     closing popup, clipped down to its Currency Exchange block.
 4. **Assembly**: `python tools/screenshots/shots_assemble.py <raw captures dir>` writes
    `static/description/screenshot_exchange_<subject>.png`: the popups and the receipt
    are placed on a neutral background of the ratio of their row (the two images of a
-   row must share their ratio, or the headings under them are not aligned), the list
-   and pivot keep only the top of the screen. Never run it on `static/description`
-   itself. The files are referenced in `index.html` and in the `images` key of the
-   manifest, after `banner.png`.
+   row must share their ratio, or the headings under them are not aligned), the list,
+   the pivot and the cancelled operation keep only the top of the screen, the rate
+   board in PDF is framed alone at full width. Never run it
+   on `static/description` itself. The files are referenced in `index.html` and in the
+   `images` key of the manifest, after `banner.png`.
 
 ## Banner and icon
 
@@ -67,3 +84,8 @@ columns), frames drawn with inline styles, and images at `width: 100%`.
 | `screenshot_exchange_popup.png` | Exchange popup with the quote (100 USD to EUR) | register, burger menu > Currency Exchange |
 | `screenshot_exchange_receipt.png` | Exchange receipt | register, receipt frame after Confirm |
 | `screenshot_exchange_closing.png` | Closing register with the operations in the moves of each currency | register, burger menu > Close Register |
+| `screenshot_exchange_rates.png` | Rate board of the counter (We buy, You receive, We sell, You pay, Commission) | register, burger menu > Exchange Rates |
+| `screenshot_exchange_rates_pdf.png` | Rate board in PDF (*Exchange Rates* report of the point of sale) | `/report/html/pos_nm_currency_exchange.report_exchange_rates/<config_id>`, `.page` |
+| `screenshot_exchange_document.png` | Exchange popup asking the identity document (300 EUR to USD, linked operations of Olivia Bennett) | register, burger menu > Currency Exchange, customer selected |
+| `screenshot_exchange_cancelled.png` | Cancelled operation: status, warning, cancellation in the chatter | `/odoo/action-pos_nm_currency_exchange.action_pos_nm_exchange/<cancelled_id>` |
+| `screenshot_exchange_register.png` | Exchange Register of the month with the identity document and the totals per currency | `/report/html/pos_nm_currency_exchange.report_exchange_register?options=...`, `.page` |
