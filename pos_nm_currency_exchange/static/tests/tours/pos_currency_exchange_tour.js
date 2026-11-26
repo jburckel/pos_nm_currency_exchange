@@ -23,6 +23,35 @@ function stubPrinting() {
 }
 
 /**
+ * The next quote of 50 received is lost with the connection; the quotes of
+ * 50 requested afterwards are counted (posmodel.nmTourQuotesRetried).
+ */
+function loseNextQuote() {
+    return {
+        content: "lose the next quote of 50 with the connection",
+        trigger: ".modal .nm-currency-exchange",
+        run: () => {
+            const call = posmodel.data.call.bind(posmodel.data);
+            posmodel.nmTourQuotesRetried = 0;
+            let lost = false;
+            posmodel.data.call = async (model, method, args = [], ...rest) => {
+                if (method === "get_quote" && args[2] === 50) {
+                    if (!lost) {
+                        lost = true;
+                        throw new ConnectionLostError("/web/dataset/call_kw");
+                    }
+                    posmodel.nmTourQuotesRetried++;
+                }
+                return call(model, method, args, ...rest);
+            };
+            posmodel.nmTourRestoreCall = () => {
+                posmodel.data.call = call;
+            };
+        },
+    };
+}
+
+/**
  * The next create_from_ui is recorded by the server but its response is
  * lost, as when the connection drops right after the commit.
  */
@@ -45,25 +74,31 @@ function loseNextConfirmResponse() {
 }
 
 /**
- * The next create_from_ui sends a quote that is no longer the one of the
- * server (as when the manager changes a rate meanwhile): the server refuses
- * it as a changed quote. The quotes requested afterwards are counted.
+ * The quotes shown hand back 1 more than the server would (as when the
+ * manager changes a rate after the quote was shown) until the next
+ * create_from_ui, which the server refuses as a changed quote. The quotes
+ * requested afterwards are counted.
  */
-function staleNextConfirmQuote() {
+function staleQuotesUntilConfirm() {
     return {
-        content: "send a stale quote with the next confirmation",
+        content: "show stale quotes until the next confirmation",
         trigger: ".modal .nm-currency-exchange",
         run: () => {
             const call = posmodel.data.call.bind(posmodel.data);
             posmodel.nmTourQuotesAfterRefusal = 0;
             let refused = false;
             posmodel.data.call = async (model, method, args = [], kwargs = {}, ...rest) => {
+                if (method === "get_quote" && !refused) {
+                    const quote = await call(model, method, args, kwargs, ...rest);
+                    return { ...quote, amount_out: quote.amount_out + 1 };
+                }
                 if (method === "create_from_ui" && !refused) {
                     refused = true;
-                    kwargs = { ...kwargs, amount_out: kwargs.amount_out + 1 };
+                    posmodel.nmTourConfirmedAmountOut = kwargs.amount_out;
                 } else if (method === "create_from_ui") {
+                    posmodel.nmTourConfirmedAmountOut = kwargs.amount_out;
                     posmodel.data.call = call;
-                } else if (method === "get_quote" && refused) {
+                } else if (method === "get_quote") {
                     posmodel.nmTourQuotesAfterRefusal++;
                 }
                 return call(model, method, args, kwargs, ...rest);
@@ -127,10 +162,32 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                 content: "a warning says the amount cannot be made up with the coins",
                 trigger: ".modal .nm-currency-exchange .nm-exchange-step-warning",
             },
+            loseNextQuote(),
             {
                 content: "type the amount received",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
                 run: "edit 50",
+            },
+            {
+                content: "the quote is lost with the connection: explained, Confirm disabled",
+                trigger:
+                    ".modal .nm-currency-exchange:has(.nm-exchange-error:contains('connection to the server was lost'):contains('requested again')) .nm-exchange-confirm[disabled]",
+            },
+            {
+                content: "no quote is shown meanwhile",
+                trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-quote))",
+            },
+            {
+                content: "the quote is requested again a few seconds later, once: the error is gone",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(.nm-exchange-error)) input.nm-exchange-amount-out:value(56.32)",
+                timeout: 15000,
+                run: () => {
+                    if (posmodel.nmTourQuotesRetried !== 1) {
+                        throw new Error(`Quotes requested again: ${posmodel.nmTourQuotesRetried}`);
+                    }
+                    posmodel.nmTourRestoreCall();
+                },
             },
             {
                 content: "no warning for 50",
@@ -257,8 +314,18 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeTour", {
                 trigger: ".modal .close-pos-popup .nm-exchange-closing-commission:contains(/1[.,]15/)",
             },
             {
-                content: "the closing popup shows the rate margin of the operation",
-                trigger: ".modal .close-pos-popup .nm-exchange-closing-rate-margin",
+                content: "the closing popup shows the Currency Exchange block",
+                trigger: ".modal .close-pos-popup .nm-exchange-closing > div:first-child:contains('Currency Exchange')",
+            },
+            {
+                content: "with the Rate Margin line: none at the rate of Odoo, 0.00",
+                trigger:
+                    ".modal .close-pos-popup .nm-exchange-closing-rate-margin:contains('Rate Margin') > span:last-child:contains(/^\\D*0[.,]00\\D*$/)",
+            },
+            {
+                content: "and the number of operations: 1",
+                trigger:
+                    ".modal .close-pos-popup .nm-exchange-closing > div:contains('Operations') > span:last-child:contains(/^1$/)",
             },
             {
                 content: "the closing popup lists the operation",
@@ -409,17 +476,18 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
                 content: "fill the counted amount of the main currency at opening",
                 trigger:
                     ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) .cash-input-sub-section input",
-                run: "edit 100",
+                run: "edit 200",
             },
             {
                 content: "wait for the debounced input of the main currency",
-                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(100)",
+                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(200)",
                 run: () => new Promise((resolve) => setTimeout(resolve, 500)),
             },
             Dialog.confirm("Open Register"),
             ProductScreen.isShown(),
             stubPrinting(),
             Chrome.clickMenuOption("Currency Exchange"),
+            staleQuotesUntilConfirm(),
             {
                 content: "type the amount received",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
@@ -490,7 +558,10 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
                 content: "the document is accepted",
                 trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-document-error))",
             },
-            staleNextConfirmQuote(),
+            {
+                content: "the stale quote is shown: 58.47 handed back",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out:value(58.47)",
+            },
             {
                 content: "confirm the operation with the stale quote",
                 trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
@@ -505,10 +576,17 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
                 trigger:
                     ".modal .nm-currency-exchange:not(:has(.nm-exchange-error)) .nm-exchange-confirm:not([disabled])",
                 run: () => {
+                    if (posmodel.nmTourConfirmedAmountOut !== 58.47) {
+                        throw new Error(`Stale amount confirmed: ${posmodel.nmTourConfirmedAmountOut}`);
+                    }
                     if (posmodel.nmTourQuotesAfterRefusal !== 1) {
                         throw new Error(`Quotes requested after the refusal: ${posmodel.nmTourQuotesAfterRefusal}`);
                     }
                 },
+            },
+            {
+                content: "the fresh quote of the server is shown: 57.47 handed back",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out:value(57.47)",
             },
             {
                 content: "nothing is confirmed without the cashier: the popup is still open",
@@ -529,10 +607,176 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
                 trigger: ".pos",
                 run: () => {
                     const html = posmodel.nmTourReceiptHtml || "";
+                    if (posmodel.nmTourConfirmedAmountOut !== 57.47) {
+                        throw new Error(`Amount confirmed again: ${posmodel.nmTourConfirmedAmountOut}`);
+                    }
                     if (!html.includes("****4567") || html.includes("X1234567")) {
                         throw new Error("Identity document not masked on the receipt: " + html.slice(0, 400));
                     }
                 },
             },
+            Chrome.clickMenuOption("Currency Exchange"),
+            {
+                content: "type the amount received of a second operation",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
+                run: "edit 50",
+            },
+            {
+                content: "select the customer again",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-customer.btn-outline-danger",
+                run: "click",
+            },
+            PartnerList.clickPartner("Partner Test 1"),
+            {
+                content: "the expiry date saved by the first operation is prefilled",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-expiry:value(2099-12-31)",
+            },
+            {
+                content: "the document is accepted",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(.nm-exchange-document-error)) input.nm-exchange-document-no-expiry:not(:checked)",
+            },
+            {
+                content: "the new document of the customer has no expiry date: tick No expiry date",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-no-expiry",
+                run: "click",
+            },
+            {
+                content: "the expiry date is hidden and the document accepted",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(input.nm-exchange-document-expiry)):not(:has(.nm-exchange-document-error)) input.nm-exchange-document-no-expiry:checked",
+            },
+            {
+                content: "confirm the second operation",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the second operation is recorded and the popup closed",
+                trigger: "body:not(:has(.modal .nm-currency-exchange))",
+            },
+            ProductScreen.isShown(),
+        ].flat(),
+});
+
+/**
+ * The counter is enabled but cannot record an operation: Currency Exchange
+ * explains why (``message``) instead of opening the popup.
+ */
+function blockedCounterTour(message) {
+    return {
+        steps: () =>
+            [
+                Dialog.confirm("Open Register"),
+                ProductScreen.isShown(),
+                Chrome.clickMenuOption("Currency Exchange"),
+                {
+                    content: "the reason is shown instead of the exchange popup",
+                    trigger: `.modal .modal-title:contains('Currency Exchange')`,
+                },
+                {
+                    content: `the message says: ${message}`,
+                    trigger: `.modal .modal-body:contains("${message}")`,
+                },
+                {
+                    content: "the exchange popup is not opened",
+                    trigger: "body:not(:has(.nm-currency-exchange))",
+                },
+                Dialog.confirm(),
+                {
+                    content: "the message is closed",
+                    trigger: "body:not(:has(.modal))",
+                },
+                ProductScreen.isShown(),
+            ].flat(),
+    };
+}
+
+registry
+    .category("web_tour.tours")
+    .add(
+        "PosCurrencyExchangeNoAccountTour",
+        blockedCounterTour("Set the exchange commission account of the Point of Sale")
+    );
+registry
+    .category("web_tour.tours")
+    .add(
+        "PosCurrencyExchangeNoCurrencyTour",
+        blockedCounterTour("Add a foreign currency to the cash payment method of the Point of Sale")
+    );
+
+/**
+ * With the Employees module (pos_hr): the employee logged in at the
+ * register records the operation. No import of pos_hr here: this file is
+ * loaded without it too.
+ */
+registry.category("web_tour.tours").add("PosCurrencyExchangeEmployeeTour", {
+    steps: () =>
+        [
+            Chrome.clickBtn("Open Register"),
+            {
+                content: "log in",
+                trigger: ".login-overlay .select-cashier",
+                run: "click",
+            },
+            {
+                content: "select the employee",
+                trigger: ".cashier-selection-item:contains('NM Tour Employee')",
+                run: "click",
+            },
+            {
+                content: "fill the counted amount of the main currency at opening",
+                trigger:
+                    ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) .cash-input-sub-section input",
+                run: "edit 100",
+            },
+            {
+                content: "wait for the debounced input of the main currency",
+                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(100)",
+                run: () => new Promise((resolve) => setTimeout(resolve, 500)),
+            },
+            Dialog.confirm("Open Register"),
+            ProductScreen.isShown(),
+            {
+                content: "the employee is the cashier",
+                trigger: ".pos",
+                run: () => {
+                    const cashier = posmodel.accessRight.loggedCashier;
+                    if (cashier?.name !== "NM Tour Employee") {
+                        throw new Error(`Cashier logged in: ${cashier?.name}`);
+                    }
+                },
+            },
+            stubPrinting(),
+            Chrome.clickMenuOption("Currency Exchange"),
+            {
+                content: "type the amount received",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
+                run: "edit 50",
+            },
+            {
+                content: "the amount handed back is quoted: 57.47",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out:value(57.47)",
+            },
+            {
+                content: "confirm the operation",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the operation is recorded and the popup closed",
+                trigger: "body:not(:has(.modal .nm-currency-exchange))",
+            },
+            {
+                content: "the receipt names the employee",
+                trigger: "body.nm-tour-printed",
+                run: () => {
+                    const html = posmodel.nmTourReceiptHtml || "";
+                    if (!html.includes("NM Tour Employee")) {
+                        throw new Error("Employee not on the receipt: " + html.slice(0, 400));
+                    }
+                },
+            },
+            ProductScreen.isShown(),
         ].flat(),
 });

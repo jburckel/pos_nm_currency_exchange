@@ -656,6 +656,40 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(exchange.amount_out, 17.0)
         self.assertEqual(session._nm_expected_cash(self.main), 2.6)
 
+    def test_drawer_check_with_foreign_change(self):
+        """Change handed back in EUR in a sale (a negative EUR cash payment)
+        leaves fewer EUR notes for the counter: the quote and the operation
+        are checked against the drawer less that change."""
+        session = self._open(fx=30.0, main=0.0)
+        Exchange = self.env['pos.nm.exchange']
+        # 13 main: commission 3, 10 x 2 / 1.1 = 18.18 -> 18 EUR, enough in the 30 counted.
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 13.0, self.fx.id)
+        self.assertEqual(quote['amount_out'], 18.0)
+        self.assertFalse(quote['drawer_error'])
+        # A sale of 10.60 paid 20 in the main currency, 9.40 handed back as 18.80 EUR.
+        order = self.create_pos_order(
+            payment_method=[
+                [self.cash_pm, {'amount': 20.0}],
+                [self.cash_pm, {'amount': -9.4, 'foreign_currency_id': self.fx.id, 'amount_currency': -18.8}],
+            ],
+            products=[[self.product_6, {}]],
+        )
+        self.assertEqual(order.state, 'paid')
+        self.assertEqual(session._nm_expected_cash(self.fx), 11.2)
+        self.assertEqual(session._nm_expected_cash(self.main), 20.0)
+        # The 18 EUR no longer are in the drawer: shown and refused.
+        quote = Exchange.get_quote(self.pos_config.id, self.main.id, 13.0, self.fx.id)
+        self.assertEqual(quote['drawer_balance_formatted'], self.fx.format(11.2))
+        self.assertIn('cannot be handed back', quote['drawer_error'])
+        with self.assertRaisesRegex(UserError, 'cannot be handed back'):
+            Exchange.create_from_ui(session.id, self.main.id, 13.0, self.fx.id)
+        # 9 main hand back 10 EUR of the 11.20 left.
+        exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 9.0, self.fx.id)['id'])
+        self.assertEqual(exchange.amount_out, 10.0)
+        self.assertAlmostEqual(session._nm_expected_cash(self.fx), 1.2, places=2)
+        self.assertEqual(session._nm_expected_cash(self.main), 29.0)
+        self._close(session, main=29.0, fx=1.2)
+
     def test_foreign_to_foreign(self):
         """EUR -> CHF, each with its own setting. CHF: 0.8 for 1 main at the
         rate of Odoo, 5% sell margin, 1% commission, 5 CHF notes.
