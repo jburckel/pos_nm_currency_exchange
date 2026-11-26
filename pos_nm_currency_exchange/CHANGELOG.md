@@ -119,6 +119,10 @@ the counted and posted amounts were right.
 - Session form: the button shows the commissions and "Exchanges: N".
 - The closing popup shows the exchange block whenever the session has
   operations, with the rate margin and the cancelled operations.
+- Store page, guides and description: POS Multi-Currency Cash is included
+  in the price shown on the Odoo Apps Store (already bought it? Contact us
+  at odoo@natimai.solutions before buying this module), no longer described
+  as sold separately.
 
 ### Fixed
 - The commission could fall below the minimum, or become negative, once the

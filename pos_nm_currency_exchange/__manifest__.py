@@ -46,7 +46,8 @@ Requirements
 ------------
 * Point of Sale (point_of_sale)
 * POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0.2.1.0 or later,
-  sold separately
+  included in the price shown on the Odoo Apps Store (already bought it?
+  Contact us at odoo@natimai.solutions before buying this module)
     """,
     "version": "20.0.2.0.0",
     "category": "Sales/Point of Sale",

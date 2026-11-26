@@ -43,9 +43,12 @@ Voraussetzungen
 
 * Die Anwendung **Kassensystem** (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0
-  oder neuer**, separat erhältlich, mit mindestens einer Fremdwährung auf
-  der Bargeld-Zahlungsmethode der Kasse (siehe dessen Anleitung: *Eine
-  Währung in bar akzeptieren*). Eine ältere Version von POS Multi-Currency
+  oder neuer**, im auf dem Odoo Apps Store angezeigten Preis enthalten
+  (bereits gekauft? Kontaktieren Sie uns vor dem Kauf dieses Moduls unter
+  odoo@natimai.solutions), mit
+  mindestens einer Fremdwährung auf der Bargeld-Zahlungsmethode der Kasse
+  (siehe dessen Anleitung: *Eine Währung in bar akzeptieren*). Eine
+  ältere Version von POS Multi-Currency
   Cash funktioniert mit diesem Modul nicht: Aktualisieren Sie sie zuerst.
   Ab 20.0.2.1.1 wird der Anfangsbestand des Bargeld-Blocks der
   Hauptwährung im Abschlussfenster korrekt angezeigt, wenn die Sitzung
