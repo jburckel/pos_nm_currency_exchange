@@ -30,6 +30,10 @@ class ResPartner(models.Model):
     nm_id_document_expiry = fields.Date(
         string='Document Expiry Date', groups='point_of_sale.group_pos_manager', copy=False,
         help='The exchange counter refuses an expired document.')
+    nm_id_document_no_expiry = fields.Boolean(
+        string='No Expiry Date', groups='point_of_sale.group_pos_manager', copy=False,
+        help='The identity document has no expiry date (an older identity card for example): the expiry '
+             'date is then not required by the exchange counter.')
     nm_nationality_id = fields.Many2one(
         'res.country', string='Nationality', groups='point_of_sale.group_pos_manager', copy=False)
     nm_birthdate = fields.Date(string='Date of Birth', groups='point_of_sale.group_pos_manager', copy=False)

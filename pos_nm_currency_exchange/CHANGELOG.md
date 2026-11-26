@@ -68,8 +68,9 @@ cannot record operations.
   *Identity document required above* and *Linked operations period (days)*
   (the operations of the same customer over that period are added to the
   thresholds, at every point of sale of the company). Identity document of
-  the customer (type, number, issuing country, expiry date, nationality,
-  date of birth) entered in the popup, stored on the contact (new tab
+  the customer (type, number, issuing country, expiry date or *No expiry
+  date* for an older document without one, nationality, date of birth)
+  entered in the popup, stored on the contact (new tab
   *Identity Document*, POS Administrators only) and copied on the
   operation with the customer name; expired documents are refused.
 - **Receipt**: header and footer of the point of sale, *Exchange licence

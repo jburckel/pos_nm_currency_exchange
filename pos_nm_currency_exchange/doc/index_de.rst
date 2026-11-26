@@ -197,7 +197,9 @@ rechts) und tippen Sie auf **Geldwechsel**:
    erscheinen seine Felder: Art, Ausstellungsland und Ablaufdatum sind
    aus dem Kontakt vorausgefüllt, und das Feld der Nummer zeigt nur als
    Hinweis die letzten 4 Zeichen der gespeicherten Nummer. Art, Nummer
-   und Ablaufdatum sind Pflichtfelder. **Staatsangehörigkeit** und
+   und Ablaufdatum sind Pflichtfelder; bei einem Dokument ohne
+   Ablaufdatum (ein älterer Personalausweis) wird stattdessen **Kein
+   Ablaufdatum** angekreuzt. **Staatsangehörigkeit** und
    **Geburtsdatum** erscheinen leer: Leer gelassen, behalten sie die Werte
    des Kontakts. Beim selben Dokument (gleiche Art, Nummer leer gelassen)
    behalten auch die Nummer und die anderen leer gelassenen Felder die
@@ -576,7 +578,8 @@ enthält. Nach dem Schließen siehe *Einen Vorgang stornieren*.
 Das Ausweisdokument wird abgelehnt
 ----------------------------------
 
-Art, Nummer und Ablaufdatum sind Pflichtfelder, und das Dokument darf
+Art, Nummer und Ablaufdatum sind Pflichtfelder (oder **Kein Ablaufdatum**
+angekreuzt bei einem Dokument ohne Ablaufdatum), und das Dokument darf
 nicht abgelaufen sein. Die Schwelle kann mit den verbundenen Vorgängen des
 Kunden erreicht sein: Das Fenster zeigt ihre Summe.
 

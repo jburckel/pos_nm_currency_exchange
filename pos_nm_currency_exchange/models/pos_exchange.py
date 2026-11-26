@@ -17,6 +17,7 @@ ID_DOCUMENT_FIELDS = [
     ('id_document_number', 'nm_id_document_number', 'number'),
     ('id_document_country_id', 'nm_id_document_country_id', 'country_id'),
     ('id_document_expiry', 'nm_id_document_expiry', 'expiry'),
+    ('id_document_no_expiry', 'nm_id_document_no_expiry', 'no_expiry'),
     ('id_nationality_id', 'nm_nationality_id', 'nationality_id'),
     ('id_birthdate', 'nm_birthdate', 'birthdate'),
 ]
@@ -85,6 +86,9 @@ class PosNmExchange(models.Model):
         'res.country', string='Issuing Country', readonly=True, groups='point_of_sale.group_pos_manager')
     id_document_expiry = fields.Date(
         string='Document Expiry Date', readonly=True, groups='point_of_sale.group_pos_manager')
+    id_document_no_expiry = fields.Boolean(
+        string='No Expiry Date', readonly=True, groups='point_of_sale.group_pos_manager',
+        help='The identity document shown has no expiry date.')
     id_nationality_id = fields.Many2one(
         'res.country', string='Nationality', readonly=True, groups='point_of_sale.group_pos_manager')
     id_birthdate = fields.Date(string='Date of Birth', readonly=True, groups='point_of_sale.group_pos_manager')
@@ -371,7 +375,9 @@ class PosNmExchange(models.Model):
             return _("Enter the type and the number of the identity document of the customer.")
         expiry = document.get('id_document_expiry')
         if not expiry:
-            return _("Enter the expiry date of the identity document of the customer.")
+            if document.get('id_document_no_expiry'):
+                return ''
+            return _("Enter the expiry date of the identity document of the customer, or tick No expiry date.")
         if expiry < fields.Date.context_today(self):
             return _("The identity document of the customer expired on %s: it cannot be accepted.",
                      fields.Date.to_string(expiry))
@@ -386,7 +392,10 @@ class PosNmExchange(models.Model):
         The register only shows the end of the number recorded on the
         customer: the fields left empty keep the values of the customer when
         the document is the same (same type, number not typed again), else
-        only the nationality and the date of birth do."""
+        only the nationality and the date of birth do. The expiry date and
+        "No expiry date" go together: an expiry date typed clears the box,
+        the box ticked clears the expiry date, and the pair recorded on the
+        customer is kept only when neither is given."""
         if document is None:
             partner = partner.sudo()
             return {
@@ -403,15 +412,22 @@ class PosNmExchange(models.Model):
                     value = value and fields.Date.to_date(value)
                 except ValueError:
                     raise UserError(_("Invalid date in the identity document of the customer: %s", value)) from None
+            elif field == 'id_document_no_expiry':
+                value = value is True or value in ('1', 'true', 'True')
             elif isinstance(value, str):
                 value = value.strip()
             values[field] = value or False
         if values['id_document_type'] not in dict(ID_DOCUMENT_TYPES):
             values['id_document_type'] = False
+        if values['id_document_no_expiry']:
+            values['id_document_expiry'] = False
+        expiry_given = bool(values['id_document_expiry'] or values['id_document_no_expiry'])
         stored = self._nm_document_values(partner)
         same_document = (values['id_document_type'] in (False, stored['id_document_type'])
                          and values['id_document_number'] in (False, stored['id_document_number']))
         for field, value in values.items():
+            if field in ('id_document_expiry', 'id_document_no_expiry') and expiry_given:
+                continue
             if not value and (same_document or field in ('id_nationality_id', 'id_birthdate')):
                 values[field] = stored[field]
         return values
@@ -593,8 +609,8 @@ class PosNmExchange(models.Model):
         for the cashier to confirm or update it in the popup, at a point of
         sale whose counter asks for identity documents. Read with sudo (the
         POS users do not read these fields of the contacts otherwise) and in
-        part only: type, issuing country, expiry date and the last 4
-        characters of the number."""
+        part only: type, issuing country, expiry date (or no expiry date)
+        and the last 4 characters of the number."""
         config = self._nm_counter_config(config_id)
         if not config.nm_exchange_document_threshold:
             raise UserError(_("This Point of Sale does not ask for identity documents."))
@@ -605,6 +621,7 @@ class PosNmExchange(models.Model):
             'number_masked': f"****{number[-4:]}" if number else '',
             'country_id': values['id_document_country_id'] or False,
             'expiry': fields.Date.to_string(values['id_document_expiry']) if values['id_document_expiry'] else False,
+            'no_expiry': bool(values['id_document_no_expiry']),
         }
 
     # ------------------------------------------------------------------

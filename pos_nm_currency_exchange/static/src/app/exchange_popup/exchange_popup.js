@@ -170,12 +170,15 @@ export class CurrencyExchangePopup extends Component {
         if (!this.documentRequired) {
             return "";
         }
-        const { type, number, expiry } = this.state.document;
+        const { type, number, expiry, no_expiry } = this.state.document;
         if (!type || (!number.trim() && !this.storedNumberMasked)) {
             return _t("Enter the type and the number of the identity document of the customer.");
         }
         if (!expiry) {
-            return _t("Enter the expiry date of the identity document of the customer.");
+            // An older document without expiry date: the box is ticked.
+            return no_expiry
+                ? ""
+                : _t("Enter the expiry date of the identity document of the customer, or tick No expiry date.");
         }
         if (expiry < DateTime.now().toISODate()) {
             return _t(
@@ -224,7 +227,15 @@ export class CurrencyExchangePopup extends Component {
     }
 
     emptyDocument() {
-        return { type: "", number: "", country_id: false, expiry: "", nationality_id: false, birthdate: "" };
+        return {
+            type: "",
+            number: "",
+            country_id: false,
+            expiry: "",
+            no_expiry: false,
+            nationality_id: false,
+            birthdate: "",
+        };
     }
 
     amountPlaceholder(currencyId) {
@@ -409,11 +420,12 @@ export class CurrencyExchangePopup extends Component {
                 this.state.storedDocument = stored;
                 this.state.documentWarning = "";
                 // Unless the cashier already typed it.
-                const { type, number, country_id, expiry } = this.state.document;
-                if (!type && !number && !country_id && !expiry) {
+                const { type, number, country_id, expiry, no_expiry } = this.state.document;
+                if (!type && !number && !country_id && !expiry && !no_expiry) {
                     this.state.document.type = stored.type || "";
                     this.state.document.country_id = stored.country_id;
                     this.state.document.expiry = stored.expiry || "";
+                    this.state.document.no_expiry = !!stored.no_expiry;
                 }
             }
         } catch (error) {
@@ -429,6 +441,16 @@ export class CurrencyExchangePopup extends Component {
     onDocumentInput(key, ev) {
         const value = ev.target.value;
         this.state.document[key] = ["country_id", "nationality_id"].includes(key) ? parseInt(value) || false : value;
+    }
+    /**
+     * "No expiry date": the expiry date is not asked, and cleared so that
+     * the server does not keep both.
+     */
+    onNoExpiryChange(ev) {
+        this.state.document.no_expiry = ev.target.checked;
+        if (ev.target.checked) {
+            this.state.document.expiry = "";
+        }
     }
 
     async confirm() {

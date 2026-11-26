@@ -105,8 +105,13 @@
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small mb-0">Expiry date</label>
-                            <input type="date" class="form-control nm-exchange-document-expiry"
+                            <input t-if="!this.state.document.no_expiry" type="date" class="form-control nm-exchange-document-expiry"
                                    t-att-value="this.state.document.expiry" t-on-change="(ev) => this.onDocumentInput('expiry', ev)"/>
+                            <div class="form-check mt-1">
+                                <input type="checkbox" class="form-check-input nm-exchange-document-no-expiry" id="nm_exchange_document_no_expiry"
+                                       t-att-checked="this.state.document.no_expiry" t-on-change="this.onNoExpiryChange"/>
+                                <label class="form-check-label small" for="nm_exchange_document_no_expiry">No expiry date</label>
+                            </div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small mb-0">Nationality</label>

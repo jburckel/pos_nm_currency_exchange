@@ -196,7 +196,9 @@ pulse **Cambio de divisas**:
    tipo, país de expedición y fecha de caducidad se rellenan desde el
    contacto, y el campo del número solo muestra, como indicación, los 4
    últimos caracteres del número registrado. Tipo, número y fecha de
-   caducidad son obligatorios. **Nacionalidad** y **Fecha de nacimiento**
+   caducidad son obligatorios; para un documento sin fecha de caducidad
+   (un documento de identidad antiguo), marque **Sin fecha de caducidad**
+   en su lugar. **Nacionalidad** y **Fecha de nacimiento**
    aparecen vacíos: si se dejan vacíos, conservan los valores del
    contacto. Para el mismo documento (mismo tipo, número dejado vacío), el
    número y los demás campos dejados vacíos también conservan los valores
@@ -574,7 +576,8 @@ operación*.
 El documento de identidad se rechaza
 ------------------------------------
 
-Tipo, número y fecha de caducidad son obligatorios, y el documento no
+Tipo, número y fecha de caducidad son obligatorios (o **Sin fecha de
+caducidad** marcado para un documento que no la tiene), y el documento no
 debe estar caducado. El umbral puede alcanzarse con las operaciones
 vinculadas del cliente: la ventana muestra su total.
 

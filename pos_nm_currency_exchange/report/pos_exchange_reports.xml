@@ -157,6 +157,7 @@
                                         <span t-out="operation['document_type']"/> <span t-out="operation['document_number']"/>
                                         <t t-if="operation['document_country']"><br/><span t-out="operation['document_country']"/></t>
                                         <t t-if="operation['document_expiry']"><br/>Expires <span t-out="operation['document_expiry']"/></t>
+                                        <t t-elif="operation['document_no_expiry']"><br/>No expiry date</t>
                                     </t>
                                 </td>
                                 <td t-out="operation['state']"/>

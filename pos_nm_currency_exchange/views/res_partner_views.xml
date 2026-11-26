@@ -12,7 +12,8 @@
                             <field name="nm_id_document_type"/>
                             <field name="nm_id_document_number"/>
                             <field name="nm_id_document_country_id" options="{'no_create': True}"/>
-                            <field name="nm_id_document_expiry"/>
+                            <field name="nm_id_document_expiry" invisible="nm_id_document_no_expiry"/>
+                            <field name="nm_id_document_no_expiry"/>
                         </group>
                         <group>
                             <field name="nm_nationality_id" options="{'no_create': True}"/>

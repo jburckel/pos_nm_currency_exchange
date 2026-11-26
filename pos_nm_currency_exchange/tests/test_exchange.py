@@ -1119,7 +1119,7 @@ class TestPosCurrencyExchange(TestPosAccounting):
         loaded = Exchange.get_customer_document(self.pos_config.id, customer.id)
         self.assertEqual(loaded, {
             'type': 'passport', 'number_masked': '****4567', 'country_id': self.env.ref('base.fr').id,
-            'expiry': self._document()['expiry']})
+            'expiry': self._document()['expiry'], 'no_expiry': False})
         types = self.pos_config._load_pos_data_read(self.pos_config, self.pos_config)[0]['_nm_id_document_types']
         self.assertIn('passport', dict(types))
         # Without a document sent, the one of the customer is used.
@@ -1238,6 +1238,65 @@ class TestPosCurrencyExchange(TestPosAccounting):
             'type': 'passport', 'number': 'PORTAL001', 'expiry': renewed})
         self.assertEqual(portal_partner.nm_id_document_number, 'PORTAL001')
         self.assertIn('****L001', portal_partner.message_ids[0].body)
+
+    def test_identity_document_no_expiry(self):
+        """An older document without expiry date is accepted once "No
+        expiry date" is ticked: saved on the customer, frozen on the
+        operation, given back to the register and shown in the register of
+        operations. An expiry date typed later clears the box; an expired
+        document is still refused."""
+        self.pos_config.write({'nm_exchange_document_threshold': 50.0})
+        session = self._open(fx=10000.0)
+        Exchange = self.env['pos.nm.exchange'].with_user(self.pos_user)
+        customer = self.env['res.partner'].create({'name': 'NM Old Card Customer'})
+        with self.assertRaisesRegex(UserError, 'expiry date'):
+            Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
+                                    document=self._document(type='id_card', expiry=''))
+        receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
+                                          document=self._document(type='id_card', expiry='', no_expiry=True))
+        exchange = Exchange.browse(receipt['id']).with_user(self.env.user)
+        self.assertTrue(exchange.id_document_no_expiry)
+        self.assertFalse(exchange.id_document_expiry)
+        self.assertTrue(customer.nm_id_document_no_expiry)
+        self.assertFalse(customer.nm_id_document_expiry)
+        loaded = Exchange.get_customer_document(self.pos_config.id, customer.id)
+        self.assertEqual((loaded['expiry'], loaded['no_expiry']), (False, True))
+        # Confirmed without the box (the register sends the fields empty):
+        # the document of the customer, without expiry date, is kept.
+        messages = customer.message_ids
+        second = Exchange.browse(Exchange.create_from_ui(
+            session.id, self.main.id, 100.0, self.fx.id, customer.id,
+            document={'type': 'id_card', 'number': ''})['id']).with_user(self.env.user)
+        self.assertTrue(second.id_document_no_expiry)
+        self.assertEqual(customer.message_ids, messages)
+        # Without a document sent, the one of the customer is used.
+        Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id)
+        # Both sent: the box wins, the expiry date is not kept.
+        both = Exchange.browse(Exchange.create_from_ui(
+            session.id, self.main.id, 100.0, self.fx.id, customer.id,
+            document=self._document(type='id_card', no_expiry=True))['id']).with_user(self.env.user)
+        self.assertFalse(both.id_document_expiry)
+
+        # A renewed card with an expiry date clears the box.
+        renewed = str(fields.Date.today() + timedelta(days=30))
+        Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, customer.id,
+                                document={'type': 'id_card', 'number': '', 'expiry': renewed})
+        self.assertFalse(customer.nm_id_document_no_expiry)
+        self.assertEqual(str(customer.nm_id_document_expiry), renewed)
+        # Expired: refused even with the box ticked on the contact.
+        customer.write({'nm_id_document_expiry': fields.Date.today() - timedelta(days=1),
+                        'nm_id_document_no_expiry': True})
+        self.assertIn('expired', Exchange._nm_document_error(Exchange._nm_document_values(customer)))
+
+        # The register of operations says so.
+        now = fields.Datetime.now()
+        data = {'date_start': fields.Datetime.to_string(now - timedelta(hours=1)),
+                'date_stop': fields.Datetime.to_string(now + timedelta(hours=1)), 'config_ids': self.pos_config.ids}
+        values = self.env['report.pos_nm_currency_exchange.report_exchange_register']._get_report_values([], data)
+        row = next(op for op in values['operations'] if op['name'] == exchange.name)
+        self.assertTrue(row['document_no_expiry'])
+        html = self._render('pos_nm_currency_exchange.action_report_exchange_register', [], data=data)
+        self.assertIn('No expiry date', html)
 
     def test_linked_value_not_shown(self):
         """The quote gives the exchanges of the customer over the period only

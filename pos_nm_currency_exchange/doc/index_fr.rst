@@ -199,7 +199,9 @@ droite) et appuyez sur **Opération de change** :
    apparaissent : type, pays de délivrance et date d'expiration sont
    préremplis depuis le contact, et le champ du numéro n'affiche, en
    indication, que les 4 derniers caractères du numéro enregistré. Type,
-   numéro et date d'expiration sont obligatoires. **Nationalité** et
+   numéro et date d'expiration sont obligatoires ; pour une pièce sans
+   date d'expiration (une ancienne carte d'identité), cochez **Sans date
+   d'expiration** à la place. **Nationalité** et
    **Date de naissance** s'affichent vides : laissés vides, ils gardent
    les valeurs du contact. Pour la même pièce (même type, numéro laissé
    vide), le numéro et les autres champs laissés vides gardent aussi les
@@ -575,7 +577,8 @@ les billets reçus. Après la clôture, voir *Annuler une opération*.
 La pièce d'identité est refusée
 -------------------------------
 
-Type, numéro et date d'expiration sont obligatoires, et la pièce ne doit
+Type, numéro et date d'expiration sont obligatoires (ou **Sans date
+d'expiration** coché pour une pièce qui n'en a pas), et la pièce ne doit
 pas être expirée. Le seuil peut être atteint avec les opérations liées du
 client : la fenêtre affiche leur total.
 

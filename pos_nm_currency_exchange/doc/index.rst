@@ -187,7 +187,9 @@ From any screen of the register, open the menu (top right) and press
    When the identity document is required, its fields appear: type,
    issuing country and expiry date are prefilled from the contact, and the
    number field only shows the last 4 characters of the recorded number
-   as a hint. Type, number and expiry date are mandatory. **Nationality**
+   as a hint. Type, number and expiry date are mandatory; for a document
+   without expiry date (an older identity card), tick **No expiry date**
+   instead. **Nationality**
    and **Date of birth** are shown empty: left empty, they keep the values
    of the contact. For the same document (same type, number left empty)
    the number and the other fields left empty keep the values of the
@@ -543,8 +545,8 @@ closing, see *Cancelling an operation*.
 The identity document is refused
 --------------------------------
 
-Type, number and expiry date are mandatory, and the document must not be
-expired. The threshold may be reached with the linked operations of the
+Type, number and expiry date are mandatory (or **No expiry date** ticked
+for a document that has none), and the document must not be expired. The threshold may be reached with the linked operations of the
 customer: the popup shows their total.
 
 Delete is missing on the operations

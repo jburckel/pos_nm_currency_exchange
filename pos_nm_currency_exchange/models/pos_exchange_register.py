@@ -51,6 +51,7 @@ class ReportExchangeRegister(models.AbstractModel):
             'document_number': exchange.id_document_number or '',
             'document_country': exchange.id_document_country_id.name or '',
             'document_expiry': fields.Date.to_string(exchange.id_document_expiry) or '',
+            'document_no_expiry': exchange.id_document_no_expiry,
             'cancelled': exchange.state == 'cancelled',
             'state': dict(exchange._fields['state']._description_selection(self.env))[exchange.state],
         }

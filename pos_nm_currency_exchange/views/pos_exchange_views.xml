@@ -88,7 +88,8 @@
                             <field name="id_document_type"/>
                             <field name="id_document_number"/>
                             <field name="id_document_country_id"/>
-                            <field name="id_document_expiry"/>
+                            <field name="id_document_expiry" invisible="id_document_no_expiry"/>
+                            <field name="id_document_no_expiry" invisible="not id_document_no_expiry"/>
                         </group>
                         <group>
                             <field name="id_nationality_id"/>
@@ -206,6 +207,7 @@
                 <field name="id_document_number" optional="show"/>
                 <field name="id_document_country_id" optional="hide"/>
                 <field name="id_document_expiry" optional="hide"/>
+                <field name="id_document_no_expiry" optional="hide"/>
                 <field name="id_nationality_id" optional="hide"/>
                 <field name="id_birthdate" optional="hide"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
