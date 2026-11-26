@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 23:33+0000\n"
-"PO-Revision-Date: 2026-11-25 23:33+0000\n"
+"POT-Creation-Date: 2026-11-26 01:57+0000\n"
+"PO-Revision-Date: 2026-11-26 01:57+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -243,6 +243,11 @@ msgstr "<br/>Caduca"
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "<br/>Licence No."
 msgstr "<br/>Licencia n.º"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
+msgid "<br/>No expiry date"
+msgstr "<br/>Sin fecha de caducidad"
 
 #. module: pos_nm_currency_exchange
 #: model:mail.template,body_html:pos_nm_currency_exchange.mail_template_pos_nm_exchange
@@ -743,9 +748,12 @@ msgstr "TIPOS DE CAMBIO"
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
-msgid "Enter the expiry date of the identity document of the customer."
+msgid ""
+"Enter the expiry date of the identity document of the customer, or tick No "
+"expiry date."
 msgstr ""
-"Introduzca la fecha de caducidad del documento de identidad del cliente."
+"Introduzca la fecha de caducidad del documento de identidad del cliente, o "
+"marque Sin fecha de caducidad."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -1163,16 +1171,22 @@ msgid ""
 "with the rate of Odoo: they are handed back at the rate of Odoo divided by 1"
 " + this margin, so the counter sells them above the market. The notes "
 "received keep the cash rate (the rate of Odoo with the Cash Rate Margin, the"
-" buy margin). With a fixed cash rate, the notes are handed back at the lower"
-" of the fixed rate and the fixed change rate, and this margin is not used."
+" buy margin). A new currency starts from its Cash Rate Margin (a negative "
+"Cash Rate Margin m gives -m / (1 + m / 100), which keeps its sell rate: 2.04"
+" for -2), as the currencies upgraded from 20.0.1; change it afterwards. With"
+" a fixed cash rate, the notes are handed back at the lower of the fixed rate"
+" and the fixed change rate, and this margin is not used."
 msgstr ""
 "Margen de la ventanilla de cambio sobre los billetes de esta moneda que "
 "entrega, con el tipo de Odoo: se entregan al tipo de Odoo dividido entre 1 +"
 " este margen, por lo que la ventanilla los vende por encima del mercado. Los"
 " billetes recibidos conservan el tipo de caja (el tipo de Odoo con el Margen"
-" del tipo de caja, el margen de compra). Con un tipo de caja fijo, los "
-"billetes se entregan al menor del tipo fijo y del tipo fijo del cambio, y "
-"este margen no se usa."
+" del tipo de caja, el margen de compra). Una moneda nueva parte de su Margen"
+" del tipo de caja (un Margen del tipo de caja negativo m da -m / (1 + m / "
+"100), que mantiene su tipo de venta: 2,04 para -2), como las monedas "
+"actualizadas desde la 20.0.1; modifíquelo después. Con un tipo de caja fijo,"
+" los billetes se entregan al menor del tipo fijo y del tipo fijo del cambio,"
+" y este margen no se usa."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_has_error
@@ -1217,6 +1231,13 @@ msgid "Nationality"
 msgstr "Nacionalidad"
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_no_expiry
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_partner__nm_id_document_no_expiry
+#: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_users__nm_id_document_no_expiry
+msgid "No Expiry Date"
+msgstr "Sin fecha de caducidad"
+
+#. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "No amount received in %(currency)s hands back %(amount)s."
@@ -1238,6 +1259,12 @@ msgstr "No hay operaciones de cambio en este periodo."
 #: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange_register
 msgid "No exchange operation yet"
 msgstr "Todavía no hay operaciones de cambio"
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid "No expiry date"
+msgstr "Sin fecha de caducidad"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__note
@@ -1851,6 +1878,17 @@ msgid "The identity document could not be loaded."
 msgstr "No se pudo cargar el documento de identidad."
 
 #. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_partner__nm_id_document_no_expiry
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_users__nm_id_document_no_expiry
+msgid ""
+"The identity document has no expiry date (an older identity card for "
+"example): the expiry date is then not required by the exchange counter."
+msgstr ""
+"El documento de identidad no tiene fecha de caducidad (un documento de "
+"identidad antiguo, por ejemplo): la ventanilla de cambio no exige entonces "
+"la fecha de caducidad."
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
@@ -1880,6 +1918,11 @@ msgstr ""
 "El documento de identidad del cliente es obligatorio: con las operaciones de"
 " los últimos %(days)s días, se cambiaron %(amount)s, por encima de "
 "%(threshold)s."
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__id_document_no_expiry
+msgid "The identity document shown has no expiry date."
+msgstr "El documento de identidad presentado no tiene fecha de caducidad."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -1937,6 +1980,17 @@ msgstr ""
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.js:0
 msgid "The quote could not be computed."
 msgstr "No se pudo calcular la cotización."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/exchange_popup/exchange_popup.xml:0
+msgid ""
+"The rate or the amount changed since the quote was shown: the new quote is "
+"shown above. Check it with the customer before confirming again."
+msgstr ""
+"El tipo o el importe cambió desde que se mostró la cotización: la nueva "
+"cotización se muestra arriba. Compruébela con el cliente antes de confirmar "
+"de nuevo."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
