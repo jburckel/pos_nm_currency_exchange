@@ -11,6 +11,7 @@
                 <field name="config_id" optional="show"/>
                 <field name="session_id" optional="show"/>
                 <field name="exchange_id"/>
+                <field name="transfer_id" optional="show"/>
                 <field name="origin"/>
                 <field name="currency_id"/>
                 <field name="value"/>
@@ -26,11 +27,13 @@
         <field name="arch" type="xml">
             <search string="Note Moves">
                 <field name="exchange_id"/>
+                <field name="transfer_id"/>
                 <field name="session_id"/>
                 <field name="config_id"/>
                 <field name="currency_id"/>
                 <filter string="Exchange" name="exchange" domain="[('origin', '=', 'exchange')]"/>
                 <filter string="Cancellation" name="cancel" domain="[('origin', '=', 'cancel')]"/>
+                <filter string="Transfer" name="transfer" domain="[('origin', '=', 'transfer')]"/>
                 <group>
                     <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
                     <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
@@ -51,7 +54,8 @@
             </p>
             <p>
                 At a Point of Sale tracking the notes by denomination, every exchange operation records the coins and
-                notes received and handed back in a foreign currency, and its cancellation the opposite.
+                notes received and handed back in a foreign currency, and its cancellation the opposite; every note transfer
+                between counters, the notes sent and received.
             </p>
         </field>
     </record>

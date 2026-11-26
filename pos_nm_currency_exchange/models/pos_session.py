@@ -53,12 +53,17 @@ class PosSession(models.Model):
             } for exchange in exchanges.sorted('id')],
         }
 
-    def _nm_expected_cash(self, currency):
+    def _nm_expected_cash(self, currency, data=None):
         """Notes expected in the drawer of ``currency`` (the currency of the
         point of sale included), computed by the closing control: opening,
-        cash payments and change of the session, cash moves and exchanges."""
+        cash payments and change of the session, cash moves, exchanges and
+        transfers.
+
+        :param data: closing control data of the session already computed,
+            to read several drawers at once
+        """
         self.ensure_one()
-        data = self.get_closing_control_data()
+        data = data or self.get_closing_control_data()
         if currency == self.currency_id:
             return data['default_cash_details'].get('amount', 0.0)
         return next((detail['amount'] for detail in data['multicurrency_details']

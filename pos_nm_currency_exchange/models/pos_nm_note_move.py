@@ -7,6 +7,7 @@ from odoo.tools import SQL
 NOTE_MOVE_ORIGINS = [
     ('exchange', 'Exchange'),
     ('cancel', 'Cancellation'),
+    ('transfer', 'Transfer'),
 ]
 
 
@@ -22,7 +23,8 @@ class PosNmNoteMove(models.Model):
     denomination, at a point of sale tracking its notes: the stock of a
     denomination during a session is its opening count plus these moves.
 
-    Written by the operations (with sudo), never edited nor deleted.
+    Written by the operations and the note transfers (with sudo), never
+    edited nor deleted.
     """
     _name = 'pos.nm.note.move'
     _description = 'Note Move'
@@ -40,6 +42,8 @@ class PosNmNoteMove(models.Model):
     origin = fields.Selection(NOTE_MOVE_ORIGINS, string='Origin', required=True, readonly=True)
     exchange_id = fields.Many2one('pos.nm.exchange', string='Exchange Operation', readonly=True, index=True,
                                   ondelete='restrict')
+    transfer_id = fields.Many2one('pos.nm.exchange.transfer', string='Note Transfer', readonly=True,
+                                  index='btree_not_null', ondelete='restrict')
     date = fields.Datetime(default=fields.Datetime.now, required=True, readonly=True)
 
     def write(self, vals):

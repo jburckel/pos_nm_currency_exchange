@@ -8,6 +8,8 @@ import { CurrencyExchangePopup } from "@pos_nm_currency_exchange/app/exchange_po
 import { ExchangeOperationsPopup } from "@pos_nm_currency_exchange/app/exchange_operations_popup/exchange_operations_popup";
 import { ExchangeRatesPopup } from "@pos_nm_currency_exchange/app/exchange_rates_popup/exchange_rates_popup";
 import { NoteStockPopup } from "@pos_nm_currency_exchange/app/note_stock_popup/note_stock_popup";
+import { SendNotesPopup } from "@pos_nm_currency_exchange/app/send_notes_popup/send_notes_popup";
+import { ReceiveNotesPopup } from "@pos_nm_currency_exchange/app/receive_notes_popup/receive_notes_popup";
 
 patch(PosStore.prototype, {
     get nmShowExchangeButton() {
@@ -50,6 +52,17 @@ patch(PosStore.prototype, {
     },
     nmNoteStock() {
         this.dialog.add(NoteStockPopup);
+    },
+    // The counter belongs to an exchange office with other counters: notes
+    // are sent to and received from them.
+    get nmShowTransfers() {
+        return Boolean(this.config.nm_exchange_enabled && this.config._nm_transfer_enabled);
+    },
+    async nmSendNotes() {
+        return makeAwaitable(this.dialog, SendNotesPopup);
+    },
+    nmReceiveNotes() {
+        this.dialog.add(ReceiveNotesPopup);
     },
     /**
      * Print a receipt template of the exchange counter on the receipt

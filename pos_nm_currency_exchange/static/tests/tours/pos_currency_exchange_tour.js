@@ -52,18 +52,19 @@ function loseNextQuote() {
 }
 
 /**
- * The next create_from_ui is recorded by the server but its response is
- * lost, as when the connection drops right after the commit.
+ * The next ``confirmMethod`` call (create_from_ui of an exchange) is
+ * recorded by the server but its response is lost, as when the connection
+ * drops right after the commit.
  */
-function loseNextConfirmResponse() {
+function loseNextConfirmResponse(confirmMethod = "create_from_ui", popup = ".modal .nm-currency-exchange") {
     return {
         content: "lose the response of the next confirmation",
-        trigger: ".modal .nm-currency-exchange",
+        trigger: popup,
         run: () => {
             const call = posmodel.data.call.bind(posmodel.data);
             posmodel.data.call = async (model, method, ...args) => {
                 const result = await call(model, method, ...args);
-                if (method === "create_from_ui") {
+                if (method === confirmMethod) {
                     posmodel.data.call = call;
                     throw new ConnectionLostError("/web/dataset/call_kw");
                 }
@@ -991,5 +992,226 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeNoteStockTour", {
                 run: "click",
                 expectUnloadPage: true,
             },
+        ].flat(),
+});
+
+function transferNoteSelector(key) {
+    return `.modal .nm-send-notes .nm-transfer-notes tr.nm-exchange-note[data-key='${key}']`;
+}
+
+/**
+ * Notes of EUR tracked by denomination at both counters of the office;
+ * opening of the main counter counted by coins/notes: 1 x 50, 2 x 20,
+ * 1 x 10. Send Notes: 50 EUR to NM Counter 2 (register open there), 1 x 50
+ * proposed from the drawer, sent as 2 x 20 and 1 x 10 instead; the response
+ * of the first Confirm is lost, Confirm again records the transfer once and
+ * prints its slip.
+ */
+registry.category("web_tour.tours").add("PosCurrencyExchangeTransferTour", {
+    steps: () =>
+        [
+            {
+                content: "fill the counted amount of the main currency at opening",
+                trigger:
+                    ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) .cash-input-sub-section input",
+                run: "edit 100",
+            },
+            {
+                content: "wait for the debounced input of the main currency",
+                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(100)",
+                run: () => new Promise((resolve) => setTimeout(resolve, 500)),
+            },
+            {
+                content: "count the EUR notes at opening by coins/notes",
+                trigger: ".modal .nm-multicurrency-opening-section .btn:has([data-icon='payments'])",
+                run: "click",
+            },
+            countNote(50, 1),
+            countNote(20, 2),
+            countNote(10, 1),
+            {
+                content: "confirm the count of the EUR notes",
+                trigger: ".modal .nm-currency-money-details .modal-footer .btn-primary:contains('Confirm')",
+                run: "click",
+            },
+            {
+                content: "100 EUR counted",
+                trigger: ".modal .nm-multicurrency-opening-section input.nm-currency-count:value(100)",
+            },
+            Dialog.confirm("Open Register"),
+            ProductScreen.isShown(),
+            stubPrinting(),
+
+            Chrome.clickMenuOption("Send Notes"),
+            {
+                content: "the other counter of the office is the destination, its register is open",
+                trigger:
+                    ".modal .nm-send-notes:not(:has(.nm-transfer-closed)) select.nm-transfer-counter:has(option:contains('NM Counter 2'))",
+            },
+            {
+                content: "send EUR",
+                trigger: ".modal .nm-send-notes select.nm-transfer-currency",
+                run: function () {
+                    const option = [...this.anchor.options].find((opt) => opt.textContent.trim() === "EUR");
+                    this.anchor.value = option.value;
+                    this.anchor.dispatchEvent(new Event("change"));
+                },
+            },
+            {
+                content: "type 50 EUR",
+                trigger: ".modal .nm-send-notes input.nm-transfer-amount",
+                run: "edit 50",
+            },
+            {
+                content: "1 x 50 proposed from the drawer",
+                trigger: `${transferNoteSelector("50")} .nm-exchange-note-qty input:value(/^1$/)`,
+            },
+            {
+                content: "the stock of the 20 notes is shown",
+                trigger: `${transferNoteSelector("20")} .nm-exchange-note-stock:contains(/^2$/)`,
+            },
+            {
+                content: "the notes add up to 50: Confirm enabled",
+                trigger:
+                    ".modal .nm-send-notes:not(:has(.nm-transfer-notes-error)) .nm-transfer-confirm:not([disabled])",
+            },
+            {
+                content: "keep the 50 note",
+                trigger: `${transferNoteSelector("50")} .nm-exchange-note-qty input`,
+                run: "edit 0",
+            },
+            {
+                content: "the notes do not add up to the amount: Confirm disabled",
+                trigger: ".modal .nm-send-notes:has(.nm-transfer-notes-error) .nm-transfer-confirm[disabled]",
+            },
+            {
+                content: "2 x 20",
+                trigger: `${transferNoteSelector("20")} .nm-exchange-note-qty input`,
+                run: "edit 2",
+            },
+            {
+                content: "1 x 10",
+                trigger: `${transferNoteSelector("10")} .nm-exchange-note-qty input`,
+                run: "edit 1",
+            },
+            {
+                content: "the notes add up to 50",
+                trigger: ".modal .nm-send-notes .nm-transfer-notes .nm-exchange-notes-total:contains(/50[.,]00/)",
+            },
+            {
+                content: "type a note",
+                trigger: ".modal .nm-send-notes input.nm-transfer-note",
+                run: "edit Tour",
+            },
+            loseNextConfirmResponse("send_from_ui", ".modal .nm-send-notes"),
+            {
+                content: "confirm the transfer",
+                trigger:
+                    ".modal .nm-send-notes:not(:has(.nm-transfer-notes-error)) .nm-transfer-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the response is lost: the inputs are frozen",
+                trigger:
+                    ".modal .nm-send-notes:has(.nm-transfer-retry):has(select.nm-transfer-currency[disabled]):has(input.nm-transfer-amount[readonly]):has(fieldset.nm-transfer-notes[disabled]) input.nm-transfer-note[readonly]",
+            },
+            {
+                content: "confirm again: the transfer already recorded is returned",
+                trigger: ".modal .nm-send-notes .nm-transfer-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the transfer is recorded and the popup closed",
+                trigger: "body:not(:has(.modal .nm-send-notes))",
+            },
+            {
+                content: "the slip of the transfer was printed",
+                trigger: "body.nm-tour-printed",
+                run: () => {
+                    const html = posmodel.nmTourReceiptHtml || "";
+                    if (!["TRF/", "NM Counter 2", "50"].every((text) => html.includes(text))) {
+                        throw new Error("Transfer slip not rendered: " + html.slice(0, 400));
+                    }
+                    document.body.classList.remove("nm-tour-printed");
+                },
+            },
+            ProductScreen.isShown(),
+        ].flat(),
+});
+
+/**
+ * NM Counter 2, register open: Receive Notes lists the 50 EUR in transit
+ * from the main counter; received, its slip is printed and the list is
+ * empty.
+ */
+registry.category("web_tour.tours").add("PosCurrencyExchangeReceiveTour", {
+    steps: () =>
+        [
+            ProductScreen.isShown(),
+            stubPrinting(),
+            Chrome.clickMenuOption("Receive Notes"),
+            {
+                content: "the notes in transit to the counter are listed",
+                trigger:
+                    ".modal .nm-receive-notes tr.nm-transfer-incoming:contains('TRF/'):has(.nm-transfer-incoming-amount:contains(/50[.,]00/)):has(.nm-transfer-incoming-note:contains('Tour'))",
+            },
+            {
+                content: "receive them",
+                trigger:
+                    ".modal .nm-receive-notes tr.nm-transfer-incoming:has(.nm-transfer-incoming-note:contains('Tour')) .nm-transfer-receive:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the slip of the transfer was printed",
+                trigger: "body.nm-tour-printed",
+                run: () => {
+                    const html = posmodel.nmTourReceiptHtml || "";
+                    if (!["TRF/", "NM Counter 2", "50"].every((text) => html.includes(text))) {
+                        throw new Error("Transfer slip not rendered: " + html.slice(0, 400));
+                    }
+                    document.body.classList.remove("nm-tour-printed");
+                },
+            },
+            {
+                content: "the notes the sending counter did not count are left",
+                trigger:
+                    ".modal .nm-receive-notes tr.nm-transfer-incoming:has(.nm-transfer-incoming-note:contains('Uncounted')) .nm-transfer-receive:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "they are counted at receiving, prefilled with 20 + 5",
+                trigger:
+                    ".modal .nm-transfer-receive-notes:has(.nm-exchange-note[data-key='20'] input:value(1)):has(.nm-exchange-note[data-key='5'] input:value(1))",
+            },
+            {
+                content: "a count that does not add up to the amount is refused",
+                trigger: ".modal .nm-transfer-receive-notes .nm-exchange-note[data-key='5'] input",
+                run: "edit 2",
+            },
+            {
+                content: "the receipt cannot be confirmed",
+                trigger: ".modal .nm-transfer-receive-notes:has(.nm-transfer-notes-error) .nm-transfer-receive-confirm[disabled]",
+            },
+            {
+                content: "count 1 x 5 again",
+                trigger: ".modal .nm-transfer-receive-notes .nm-exchange-note[data-key='5'] input",
+                run: "edit 1",
+            },
+            {
+                content: "confirm the receipt of the notes counted",
+                trigger: ".modal .nm-transfer-receive-notes .nm-transfer-receive-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the slip of the second transfer was printed",
+                trigger: "body.nm-tour-printed",
+                run: () => document.body.classList.remove("nm-tour-printed"),
+            },
+            {
+                content: "nothing left in transit",
+                trigger: ".modal .nm-receive-notes .nm-transfer-empty",
+            },
+            Dialog.cancel(),
+            ProductScreen.isShown(),
         ].flat(),
 });

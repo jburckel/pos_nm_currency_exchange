@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Version 20.0.3.0.0 in progress: the exchange office vertical (see
 [`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)). Lots 1
-to 4 are done; the transfers between counters (lot 5) are not started. Upgrade with
+to 5 are done. Upgrade with
 `-u pos_nm_currency_exchange`: the migration freezes the licence on the
 existing operations and chains them into the register hash, in order.
 
@@ -68,6 +68,28 @@ existing operations and chains them into the register hash, in order.
   currency and denomination, the opening count, the notes received and
   handed back, the stock, the closing count and the difference. The
   closing popup gets the expected quantity of each coin and note.
+- **Note Transfers** (*Point of Sale -> Orders*): notes moved from the
+  drawer of one counter of an office to another counter of the same
+  office. *Send* posts a cash out on the open session of the sending
+  counter and *Receive* a cash in of the same value on the open session of
+  the receiving counter, both on the new *Notes in Transit Account* of the
+  office (a current assets account): its balance is the value of the
+  notes in transit. Gapless references `TRF/YYYY/NNNNN` given at sending;
+  the drawer must hold the amount; with *Track the Notes by Denomination*
+  the notes sent are counted by denomination and move the note stock of
+  both drawers (counted at receiving when only the receiving counter
+  tracks them). A transfer worth less than a cent of the company currency
+  is refused. A transfer in transit can be cancelled while the sending
+  session is open (by a POS Administrator or the cashier who sent it); its
+  state, number, value, sessions and lines are only set by sending,
+  receiving and cancelling, and a transfer sent cannot be edited, but its
+  note, nor its cash moves deleted. *Send Notes* and *Receive Notes* in the
+  menu of the register (counters of an office with another enabled
+  counter); transfer slip printed at the register.
+- **Drawers** page of the office: expected cash of every currency at each
+  counter with an open session, operations of the day and their
+  commissions, notes in transit per currency and their total value;
+  *Transfers* smart button.
 
 ## [20.0.2.0.0] - 2026-11-25
 

@@ -1152,13 +1152,14 @@ class PosNmExchange(models.Model):
                    user=self.env.user.name, name=self.name, document=self._nm_masked_document()),
             subtype_xmlid='mail.mt_note')
 
+    @api.model
     def _nm_post_line(self, cash_pm, session, amount, account, label, partner, currency, amount_currency,
                       employee=None):
         """Statement line of the cash journal in ``currency`` (a foreign
         line when it is not the currency of the point of sale), like the
         cash moves of POS Multi-Currency Cash: ``partner`` is the operator,
-        not the customer, and with pos_hr the line keeps the employee."""
-        self.ensure_one()
+        not the customer, and with pos_hr the line keeps the employee. Also
+        used by the transfers of notes between counters."""
         config = session.config_id
         if currency == config.currency_id:
             move_lines = cash_pm._create_payment_line(session, amount, account, label, partner)
@@ -1166,7 +1167,9 @@ class PosNmExchange(models.Model):
             move_lines = cash_pm._create_payment_line(
                 session, amount, account, label, partner, currency.id, amount_currency)
             detail = session._nm_get_or_create_detail(currency)
-            signed = amount_currency if amount > 0 else -amount_currency
+            # The sign of the line, as core does (copysign): a cash in of a
+            # value rounding to 0 still adds the amount to the drawer.
+            signed = math.copysign(amount_currency, amount)
             detail.cash_moves_amount = currency.round(detail.cash_moves_amount + signed)
         line = move_lines.move_id.statement_line_id
         if employee:
@@ -1248,15 +1251,20 @@ class PosNmExchange(models.Model):
         return notes
 
     @api.model
-    def _nm_note_grid(self, config, currency, amount, grid, received):
+    def _nm_note_grid(self, config, currency, amount, grid, received, transfer=False):
         """Notes of an operation by denomination sent by the register
         ({value key: quantity}), checked: coins and notes of the currency at
         the point of sale, whole quantities, adding up to ``amount``.
 
         :param received: the notes received (else handed back)
+        :param transfer: the notes of a transfer to another counter
+            (pos.nm.exchange.transfer): sent, or received by the receiving
+            counter when the sending one does not track them
         :return: {key: (value, quantity)}, the quantities that are not 0
         """
         if not isinstance(grid, dict):
+            if transfer and not received:
+                raise UserError(_("Enter the notes sent by denomination (%s).", currency.name))
             if received:
                 raise UserError(_("Enter the notes received by denomination (%s).", currency.name))
             raise UserError(_("Enter the notes handed back by denomination (%s).", currency.name))
@@ -1280,6 +1288,9 @@ class PosNmExchange(models.Model):
                 notes[key] = (bills[key], notes.get(key, (0.0, 0))[1] + int(quantity))
         total = sum(value * quantity for value, quantity in notes.values())
         if currency.compare_amounts(total, amount):
+            if transfer and not received:
+                raise UserError(_("The notes sent add up to %(total)s instead of %(amount)s.",
+                                  total=currency.format(total), amount=currency.format(amount)))
             if received:
                 raise UserError(_("The notes received add up to %(total)s instead of %(amount)s.",
                                   total=currency.format(total), amount=currency.format(amount)))

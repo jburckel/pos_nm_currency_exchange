@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from datetime import datetime, time
 from uuid import uuid4
+
+import pytz
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
@@ -97,6 +100,19 @@ class PosNmExchangeOffice(models.Model):
         string='Board Refresh (seconds)', default=60,
         help='The rate board reloads the rates every so many seconds.')
 
+    transit_account_id = fields.Many2one(
+        'account.account', string='Notes in Transit Account', check_company=True,
+        domain=[('account_type', '=', 'asset_current')], tracking=True,
+        help='Current asset account of the notes transferred between the counters of the office: the cash out of '
+             'the sending counter and the cash in of the receiving counter are booked on it, its balance is the '
+             'value of the notes in transit. Required to transfer notes.')
+    transfer_ids = fields.One2many('pos.nm.exchange.transfer', 'office_id', string='Note Transfers')
+    transfer_count = fields.Integer(string='Transfer Count', compute='_compute_transfer_count')
+    drawers_html = fields.Html(
+        string='Drawers', compute='_compute_drawers_html', sanitize=False,
+        groups='point_of_sale.group_pos_manager',
+        help='Drawers of the counters with an open session, notes in transit and operations of the day.')
+
     @api.depends('config_ids')
     def _compute_config_count(self):
         for office in self:
@@ -121,6 +137,25 @@ class PosNmExchangeOffice(models.Model):
                 raise ValidationError(_("The linked operations period cannot be negative."))
             if office.board_refresh and office.board_refresh < 10:
                 raise ValidationError(_("The rate board cannot reload the rates more often than every 10 seconds."))
+
+    @api.depends('transfer_ids')
+    def _compute_transfer_count(self):
+        counts = dict(self.env['pos.nm.exchange.transfer']._read_group(
+            [('office_id', 'in', self.ids)], ['office_id'], ['__count']))
+        for office in self:
+            office.transfer_count = counts.get(office, 0)
+
+    def _compute_drawers_html(self):
+        for office in self:
+            office.drawers_html = self.env['ir.qweb']._render(
+                'pos_nm_currency_exchange.exchange_office_drawers', {'drawers': office._nm_drawers()}) \
+                if office.id else False
+
+    @api.constrains('transit_account_id')
+    def _check_transit_account(self):
+        for office in self:
+            if office.transit_account_id and office.transit_account_id.account_type != 'asset_current':
+                raise ValidationError(_("The notes in transit account must be a current asset account."))
 
     @api.constrains('reference_config_id', 'config_ids')
     def _check_reference_config(self):
@@ -246,6 +281,88 @@ class PosNmExchangeOffice(models.Model):
             'view_mode': 'list,form',
             'domain': [('nm_exchange_office_id', '=', self.id)],
             'context': {'default_nm_exchange_office_id': self.id},
+        }
+
+    def action_nm_view_transfers(self):
+        self.ensure_one()
+        return {
+            'name': _('Note Transfers'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'pos.nm.exchange.transfer',
+            'view_mode': 'list,form',
+            'domain': [('office_id', '=', self.id)],
+            'context': {'default_office_id': self.id},
+        }
+
+    def _nm_today_start(self):
+        """Start of the day of the user, in UTC."""
+        tz = pytz.timezone(self.env.user.tz or 'UTC')
+        start = tz.localize(datetime.combine(fields.Date.context_today(self), time.min))
+        return start.astimezone(pytz.utc).replace(tzinfo=None)
+
+    def _nm_drawers(self):
+        """Consolidated drawers of the office: for each counter with an open
+        session, the cash expected in each drawer and the operations of the
+        day with their commissions; the notes in transit between the
+        counters per currency, and their value.
+
+        :return: {'counters': [{config, session, cash: [{currency, amount,
+            amount_formatted}], operation_count, commission,
+            commission_formatted}], 'in_transit': [{currency, amount,
+            amount_formatted, value, value_formatted, count}],
+            'in_transit_value', 'in_transit_value_formatted',
+            'operation_count', 'commission', 'commission_formatted'}
+        """
+        self.ensure_one()
+        office = self.sudo()
+        main = office.currency_id
+        today = self._nm_today_start()
+        exchanges = self.env['pos.nm.exchange'].sudo().search([
+            ('config_id', 'in', office.config_ids.ids), ('state', '=', 'done'), ('date', '>=', today)])
+        counters = []
+        for config in office.config_ids.sorted('name'):
+            session = config.current_session_id
+            if session.state not in ('opened', 'closing_control'):
+                continue
+            data = session.get_closing_control_data()
+            cash = []
+            for currency in config._nm_exchange_currencies():
+                amount = session._nm_expected_cash(currency, data)
+                cash.append({'currency': currency.name, 'amount': amount, 'amount_formatted': currency.format(amount)})
+            config_exchanges = exchanges.filtered(lambda e: e.config_id == config)
+            commission = main.round(sum(config_exchanges.mapped('commission')))
+            counters.append({
+                'config': config.name,
+                'session': session.name,
+                'cash': cash,
+                'operation_count': len(config_exchanges),
+                'commission': commission,
+                'commission_formatted': main.format(commission),
+            })
+        in_transit = []
+        transfers = office.transfer_ids.filtered(lambda t: t.state == 'sent')
+        for currency in transfers.currency_id.sorted('name'):
+            currency_transfers = transfers.filtered(lambda t: t.currency_id == currency)
+            amount = currency.round(sum(currency_transfers.mapped('amount')))
+            value = main.round(sum(currency_transfers.mapped('value')))
+            in_transit.append({
+                'currency': currency.name,
+                'amount': amount,
+                'amount_formatted': currency.format(amount),
+                'value': value,
+                'value_formatted': main.format(value),
+                'count': len(currency_transfers),
+            })
+        in_transit_value = main.round(sum(transfers.mapped('value')))
+        commission = main.round(sum(counter['commission'] for counter in counters))
+        return {
+            'counters': counters,
+            'in_transit': in_transit,
+            'in_transit_value': in_transit_value,
+            'in_transit_value_formatted': main.format(in_transit_value),
+            'operation_count': sum(counter['operation_count'] for counter in counters),
+            'commission': commission,
+            'commission_formatted': main.format(commission),
         }
 
     def action_nm_view_exchanges(self):

@@ -268,3 +268,77 @@ drawer revaluation, counts per cashier).
   counts in the opposite column); Difference = closing - stock, only when
   the closing was counted by denomination. Multi-company rule, POS
   managers.
+
+## Note transfers
+
+- `pos.nm.exchange.transfer` (*Note Transfer*, `mail.thread`): office, from
+  and to counters (both of the office, different, in the currency of the
+  office, both taking the currency of the transfer in cash:
+  `_nm_check_counters`, a constraint checked again when sending), currency,
+  amount (> 0), value in the currency of the company, state draft / sent
+  (*In Transit*) / received / cancelled, sessions, the three statement
+  lines, dates and users, note, `notes` (Json `{key: quantity}`), note
+  moves, `uuid` (unique).
+- Reference `TRF/YYYY/NNNNN` (`no_gap`) drawn by `_nm_send` after every
+  check: a draft keeps `/`, a refused sending draws no number.
+- `_nm_send`: open session of the sending counter, transit account of the
+  office (`transit_account_id`, current assets), drawer of the currency
+  (`_nm_expected_cash`, "cannot be sent"), notes grid when the currency is
+  tracked at the sending counter (`pos.nm.exchange._nm_note_grid(...,
+  transfer=True)`: same rules as the exchange grids, a stock shortfall is
+  not refused). Value frozen: the amount in the currency of the point of
+  sale, else the amount at the rate of Odoo of the day, like the cash moves
+  of POS Multi-Currency Cash; a value rounding to zero is refused ("too
+  small to be transferred") before the number is drawn. Cash out through
+  `pos.nm.exchange._nm_post_line` (an `@api.model` helper shared with the
+  operations: foreign line and `cash_moves_amount` of the detail, signed
+  with `math.copysign` like core, so a line worth 0 keeps its sign), label
+  `TRF/...: notes sent to <counter>`; note moves `-qty`, origin
+  `transfer`. From the back office (*Send*, POS managers) without a grid,
+  the notes proposed from the stock are sent when they make up the amount
+  within the stock, else the register is asked for.
+- `_nm_receive`: open session of the receiving counter, cash in of the same
+  value and amount on the counterpart account of the sending line; note
+  moves `+qty` when the receiving counter tracks the currency: the notes
+  sent, or, when the sending counter did not count them, the notes counted
+  at receiving (`_nm_check_received_notes`: grid `notes` of
+  `receive_from_ui`, `_nm_note_grid(..., received=True, transfer=True)`;
+  from the back office a breakdown of the amount, the largest first),
+  written to `notes`. The amount received is the amount sent: a difference
+  is found by the closing count.
+- `_nm_cancel`: a draft is cancelled as is; a transfer in transit only
+  while its sending session is open (cash in of the value on that session,
+  opposite note moves, origin `cancel`); a received transfer never. POS
+  managers, or the cashier who sent it while it is in transit.
+- `create` / `write` (`_nm_check_system_fields`): outside sudo, the fields
+  written by the transfer itself (`TRANSFER_SYSTEM_FIELDS`: name, state,
+  value, notes, uuid, sessions, lines, dates and users, note moves) are
+  refused whatever the state (a new transfer may carry `name='/'` and
+  `state='draft'`); a transfer that is not a draft refuses every field but
+  `note`; only drafts are deleted. Receiving and cancelling also require
+  the sending line. Its statement lines cannot be
+  deleted (`account.bank.statement.line._unlink_except_exchange_leg`).
+- Register RPCs (POS user, `_nm_counter_config`, sudo after the checks):
+  `get_transfer_targets(config_id)` -> `{targets: [{id, name,
+  session_open}] (the enabled counters only), currencies: [{id, name,
+  symbol, decimal_places, tracked,
+  rows: [{key, value, label, stock}]}]}`; `send_from_ui(session_id,
+  config_to_id, currency_id, amount, *, notes, note, uuid)` (a replay of
+  the uuid in the same session returns the transfer recorded; a disabled
+  receiving counter is refused); `get_incoming_transfers(config_id)` ->
+  `[{id, name, config_from, currency, currency_id, amount,
+  amount_formatted, notes_label, sent_date, note, needs_notes, rows}]`;
+  `receive_from_ui(transfer_id, session_id, *, notes)` (received again in the same
+  session: returned as is). Both return `_nm_transfer_data()`, also the
+  data of the transfer slip `pos_exchange_transfer_receipt`.
+- `pos.config._nm_transfer_enabled()` (`_nm_transfer_enabled` in the data
+  of the register): counter enabled and another enabled counter in its
+  office. A refused receipt reloads the list of the register.
+- Office: *Transfers* smart button and the *Drawers* page,
+  `drawers_html` rendered from `_nm_drawers()` (template
+  `exchange_office_drawers`): per counter with an open session the expected
+  cash of each currency (one closing control computation per session:
+  `_nm_expected_cash(currency, data)`), the operations of the day (time
+  zone of the user) and their commissions; the transfers in transit per
+  currency and their value, which is the balance of the transit account.
+

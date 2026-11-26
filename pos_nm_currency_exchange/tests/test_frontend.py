@@ -246,3 +246,97 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
             ]))
         stock = {row['key']: row['stock'] for row in session._nm_note_stock(foreign_currency)['rows']}
         self.assertEqual(stock, {'50': 1, '20': 1, '10': 1, '5': 0})
+
+    def test_pos_currency_exchange_transfer_tour(self):
+        """Two counters of one exchange office, the notes of EUR tracked by
+        denomination at both. The main counter sends 50 EUR to the second
+        one as 2 x 20 and 1 x 10 (the response of the first Confirm is lost:
+        one transfer); the second counter, its register open, receives them:
+        the value of the notes goes through the transit account of the
+        office, the notes move from one drawer to the other."""
+        foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
+        commission_account = self.env['account.account'].create({
+            'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})
+        transit_account = self.env['account.account'].create({
+            'name': 'EX Tour Transit', 'code': '999054', 'account_type': 'asset_current'})
+        office = self.env['pos.nm.exchange.office'].create({
+            'name': 'NM Tour Office', 'transit_account_id': transit_account.id})
+        counter_values = {
+            'nm_exchange_enabled': True,
+            'nm_exchange_income_account_id': commission_account.id,
+            'nm_exchange_track_notes': True,
+            'nm_exchange_office_id': office.id,
+        }
+        self.main_pos_config.write(counter_values)
+        journal = self.env['account.journal'].create({
+            'name': 'NM Tour Cash 2', 'code': 'NMT2', 'type': 'cash',
+            'profit_account_id': cash_pm.journal_id.profit_account_id.id,
+            'loss_account_id': cash_pm.journal_id.loss_account_id.id,
+        })
+        cash_pm_2 = self.env['pos.payment.method'].create({
+            'name': 'NM Tour Cash 2', 'journal_id': journal.id, 'type': 'cash',
+            'currency_ids': [(4, foreign_currency.id)]})
+        counter_2 = self.main_pos_config.copy({'name': 'NM Counter 2'})
+        counter_2.write({**counter_values, 'payment_method_ids': [(6, 0, cash_pm_2.ids)]})
+        self.assertTrue(self.main_pos_config._load_pos_data_read(
+            self.main_pos_config, self.main_pos_config)[0]['_nm_transfer_enabled'])
+
+        # The register of the second counter is open, without the opening
+        # popup: 100 in the main drawer, no EUR.
+        counter_2.with_user(self.pos_user).open_ui()
+        session_2 = counter_2.current_session_id
+        session_2.set_multicurrency_counts({str(foreign_currency.id): 0.0})
+        session_2.set_opening_control(100.0, '')
+        self.main_pos_config.with_user(self.pos_user).open_ui()
+        session = self.main_pos_config.current_session_id
+        TestPosMulticurrencyUi._start_tour(self, 'PosCurrencyExchangeTransferTour')
+
+        transfer = self.env['pos.nm.exchange.transfer'].search([('office_id', '=', office.id)])
+        self.assertEqual(len(transfer), 1)
+        self.assertEqual(transfer.state, 'sent')
+        self.assertTrue(transfer.name.startswith('TRF/'))
+        self.assertEqual((transfer.config_from_id, transfer.config_to_id), (self.main_pos_config, counter_2))
+        self.assertEqual(transfer.currency_id, foreign_currency)
+        self.assertAlmostEqual(transfer.amount, 50.0, places=2)
+        self.assertEqual(transfer.notes, {'20': 2, '10': 1})
+        self.assertEqual(transfer.note, 'Tour')
+        self.assertEqual(transfer.session_from_id, session)
+        line_from = transfer.statement_line_from_id
+        self.assertEqual(line_from.pos_session_id, session)
+        self.assertAlmostEqual(line_from.amount, -transfer.value, places=2)
+        # A second transfer sent while the first counter did not track the
+        # notes: the second counter counts them at receiving.
+        Transfer = self.env['pos.nm.exchange.transfer']
+        self.main_pos_config.nm_exchange_track_notes = False
+        uncounted = Transfer.browse(Transfer.with_user(self.pos_user).send_from_ui(
+            session.id, counter_2.id, foreign_currency.id, 25.0, note='Uncounted')['id'])
+        self.main_pos_config.nm_exchange_track_notes = True
+        self.assertFalse(uncounted.notes)
+
+        self.start_tour("/pos/ui/%d?from_backend=True" % counter_2.id, 'PosCurrencyExchangeReceiveTour',
+                        login="pos_user")
+
+        transfer.invalidate_recordset()
+        self.assertEqual(transfer.state, 'received')
+        self.assertEqual(transfer.session_to_id, session_2)
+        line_to = transfer.statement_line_to_id
+        self.assertEqual(line_to.pos_session_id, session_2)
+        self.assertAlmostEqual(line_to.amount, transfer.value, places=2)
+        moves = transfer.note_move_ids
+        self.assertEqual(
+            sorted((move.session_id.id, move.value, move.quantity, move.origin) for move in moves),
+            sorted([
+                (session.id, 20.0, -2, 'transfer'),
+                (session.id, 10.0, -1, 'transfer'),
+                (session_2.id, 20.0, 2, 'transfer'),
+                (session_2.id, 10.0, 1, 'transfer'),
+            ]))
+        stock = {row['key']: row['stock'] for row in session._nm_note_stock(foreign_currency)['rows']}
+        self.assertEqual(stock, {'50': 1, '20': 0, '10': 0, '5': 0})
+        uncounted.invalidate_recordset()
+        self.assertEqual(uncounted.state, 'received')
+        self.assertEqual(uncounted.notes, {'20': 1, '5': 1})
+        self.assertEqual(sorted((move.session_id.id, move.value, move.quantity) for move in uncounted.note_move_ids),
+                         [(session_2.id, 5.0, 1), (session_2.id, 20.0, 1)])
+        stock_2 = {row['key']: row['stock'] for row in session_2._nm_note_stock(foreign_currency)['rows']}
+        self.assertEqual(stock_2, {'50': 0, '20': 3, '10': 1, '5': 1})

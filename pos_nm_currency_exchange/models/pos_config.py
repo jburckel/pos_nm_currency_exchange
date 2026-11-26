@@ -94,7 +94,7 @@ class PosConfig(models.Model):
     nm_exchange_track_notes = fields.Boolean(
         string='Track the Notes by Denomination',
         default=False,
-        help='The exchange popup asks the foreign notes received and handed back by denomination, proposes '
+        help='The exchange popup asks for the foreign notes received and handed back by denomination, proposes '
              'the notes handed back from the stock of the drawer (opening count and operations of the '
              'session), and the closing popup shows the expected quantity of each coin and note. Foreign '
              'currencies with coins and notes only.',
@@ -187,7 +187,16 @@ class PosConfig(models.Model):
             read_records[0]['_nm_funds_origins'] = exchange_fields['funds_origin']._description_selection(self.env)
             read_records[0]['_nm_purposes'] = exchange_fields['purpose']._description_selection(self.env)
             read_records[0]['_nm_note_currency_ids'] = config._nm_note_currencies().ids
+            read_records[0]['_nm_transfer_enabled'] = config._nm_transfer_enabled()
         return read_records
+
+    def _nm_transfer_enabled(self):
+        """The register sends and receives notes: the exchange counter is
+        enabled and its office has at least one other enabled counter."""
+        self.ensure_one()
+        office = self.sudo().nm_exchange_office_id
+        return bool(self.nm_exchange_enabled and office
+                    and (office.config_ids - self).filtered('nm_exchange_enabled'))
 
     def _nm_note_bills(self, currency):
         """Coins and notes of ``currency`` available at the point of sale

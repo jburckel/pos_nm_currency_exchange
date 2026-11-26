@@ -36,6 +36,10 @@
                         </button>
                         <button name="action_nm_view_exchanges" type="object" class="oe_stat_button"
                                 icon="fa-exchange" string="Operations"/>
+                        <button name="action_nm_view_transfers" type="object" class="oe_stat_button"
+                                icon="fa-truck">
+                            <field name="transfer_count" widget="statinfo" string="Transfers"/>
+                        </button>
                     </div>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <field name="active" invisible="1"/>
@@ -48,6 +52,7 @@
                             <field name="partner_id"/>
                             <field name="licence"/>
                             <field name="compliance_user_id"/>
+                            <field name="transit_account_id"/>
                             <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
@@ -85,6 +90,15 @@
                                 Apply Rates to the Counters copies the cash rate (rate mode, margin, fixed rates), the roundings of the coins and notes, the
                                 exchange sell margin and the commissions of every currency of the reference counter to
                                 the other counters: the customers get the same rates at every counter.
+                            </div>
+                        </page>
+                        <page string="Drawers" name="drawers" groups="point_of_sale.group_pos_manager"
+                              invisible="not id">
+                            <field name="drawers_html" readonly="1" nolabel="1"/>
+                            <div class="text-muted">
+                                Cash expected in the drawers of the counters with an open session (opening, sales,
+                                cash moves, exchanges and transfers), notes sent by a counter and not received yet,
+                                and operations of the day.
                             </div>
                         </page>
                         <page string="Rate Board" name="board" groups="point_of_sale.group_pos_manager">

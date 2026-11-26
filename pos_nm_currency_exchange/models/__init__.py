@@ -8,6 +8,7 @@ from . import pos_exchange
 from . import pos_exchange_office
 from . import pos_exchange_register
 from . import pos_exchange_register_closing
+from . import pos_exchange_transfer
 from . import pos_nm_note_move
 from . import pos_session
 from . import pos_session_report

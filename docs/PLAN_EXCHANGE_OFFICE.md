@@ -120,7 +120,11 @@ edited or deleted, the server recomputes every check.
   grids, cancellation, closing data, Note Stock report, receipt; tests
   `tests/test_note_stock.py`). Foreign currencies only: the currency of the
   point of sale has no count by denomination in POS Multi-Currency Cash.
-- Lot 5: not started.
+- Lot 5: done (transfers, transit account, note moves, register RPCs,
+  register menu entries *Send Notes* / *Receive Notes* and their popups,
+  transfer slip, office drawers; tests `tests/test_transfer.py` and the
+  tours `PosCurrencyExchangeTransferTour` /
+  `PosCurrencyExchangeReceiveTour`).
 
 ## Order of work and checks
 
