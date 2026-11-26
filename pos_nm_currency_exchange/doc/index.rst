@@ -40,8 +40,9 @@ Requirements
 
 * The **Point of Sale** application (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 or
-  later**, included in the price shown on the Odoo Apps Store (not charged
-  again if you already own it), with at least one foreign currency on the
+  later**, included in the price shown on the Odoo Apps Store (already
+  bought it? Contact us at odoo@natimai.solutions before buying this
+  module), with at least one foreign currency on the
   cash payment method of the point of sale (see its guide: *Accept a
   currency in cash*). An older version of POS Multi-Currency Cash does not
   work with

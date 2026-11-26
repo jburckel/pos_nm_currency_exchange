@@ -5,8 +5,9 @@ POS Currency Exchange
 Currency exchange counter inside the Odoo 20 Point of Sale: the customer
 brings notes in one currency and leaves with another, minus a commission.
 Built on `POS Multi-Currency Cash <https://apps.odoo.com/apps/modules/20.0/pos_nm_multicurrencies>`_
-(required, included in the price shown on the Odoo Apps Store, not charged
-again if you already own it), which controls the cash drawer of every
+(required, included in the price shown on the Odoo Apps Store; already
+bought it? Contact us at odoo@natimai.solutions before buying this module),
+which controls the cash drawer of every
 currency, its cash rates and its coins and notes.
 
 Features
@@ -58,8 +59,8 @@ Dependencies
 
 * ``point_of_sale``
 * ``pos_nm_multicurrencies`` 20.0.2.1.0 or later (POS Multi-Currency Cash,
-  included in the price shown on the Odoo Apps Store, not charged again if
-  you already own it)
+  included in the price shown on the Odoo Apps Store; already bought it?
+  Contact us at odoo@natimai.solutions before buying this module)
 
 Models
 ======
