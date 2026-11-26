@@ -96,6 +96,7 @@ cannot record operations.
   period with *Print Register* (totals per currency).
 - Messages instead of the popup when the counter cannot work (no foreign
   cash currency, no commission account).
+- Store page: screenshot of the rate board in PDF.
 
 ### Changed
 - The cashier of an operation is decided by the server: the user, or the

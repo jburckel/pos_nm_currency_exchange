@@ -351,8 +351,9 @@ les pièces d'identité auprès d'un quelconque registre.
 * Au-delà de **Pièce d'identité obligatoire au-delà de**, elle exige un
   client et une pièce d'identité valide : type (Passeport, Carte
   d'identité, Permis de conduire, Titre de séjour, Autre), numéro, pays de
-  délivrance, date d'expiration, nationalité et date de naissance. Une
-  pièce expirée est refusée.
+  délivrance, date d'expiration (ou **Sans date d'expiration** pour une
+  pièce qui n'en a pas), nationalité et date de naissance. Une pièce
+  expirée est refusée.
 
 Le serveur vérifie à nouveau ces règles lors de l'enregistrement. La pièce
 saisie à la caisse, lorsqu'elle diffère de celle enregistrée, est

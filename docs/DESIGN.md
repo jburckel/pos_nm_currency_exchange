@@ -44,7 +44,12 @@ drawer revaluation, counts per cashier).
   the session (open), the counter (enabled, commission account), the currencies,
   the identification rules (recomputed server side), the drawer of the currency
   handed back in every currency (closing control amount of the open session), and
-  that the amount handed back is the one quoted to the cashier (`amount_out`). The
+  that the amount handed back is the one quoted to the cashier (`amount_out`). That
+  last refusal is `NmQuoteChangedError` (a `UserError`) whose `context` carries
+  `nm_exchange_error: 'nm_exchange_quote_changed'`, the amount sent and the amount
+  quoted; the popup reads it from `error.data.context` (not from the translated
+  message), requests a new quote of the same inputs at once and shows a warning,
+  and the cashier confirms again (never automatically). The
   cashier is the user, or the employee logged in with `pos_hr` (checked against the
   employees of the point of sale). A second call with the same `uuid` returns the
   operation already recorded (lost connection), after `_nm_check_same_operation`:
@@ -58,14 +63,19 @@ drawer revaluation, counts per cashier).
   for the quote of the amounts shown, and prints the receipt through the ticket
   printer. A `ConnectionLostError` is shown as a translated message (the server
   message `error.data.message` only for server errors); a quote lost with the
-  connection is requested again 5 s later while the inputs do not change. The receipt templates are QWeb views added to the templates the POS
+  connection is requested again 5 s later while the inputs do not change. The
+  receipt templates are QWeb views added to the templates the POS
   loads (`ir.ui.view._get_xml_ids_to_load`); the receipt body is shared with the
   PDF report of the operation.
 
 ## Settings
 
 - Per currency, on `pos.nm.currency.setting`: Exchange Sell Margin (%), commission
-  in percent, fixed commission, minimum commission, logged in the chatter.
+  in percent, fixed commission, minimum commission, logged in the chatter. A setting
+  created without a sell margin starts from `nm_default_sell_margin(margin_percent)`
+  (m when positive, -m / (1 + m/100) when negative: the same sell rate), the helper
+  of the pre-migration; an onchange follows the Cash Rate Margin until the record is
+  saved, a saved setting is never changed.
 - On the point of sale: counter enabled, commission income account (income types
   only), exchange licence number, customer required above, customer required for
   every operation, identity document required above, linked operations period
@@ -77,7 +87,10 @@ drawer revaluation, counts per cashier).
   done operations of the same customer over the last N x 24 h at every point of
   sale of the company (`_nm_linked_value`).
 - Above the document threshold: customer and valid (not expired) identity document
-  required. The document is frozen on the operation with the customer name. The
+  required: type, number and expiry date, or *No expiry date*
+  (`nm_id_document_no_expiry` / `id_document_no_expiry`) for a document without one.
+  The expiry date and the box are a pair: one sent clears the other, the pair of the
+  contact is kept only when neither is sent for the same document. The document is frozen on the operation with the customer name. The
   receipt prints the document type and the last 4 characters of its number.
 - The register sends the document typed (`_nm_document_values`): the fields left
   empty keep the values of the contact when the document is the same (same type,
@@ -126,7 +139,11 @@ drawer revaluation, counts per cashier).
   identity documents (Excel through Export) and PDF per period
   (`pos.nm.exchange.register.wizard`, A4 landscape, totals per currency).
 - Rate board (`pos.config._nm_rate_board`): register popup, receipt printer and
-  PDF report on `pos.config`.
+  PDF report on `pos.config`. The typical amount (`_nm_board_amount`) is the power of
+  10 nearest to 100 units of the currency of the point of sale, rounded to the
+  nearest common multiple of its payment step (`_nm_payment_step`) and change step
+  (`pos.nm.exchange._nm_change_step`), at least one step: the board row is exactly
+  what an operation of that amount records.
 
 ## Security model
 

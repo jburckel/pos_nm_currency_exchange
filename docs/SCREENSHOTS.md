@@ -36,7 +36,10 @@ is under `tools/screenshots/`.
      container; the currency setting form is its `.o_form_sheet`; the cancelled
      operation is its `.o_form_renderer` (form and chatter); the report blocks are the
      `#nm_exchange` element of the Sales Details report and the `.page` of the Exchange
-     Register report of the month (`/report/html/...?options=` with the dates);
+     Register report of the month (`/report/html/...?options=` with the dates) and
+     the `.page` of the Exchange Rates report of the point of sale
+     (`/report/html/pos_nm_currency_exchange.report_exchange_rates/<config_id>`,
+     1200 px wide, with a white padding added around the page);
    - register: `/pos/ui/<config_id>?from_backend=True`, `printWithFallback` of the
      ticket printer replaced to keep the receipt frame, burger menu > Currency
      Exchange, USD to EUR, 100 typed, popup captured as `.modal-content`, Confirm,
@@ -49,7 +52,8 @@ is under `tools/screenshots/`.
    `static/description/screenshot_exchange_<subject>.png`: the popups and the receipt
    are placed on a neutral background of the ratio of their row (the two images of a
    row must share their ratio, or the headings under them are not aligned), the list,
-   the pivot and the cancelled operation keep only the top of the screen. Never run it
+   the pivot and the cancelled operation keep only the top of the screen, the rate
+   board in PDF is framed alone at full width. Never run it
    on `static/description` itself. The files are referenced in `index.html` and in the
    `images` key of the manifest, after `banner.png`.
 
@@ -81,6 +85,7 @@ columns), frames drawn with inline styles, and images at `width: 100%`.
 | `screenshot_exchange_receipt.png` | Exchange receipt | register, receipt frame after Confirm |
 | `screenshot_exchange_closing.png` | Closing register with the operations in the moves of each currency | register, burger menu > Close Register |
 | `screenshot_exchange_rates.png` | Rate board of the counter (We buy, You receive, We sell, You pay, Commission) | register, burger menu > Exchange Rates |
+| `screenshot_exchange_rates_pdf.png` | Rate board in PDF (*Exchange Rates* report of the point of sale) | `/report/html/pos_nm_currency_exchange.report_exchange_rates/<config_id>`, `.page` |
 | `screenshot_exchange_document.png` | Exchange popup asking the identity document (300 EUR to USD, linked operations of Olivia Bennett) | register, burger menu > Currency Exchange, customer selected |
 | `screenshot_exchange_cancelled.png` | Cancelled operation: status, warning, cancellation in the chatter | `/odoo/action-pos_nm_currency_exchange.action_pos_nm_exchange/<cancelled_id>` |
 | `screenshot_exchange_register.png` | Exchange Register of the month with the identity document and the totals per currency | `/report/html/pos_nm_currency_exchange.report_exchange_register?options=...`, `.page` |

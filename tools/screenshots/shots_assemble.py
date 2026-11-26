@@ -42,6 +42,8 @@ LAYOUT = {
     "screenshot_exchange_list.png": {"crop": 450},
     "screenshot_exchange_pivot.png": {"crop": 400},
     "screenshot_exchange_cancelled.png": {"crop": 620},
+    # Rate board in PDF, full width.
+    "screenshot_exchange_rates_pdf.png": {"ratio": 2.6},
 }
 
 

@@ -100,6 +100,15 @@ with sync_playwright() as p:
     page.wait_for_selector(".page h2", timeout=30000)
     time.sleep(2)
     shot(page, "exchange_register", locator=page.locator(".page").last)
+    # Rate board of the point of sale in PDF (Exchange Rates report), 1200 px wide:
+    # one line per currency; a white margin is added around the page.
+    page.set_viewport_size({"width": 1200, "height": 900})
+    page.goto(BASE + f"/report/html/pos_nm_currency_exchange.report_exchange_rates/{config_id}")
+    page.wait_for_selector(".page .nm-exchange-rate-board", timeout=30000)
+    page.evaluate("document.querySelector('.page').style.padding = '28px 32px'")
+    time.sleep(2)
+    shot(page, "exchange_rates_pdf", locator=page.locator(".page").last)
+    page.set_viewport_size({"width": 1440, "height": 900})
     # Sales details report: the exchange block
     page.goto(BASE + f"/report/html/point_of_sale.report_saledetails/{session_id}")
     page.wait_for_selector("body", timeout=30000)

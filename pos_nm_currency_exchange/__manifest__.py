@@ -87,6 +87,7 @@ Requirements
         "static/description/screenshot_exchange_closing.png",
         "static/description/screenshot_exchange_document.png",
         "static/description/screenshot_exchange_rates.png",
+        "static/description/screenshot_exchange_rates_pdf.png",
         "static/description/screenshot_exchange_cancelled.png",
         "static/description/screenshot_exchange_commissions.png",
         "static/description/screenshot_exchange_list.png",

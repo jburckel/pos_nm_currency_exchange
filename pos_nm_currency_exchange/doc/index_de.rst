@@ -351,7 +351,8 @@ Ausweisdokumente nicht gegen ein Register.
 * Über **Ausweisdokument erforderlich ab** erfordert er einen Kunden und
   ein gültiges Ausweisdokument: Art (Reisepass, Personalausweis,
   Führerschein, Aufenthaltstitel, Andere), Nummer, Ausstellungsland,
-  Ablaufdatum, Staatsangehörigkeit und Geburtsdatum. Ein abgelaufenes
+  Ablaufdatum (oder **Kein Ablaufdatum** bei einem Dokument ohne
+  Ablaufdatum), Staatsangehörigkeit und Geburtsdatum. Ein abgelaufenes
   Dokument wird abgelehnt.
 
 Der Server prüft diese Regeln beim Erfassen erneut. Das an der Kasse

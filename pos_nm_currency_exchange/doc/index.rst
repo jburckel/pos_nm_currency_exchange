@@ -191,8 +191,7 @@ From any screen of the register, open the menu (top right) and press
    number field only shows the last 4 characters of the recorded number
    as a hint. Type, number and expiry date are mandatory; for a document
    without expiry date (an older identity card), tick **No expiry date**
-   instead. **Nationality**
-   and **Date of birth** are shown empty: left empty, they keep the values
+   instead. **Nationality** and **Date of birth** are shown empty: left empty, they keep the values
    of the contact. For the same document (same type, number left empty)
    the number and the other fields left empty keep the values of the
    contact too; for another document, type its number;
@@ -332,8 +331,9 @@ documents against any register.
 * Above **Customer required above**, the operation needs a customer.
 * Above **Identity document required above**, it needs a customer and a
   valid identity document: type (Passport, Identity Card, Driving Licence,
-  Residence Permit, Other), number, issuing country, expiry date,
-  nationality and date of birth. An expired document is refused.
+  Residence Permit, Other), number, issuing country, expiry date (or
+  **No expiry date** for a document without one), nationality and date of
+  birth. An expired document is refused.
 
 The server checks these rules again when the operation is recorded. The
 document typed at the register, when it differs from the one recorded,
@@ -553,8 +553,9 @@ The identity document is refused
 --------------------------------
 
 Type, number and expiry date are mandatory (or **No expiry date** ticked
-for a document that has none), and the document must not be expired. The threshold may be reached with the linked operations of the
-customer: the popup shows their total.
+for a document that has none), and the document must not be expired. The
+threshold may be reached with the linked operations of the customer: the
+popup shows their total.
 
 Delete is missing on the operations
 -----------------------------------

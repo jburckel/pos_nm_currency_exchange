@@ -351,7 +351,8 @@ documentos de identidad en ningún registro.
   requiere un cliente y un documento de identidad válido: tipo
   (Pasaporte, Documento nacional de identidad, Permiso de conducir,
   Permiso de residencia, Otro), número, país de expedición, fecha de
-  caducidad, nacionalidad y fecha de nacimiento. Un documento caducado se
+  caducidad (o **Sin fecha de caducidad** para un documento que no la
+  tiene), nacionalidad y fecha de nacimiento. Un documento caducado se
   rechaza.
 
 El servidor vuelve a comprobar estas reglas al registrar la operación. El
