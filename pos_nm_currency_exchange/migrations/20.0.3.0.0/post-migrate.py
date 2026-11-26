@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""20.0.3.0.0: licence frozen on the operations, hash chain of the register.
+"""20.0.3.0.0: license frozen on the operations, hash chain of the register.
 
 Idempotent: an operation already hashed is left as it is, the chain goes on
 from the last hash of its company."""

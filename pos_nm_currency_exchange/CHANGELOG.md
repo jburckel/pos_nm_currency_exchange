@@ -10,13 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Version 20.0.3.0.0 in progress: the exchange office vertical (see
 [`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)). Lots 1
 to 5 are done. Upgrade with
-`-u pos_nm_currency_exchange`: the migration freezes the licence on the
+`-u pos_nm_currency_exchange`: the migration freezes the license on the
 existing operations and chains them into the register hash, in order.
 
 ### Added
-- **Exchange Offices** (*Point of Sale -> Configuration*): the counters
+- **Exchange Offices** (*Point of Sale → Configuration*): the counters
   (points of sale) of one licensed place of business. The office carries
-  the licence, the address, the compliance officer and the identification
+  the license, the address, the compliance officer and the identification
   rules, which replace those of its counters. *Apply Rates to the
   Counters* copies the cash rate, the roundings of the coins and notes,
   the sell margin and the commissions of every currency of the reference
@@ -41,7 +41,7 @@ existing operations and chains them into the register hash, in order.
   last reference and hash frozen, PDF attached. An operation of a closed
   period cannot be cancelled; periods cannot overlap; closings are
   gapless (`EXR/YYYY/NNNN`) and cannot be changed or deleted.
-- The PDF register gains the office, its address and licence, the
+- The PDF register gains the office, its address and license, the
   customer address, nationality and date of birth, the declarations, the
   compliance status and the hash of each operation.
 - **Rate board for the customers**: a full-screen page per counter
@@ -61,14 +61,14 @@ existing operations and chains them into the register hash, in order.
   amount the coins and notes cannot make up is shown as an error.
 - **Note moves**: every operation records the coins and notes received and
   handed back by denomination, its cancellation the opposite ones; never
-  edited nor deleted (*Point of Sale -> Reporting -> Note Moves*, and a
+  edited nor deleted (*Point of Sale → Reporting → Note Moves*, and a
   button on the operation). The exchange receipt lists the notes under the
   amounts.
-- **Note Stock** report (*Point of Sale -> Reporting*): per session,
+- **Note Stock** report (*Point of Sale → Reporting*): per session,
   currency and denomination, the opening count, the notes received and
   handed back, the stock, the closing count and the difference. The
   closing popup gets the expected quantity of each coin and note.
-- **Note Transfers** (*Point of Sale -> Orders*): notes moved from the
+- **Note Transfers** (*Point of Sale → Orders*): notes moved from the
   drawer of one counter of an office to another counter of the same
   office. *Send* posts a cash out on the open session of the sending
   counter and *Receive* a cash in of the same value on the open session of
@@ -90,6 +90,10 @@ existing operations and chains them into the register hash, in order.
   counter with an open session, operations of the day and their
   commissions, notes in transit per currency and their total value;
   *Transfers* smart button.
+
+### Changed
+- English texts use the US spelling *license* and *Email*, as the texts of
+  20.0.2.0.0 already do, extended to the exchange office features.
 
 ## [20.0.2.0.0] - 2026-11-25
 

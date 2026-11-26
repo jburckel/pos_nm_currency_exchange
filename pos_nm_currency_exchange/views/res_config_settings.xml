@@ -25,7 +25,7 @@
                                 <field name="pos_nm_exchange_office_id" class="col-lg-6"/>
                             </div>
                             <div class="text-muted mt8" invisible="not pos_nm_exchange_office_id">
-                                The licence and the identification thresholds of the office apply to this counter.
+                                The license and the identification thresholds of the office apply to this counter.
                             </div>
                             <div invisible="pos_nm_exchange_office_id">
                                 <div class="row mt8">

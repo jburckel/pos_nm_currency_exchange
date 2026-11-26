@@ -40,13 +40,19 @@ Features
   side, with the commission on a dedicated income account: the operations
   appear in the closing control, the Currency Position report and the Sales
   Details report
-* Exchange offices: several counters sharing a licence, identification
+* Exchange offices: several counters sharing a license, identification
   rules and the same rates, applied from a reference counter
 * Compliance: origin of funds and review thresholds, politically exposed
   person, review by the compliance officer; inalterable register (hash
   chain, integrity check) and closings of the register per period
 * Rate board on a screen facing the customers (TV, tablet or the customer
   display of Odoo), refreshed by itself
+* Notes tracked by denomination: notes received and handed back counted
+  per coin and note, note moves, Note Stock report and expected quantities
+  in the closing popup
+* Note transfers between the counters of an office, through a notes in
+  transit account, with gapless references and a transfer slip; drawers of
+  every counter on the office
 * Operations listed per point of sale, session and cashier, with a pivot of
   the commissions and rate margins; exchange register exported to Excel or
   printed in PDF for a period

@@ -11,14 +11,14 @@ edited or deleted, the server recomputes every check.
 ## Lot 1 - Exchange office and its counters
 
 - New model `pos.nm.exchange.office` (*Exchange Office*): name, company,
-  address (`partner_id`), licence number, compliance officer (`user_id`),
+  address (`partner_id`), license number, compliance officer (`user_id`),
   counters (`pos.config.nm_exchange_office_id`), active.
-- The office carries the **rules** shared by its counters: licence, the
+- The office carries the **rules** shared by its counters: license, the
   identification thresholds (customer, document, origin of funds, review),
   customer always required, linked operations period. A counter outside any
   office keeps its own fields (no change for current users).
   `pos.config._nm_rules()` returns the effective rules: every check
-  (`_nm_identification`, `get_customer_document`, receipt licence, rate
+  (`_nm_identification`, `get_customer_document`, receipt license, rate
   board) reads it instead of the fields of the point of sale.
 - The counters of an office share the currency of the office (constraint):
   the thresholds are in that currency.
@@ -41,7 +41,7 @@ edited or deleted, the server recomputes every check.
 - Customer declarations frozen on the operation: politically exposed person
   (declared by the customer), purpose of the operation (travel, business,
   other), address of the customer (copied from the contact).
-- Compliance fields editable by POS managers only, logged in the chatter:
+- Compliance fields editable by POS Administrators only, logged in the chatter:
   `compliance_state` (none / to review / reviewed / reported), compliance
   note. `write` keeps refusing every other field.
 - **Inalterability**: every operation gets a hash at creation (SHA-256 of
@@ -51,11 +51,11 @@ edited or deleted, the server recomputes every check.
   and reports the first operation that does not match, like the
   inalterability check of accounting.
 - **Register closings** (`pos.nm.exchange.register.closing`): the register
-  of a period, office or company, is closed by a manager: counts, totals per
+  of a period, office or company, is closed by a POS Administrator: counts, totals per
   currency, last reference and last hash are frozen, the PDF register is
   generated and attached. A period cannot be closed twice; the closings are
   gapless too.
-- The PDF register gains the office, its address and licence, the new
+- The PDF register gains the office, its address and license, the new
   customer fields, the compliance flags and the hash of the last operation.
 
 ## Lot 3 - Rate board on the customer screen
@@ -64,7 +64,7 @@ edited or deleted, the server recomputes every check.
   access token of the point of sale, the one of the customer display; an
   office has its own token and page `/pos_nm_exchange/office_board/<id>`):
   full screen, large type, rows of `pos.config._nm_rate_board()` (we buy /
-  we sell per unit and for the typical amount, commission rule), licence,
+  we sell per unit and for the typical amount, commission rule), license,
   date and time. Refreshed by a JSON route every N seconds (setting, default
   60 s), without reloading; the last rates stay on screen while the network
   is lost, with a discreet marker.

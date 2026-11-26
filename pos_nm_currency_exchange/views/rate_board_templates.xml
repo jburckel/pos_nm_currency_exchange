@@ -21,7 +21,7 @@
                     </div>
                     <div class="nm-board-clock">
                         <div class="nm-board-time" id="nm-board-time"/>
-                        <div class="nm-board-licence" t-if="board['licence']">Licence <span t-out="board['licence']"/></div>
+                        <div class="nm-board-licence" t-if="board['licence']">License <span t-out="board['licence']"/></div>
                     </div>
                 </header>
                 <table class="nm-board-table">

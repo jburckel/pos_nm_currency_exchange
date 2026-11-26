@@ -57,13 +57,19 @@ msgid ""
 "  side, with the commission on a dedicated income account: the operations\n"
 "  appear in the closing control, the Currency Position report and the Sales\n"
 "  Details report\n"
-"* Exchange offices: several counters sharing a licence, identification\n"
+"* Exchange offices: several counters sharing a license, identification\n"
 "  rules and the same rates, applied from a reference counter\n"
 "* Compliance: origin of funds and review thresholds, politically exposed\n"
 "  person, review by the compliance officer; inalterable register (hash\n"
 "  chain, integrity check) and closings of the register per period\n"
 "* Rate board on a screen facing the customers (TV, tablet or the customer\n"
 "  display of Odoo), refreshed by itself\n"
+"* Notes tracked by denomination: notes received and handed back counted\n"
+"  per coin and note, note moves, Note Stock report and expected quantities\n"
+"  in the closing popup\n"
+"* Note transfers between the counters of an office, through a notes in\n"
+"  transit account, with gapless references and a transfer slip; drawers of\n"
+"  every counter on the office\n"
 "* Operations listed per point of sale, session and cashier, with a pivot of\n"
 "  the commissions and rate margins; exchange register exported to Excel or\n"
 "  printed in PDF for a period\n"
@@ -115,13 +121,19 @@ msgstr ""
 "  side, with the commission on a dedicated income account: the operations\n"
 "  appear in the closing control, the Currency Position report and the Sales\n"
 "  Details report\n"
-"* Exchange offices: several counters sharing a licence, identification\n"
+"* Exchange offices: several counters sharing a license, identification\n"
 "  rules and the same rates, applied from a reference counter\n"
 "* Compliance: origin of funds and review thresholds, politically exposed\n"
 "  person, review by the compliance officer; inalterable register (hash\n"
 "  chain, integrity check) and closings of the register per period\n"
 "* Rate board on a screen facing the customers (TV, tablet or the customer\n"
 "  display of Odoo), refreshed by itself\n"
+"* Notes tracked by denomination: notes received and handed back counted\n"
+"  per coin and note, note moves, Note Stock report and expected quantities\n"
+"  in the closing popup\n"
+"* Note transfers between the counters of an office, through a notes in\n"
+"  transit account, with gapless references and a transfer slip; drawers of\n"
+"  every counter on the office\n"
 "* Operations listed per point of sale, session and cashier, with a pivot of\n"
 "  the commissions and rate margins; exchange register exported to Excel or\n"
 "  printed in PDF for a period\n"
@@ -380,8 +392,8 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
-msgid "<br/>Licence"
-msgstr "<br/>Licence"
+msgid "<br/>License"
+msgstr "<br/>License"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
@@ -628,10 +640,10 @@ msgstr "Amounts"
 #: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange_office
 msgid ""
 "An exchange office groups the counters (points of sale) of one licensed place of business: they share\n"
-"                its licence, its identification thresholds, its rates and its rate board."
+"                its license, its identification thresholds, its rates and its rate board."
 msgstr ""
 "An exchange office groups the counters (points of sale) of one licensed place of business: they share\n"
-"                its licence, its identification thresholds, its rates and its rate board."
+"                its license, its identification thresholds, its rates and its rate board."
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -1713,9 +1725,9 @@ msgstr "Exchange license number"
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__licence
 msgid ""
-"Exchange licence number of the counter when the operation was recorded."
+"Exchange license number of the counter when the operation was recorded."
 msgstr ""
-"Exchange licence number of the counter when the operation was recorded."
+"Exchange license number of the counter when the operation was recorded."
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
@@ -2113,8 +2125,8 @@ msgstr "Last Updated on"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__licence
-msgid "Licence"
-msgstr "Licence"
+msgid "License"
+msgstr "License"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
@@ -2126,19 +2138,19 @@ msgstr "License No."
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_licence
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_licence
 msgid ""
-"License or registration number of the currency exchange activity, printed "
-"on the exchange receipts and the rate board when set."
+"License or registration number of the currency exchange activity, printed on"
+" the exchange receipts and the rate board when set."
 msgstr ""
-"License or registration number of the currency exchange activity, printed "
-"on the exchange receipts and the rate board when set."
+"License or registration number of the currency exchange activity, printed on"
+" the exchange receipts and the rate board when set."
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange_office__licence
 msgid ""
-"Licence or registration number of the office, printed on the receipts, the "
+"License or registration number of the office, printed on the receipts, the "
 "rate board and the exchange register of its counters."
 msgstr ""
-"Licence or registration number of the office, printed on the receipts, the "
+"License or registration number of the office, printed on the receipts, the "
 "rate board and the exchange register of its counters."
 
 #. module: pos_nm_currency_exchange
@@ -2636,11 +2648,11 @@ msgstr "Office of the counter when the operation was recorded."
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_office_id
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_office_id
 msgid ""
-"Office of this counter: its licence and its identification and review rules "
+"Office of this counter: its license and its identification and review rules "
 "replace those of the point of sale, and it can apply the rates of its "
 "reference counter to this one."
 msgstr ""
-"Office of this counter: its licence and its identification and review rules "
+"Office of this counter: its license and its identification and review rules "
 "replace those of the point of sale, and it can apply the rates of its "
 "reference counter to this one."
 
@@ -3995,10 +4007,10 @@ msgstr "The identity document shown has no expiry date."
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
 msgid ""
-"The licence and the identification thresholds of the office apply to this "
+"The license and the identification thresholds of the office apply to this "
 "counter."
 msgstr ""
-"The licence and the identification thresholds of the office apply to this "
+"The license and the identification thresholds of the office apply to this "
 "counter."
 
 #. module: pos_nm_currency_exchange

@@ -78,7 +78,7 @@ class PosConfig(models.Model):
         string='Exchange Office',
         check_company=True,
         index='btree_not_null',
-        help='Office of this counter: its licence and its identification and review rules replace those '
+        help='Office of this counter: its license and its identification and review rules replace those '
              'of the point of sale, and it can apply the rates of its reference counter to this one.',
     )
     nm_exchange_board_on_display = fields.Boolean(
@@ -111,7 +111,7 @@ class PosConfig(models.Model):
 
     def _nm_rules(self):
         """Rules of the counter: those of its exchange office, else those
-        of the point of sale (licence, thresholds, linked operations
+        of the point of sale (license, thresholds, linked operations
         period). Keys of RULE_FIELDS."""
         self.ensure_one()
         office = self.nm_exchange_office_id

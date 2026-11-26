@@ -121,7 +121,7 @@
                         <t t-if="office_name">
                             <strong t-out="office_name"/>
                             <t t-if="office_address"> - <span t-out="office_address"/></t>
-                            <t t-if="office_licence"><br/>Licence <span t-out="office_licence"/></t>
+                            <t t-if="office_licence"><br/>License <span t-out="office_licence"/></t>
                             <br/>
                         </t>
                         <span t-out="date_start"/> - <span t-out="date_stop"/><br/>

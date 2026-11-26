@@ -66,7 +66,7 @@ class TestExchangeOffice(ExchangeCase):
         self.assertEqual(receipt['licence'], 'LIC-OFFICE')
         self.assertEqual(exchange.office_id, self.office)
         self.assertEqual(exchange.licence, 'LIC-OFFICE')
-        # The licence is frozen on the operation.
+        # The license is frozen on the operation.
         self.office.licence = 'LIC-NEW'
         self.assertEqual(Exchange.get_receipt(exchange.id)['licence'], 'LIC-OFFICE')
 

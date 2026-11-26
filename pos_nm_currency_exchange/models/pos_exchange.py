@@ -226,8 +226,8 @@ class PosNmExchange(models.Model):
     office_id = fields.Many2one(
         'pos.nm.exchange.office', string='Exchange Office', readonly=True, index=True, check_company=True,
         help='Office of the counter when the operation was recorded.')
-    licence = fields.Char(string='Licence', readonly=True,
-                          help='Exchange licence number of the counter when the operation was recorded.')
+    licence = fields.Char(string='License', readonly=True,
+                          help='Exchange license number of the counter when the operation was recorded.')
     # Declarations of the customer, frozen with the operation.
     customer_address = fields.Char(
         string='Customer Address', readonly=True, groups='point_of_sale.group_pos_manager',

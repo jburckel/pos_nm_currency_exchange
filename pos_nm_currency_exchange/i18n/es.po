@@ -57,13 +57,19 @@ msgid ""
 "  side, with the commission on a dedicated income account: the operations\n"
 "  appear in the closing control, the Currency Position report and the Sales\n"
 "  Details report\n"
-"* Exchange offices: several counters sharing a licence, identification\n"
+"* Exchange offices: several counters sharing a license, identification\n"
 "  rules and the same rates, applied from a reference counter\n"
 "* Compliance: origin of funds and review thresholds, politically exposed\n"
 "  person, review by the compliance officer; inalterable register (hash\n"
 "  chain, integrity check) and closings of the register per period\n"
 "* Rate board on a screen facing the customers (TV, tablet or the customer\n"
 "  display of Odoo), refreshed by itself\n"
+"* Notes tracked by denomination: notes received and handed back counted\n"
+"  per coin and note, note moves, Note Stock report and expected quantities\n"
+"  in the closing popup\n"
+"* Note transfers between the counters of an office, through a notes in\n"
+"  transit account, with gapless references and a transfer slip; drawers of\n"
+"  every counter on the office\n"
 "* Operations listed per point of sale, session and cashier, with a pivot of\n"
 "  the commissions and rate margins; exchange register exported to Excel or\n"
 "  printed in PDF for a period\n"
@@ -126,6 +132,12 @@ msgstr ""
 "  registro por periodo\n"
 "* Tabla de tipos en una pantalla orientada a los clientes (televisor, tableta o\n"
 "  la pantalla del cliente de Odoo), actualizada por sí sola\n"
+"* Billetes seguidos por denominación: billetes recibidos y entregados contados\n"
+"  por moneda y billete, movimientos de billetes, informe Existencias de billetes\n"
+"  y cantidades esperadas en la ventana de cierre\n"
+"* Traspasos de billetes entre las ventanillas de una casa de cambio, a través de\n"
+"  una cuenta de fondos en tránsito, con referencias sin huecos y un comprobante\n"
+"  de traspaso; cajones de todas las ventanillas en la casa de cambio\n"
 "* Operaciones listadas por punto de venta, sesión y cajero, con una tabla\n"
 "  dinámica de las comisiones y márgenes de tipo; registro de cambios\n"
 "  exportado a Excel o impreso en PDF para un periodo\n"
@@ -387,7 +399,7 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
-msgid "<br/>Licence"
+msgid "<br/>License"
 msgstr "<br/>Licencia"
 
 #. module: pos_nm_currency_exchange
@@ -641,7 +653,7 @@ msgstr "Importes"
 #: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange_office
 msgid ""
 "An exchange office groups the counters (points of sale) of one licensed place of business: they share\n"
-"                its licence, its identification thresholds, its rates and its rate board."
+"                its license, its identification thresholds, its rates and its rate board."
 msgstr ""
 "Una casa de cambio agrupa las ventanillas (puntos de venta) de un establecimiento autorizado: comparten\n"
 "                su licencia, sus umbrales de identificación, sus tipos y su tabla de tipos."
@@ -1731,7 +1743,7 @@ msgstr "Número de licencia de cambio"
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__licence
 msgid ""
-"Exchange licence number of the counter when the operation was recorded."
+"Exchange license number of the counter when the operation was recorded."
 msgstr ""
 "Número de licencia de cambio de la ventanilla cuando se registró la "
 "operación."
@@ -2134,7 +2146,7 @@ msgstr "Última actualización el"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__licence
-msgid "Licence"
+msgid "License"
 msgstr "Licencia"
 
 #. module: pos_nm_currency_exchange
@@ -2147,8 +2159,8 @@ msgstr "Licencia n.º"
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_licence
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_licence
 msgid ""
-"License or registration number of the currency exchange activity, printed "
-"on the exchange receipts and the rate board when set."
+"License or registration number of the currency exchange activity, printed on"
+" the exchange receipts and the rate board when set."
 msgstr ""
 "Número de licencia o de registro de la actividad de cambio, impreso en los "
 "recibos de cambio y la tabla de tipos cuando se indica."
@@ -2156,7 +2168,7 @@ msgstr ""
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange_office__licence
 msgid ""
-"Licence or registration number of the office, printed on the receipts, the "
+"License or registration number of the office, printed on the receipts, the "
 "rate board and the exchange register of its counters."
 msgstr ""
 "Número de licencia o de registro de la casa de cambio, impreso en los "
@@ -2658,7 +2670,7 @@ msgstr "Casa de cambio de la ventanilla cuando se registró la operación."
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_office_id
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_office_id
 msgid ""
-"Office of this counter: its licence and its identification and review rules "
+"Office of this counter: its license and its identification and review rules "
 "replace those of the point of sale, and it can apply the rates of its "
 "reference counter to this one."
 msgstr ""
@@ -4041,7 +4053,7 @@ msgstr "El documento de identidad presentado no tiene fecha de caducidad."
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
 msgid ""
-"The licence and the identification thresholds of the office apply to this "
+"The license and the identification thresholds of the office apply to this "
 "counter."
 msgstr ""
 "La licencia y los umbrales de identificación de la casa de cambio se aplican"

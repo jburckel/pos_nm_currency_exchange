@@ -13,7 +13,7 @@ def migrate(cr, version):
     - The operations record the user who made them: the creator.
     - POS Multi-Currency Cash must be 20.0.2.1.0 or later.
     - The exchange sell margin of a currency starts at its cash rate margin:
-      the counter now sells the notes at the rate of Odoo less this margin
+      the counter now sells the notes at the rate of Odoo divided by 1 + this margin
       instead of plus the margin. A negative cash rate margin m handed back
       fewer notes than the rate of Odoo: the sell margin -m / (1 + m / 100)
       keeps that sell rate (2.04 % for -2 %). Same helper as the currencies
