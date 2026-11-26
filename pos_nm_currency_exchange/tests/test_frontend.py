@@ -92,8 +92,10 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
 
     def test_pos_currency_exchange_document_tour(self):
         """Identity document required above 20: the expired document of the
-        customer is refused in the popup, the corrected one is saved on the
-        customer and frozen on the operation."""
+        customer is refused in the popup, "No expiry date" hides the expiry
+        date, the corrected one is saved on the customer and frozen on the
+        operation. The first Confirm sends a stale quote: refused, a fresh
+        quote is shown and confirmed by the cashier, once."""
         foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
         commission_account = self.env['account.account'].create({
             'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})

@@ -251,9 +251,9 @@ Die Kasse lehnt einen Vorgang mit einer Meldung ab, wenn:
 * der Kunde oder ein gültiges Ausweisdokument erforderlich ist und fehlt,
   oder das Dokument abgelaufen ist;
 * sich das Angebot zwischen Fenster und Server geändert hat (Kurs, Marge
-  oder Provision inzwischen geändert): „Das Angebot hat sich geändert:
-  ...“. Geben Sie den Betrag erneut ein, um das neue Angebot zu erhalten,
-  und bestätigen Sie dann;
+  oder Provision inzwischen geändert): Es wird nichts gebucht, das Fenster
+  zeigt sofort das neue Angebot mit einem Hinweis; prüfen Sie es mit dem
+  Kunden und bestätigen Sie dann erneut;
 * die Sitzung nicht geöffnet oder der Schalter deaktiviert ist.
 
 Einen Beleg nachdrucken
@@ -559,8 +559,10 @@ Vorgang nicht.
 -------------------------------
 
 Ein Kurs, eine Marge oder eine Provision hat sich nach dem Angebot
-geändert. Geben Sie den Betrag erneut ein: Das Fenster berechnet den neuen
-Betrag; bestätigen Sie dann.
+geändert: Es wurde nichts gebucht. Das Fenster fordert sofort das neue
+Angebot an und zeigt es mit einem Hinweis; prüfen Sie den neuen Betrag mit
+dem Kunden und drücken Sie dann erneut **Bestätigen**. Der Vorgang wird nie
+von selbst bestätigt.
 
 Die Verbindung brach beim Bestätigen ab
 ---------------------------------------

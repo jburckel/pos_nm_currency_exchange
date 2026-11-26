@@ -63,6 +63,9 @@
                     Amount to receive computed from the amount handed back.
                 </div>
                 <div t-if="this.coinStepWarning" class="alert alert-warning py-2 mb-0 nm-exchange-step-warning" role="alert" t-out="this.coinStepWarning"/>
+                <div t-if="this.state.quoteChanged" class="alert alert-warning py-2 mb-0 nm-exchange-quote-changed" role="alert">
+                    The rate or the amount changed since the quote was shown: the new quote is shown above. Check it with the customer before confirming again.
+                </div>
                 <div t-if="this.errorMessage" class="alert alert-danger py-2 mb-0 nm-exchange-error" role="alert" t-out="this.errorMessage"/>
                 <div t-if="this.state.pending" class="alert alert-warning py-2 mb-0 nm-exchange-retry" role="alert">
                     The connection was lost: the operation may have been recorded. Confirm again once the connection is back: an operation already recorded is not recorded twice.

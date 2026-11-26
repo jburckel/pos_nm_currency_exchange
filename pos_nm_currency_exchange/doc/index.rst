@@ -238,8 +238,9 @@ The register refuses an operation, with a message, when:
 * the customer, or a valid identity document, is required and missing, or
   the document has expired;
 * the quote changed between the popup and the server (rate, margin or
-  commission changed meanwhile): "The quote changed: ...". Type the amount
-  again to get the new quote, then confirm;
+  commission changed meanwhile): nothing is recorded, the popup shows the
+  new quote at once with a warning; check it with the customer, then
+  confirm again;
 * the session is not open, or the counter is disabled.
 
 Reprinting a receipt
@@ -526,8 +527,10 @@ The amount received cannot be made up with the coins of the currency (see
 "The quote changed"
 -------------------
 
-A rate, a margin or a commission changed after the quote. Type the amount
-again: the popup quotes the new amount, then confirm.
+A rate, a margin or a commission changed after the quote: nothing was
+recorded. The popup requests the new quote at once and shows it with a
+warning; check the new amount with the customer, then press **Confirm**
+again. The operation is never confirmed on its own.
 
 The connection was lost while confirming
 ----------------------------------------

@@ -253,9 +253,9 @@ La caisse refuse une opération, avec un message, lorsque :
 * le client, ou une pièce d'identité valide, est requis et manquant, ou la
   pièce a expiré ;
 * la cotation a changé entre la fenêtre et le serveur (taux, marge ou
-  commission modifiés entre-temps) : « La cotation a changé : ... ».
-  Saisissez à nouveau le montant pour obtenir la nouvelle cotation, puis
-  confirmez ;
+  commission modifiés entre-temps) : rien n'est enregistré, la fenêtre
+  affiche aussitôt la nouvelle cotation avec un avertissement ; vérifiez-la
+  avec le client, puis confirmez à nouveau ;
 * la session n'est pas ouverte, ou le guichet est désactivé.
 
 Réimprimer un ticket
@@ -557,9 +557,11 @@ Le montant reçu ne peut pas être composé avec les pièces de la devise
 « La cotation a changé »
 ------------------------
 
-Un taux, une marge ou une commission a changé après la cotation.
-Saisissez à nouveau le montant : la fenêtre calcule le nouveau montant,
-puis confirmez.
+Un taux, une marge ou une commission a changé après la cotation : rien
+n'a été enregistré. La fenêtre demande aussitôt la nouvelle cotation et
+l'affiche avec un avertissement ; vérifiez le nouveau montant avec le
+client, puis appuyez à nouveau sur **Confirmer**. L'opération n'est jamais
+confirmée d'elle-même.
 
 La connexion a été perdue pendant la confirmation
 -------------------------------------------------

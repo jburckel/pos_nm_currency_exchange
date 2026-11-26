@@ -250,9 +250,9 @@ La caja rechaza una operación, con un mensaje, cuando:
 * se requiere el cliente, o un documento de identidad válido, y falta, o
   el documento ha caducado;
 * la cotización cambió entre la ventana y el servidor (tipo, margen o
-  comisión modificados entretanto): «La cotización cambió: ...».
-  Introduzca de nuevo el importe para obtener la nueva cotización y
-  confirme;
+  comisión modificados entretanto): no se registra nada, la ventana
+  muestra de inmediato la nueva cotización con un aviso; compruébela con
+  el cliente y confirme de nuevo;
 * la sesión no está abierta, o la ventanilla está desactivada.
 
 Reimprimir un recibo
@@ -555,9 +555,10 @@ El importe recibido no se puede componer con las monedas de la divisa
 «La cotización cambió»
 ----------------------
 
-Un tipo, un margen o una comisión cambió después de la cotización.
-Introduzca de nuevo el importe: la ventana calcula el nuevo importe;
-después confirme.
+Un tipo, un margen o una comisión cambió después de la cotización: no
+se registró nada. La ventana pide de inmediato la nueva cotización y la
+muestra con un aviso; compruebe el nuevo importe con el cliente y pulse de
+nuevo **Confirmar**. La operación nunca se confirma sola.
 
 La conexión se perdió al confirmar
 ----------------------------------

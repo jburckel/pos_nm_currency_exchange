@@ -97,7 +97,9 @@ cannot record operations.
 - The commission account must be an income account.
 - The "too small" refusal also shows in the quote.
 - An operation is refused when its quote changed between the popup and the
-  server ("The quote changed: ..."): enter the amount again.
+  server (rates, sell margin or commission changed meanwhile): the popup
+  requests the new quote at once and asks the cashier to check it with the
+  customer before confirming again; it is never confirmed on its own.
 - *Sales Details* run for a period lists the operations of that period on
   the selected points of sale, open sessions included; commissions and
   rate margins are totalled per currency.

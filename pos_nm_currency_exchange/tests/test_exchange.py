@@ -8,11 +8,13 @@ from psycopg2 import IntegrityError
 
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.http.dispatcher import serialize_exception
 from odoo.tests import new_test_user, tagged
 from odoo.tools import mute_logger
 from odoo.tools.misc import file_path
 from odoo.addons.point_of_sale.tests.test_pos_accounting import TestPosAccounting
 from odoo.addons.pos_nm_currency_exchange import _nm_check_parent_version
+from odoo.addons.pos_nm_currency_exchange.models.pos_exchange import QUOTE_CHANGED, NmQuoteChangedError
 
 
 @tagged('post_install', '-at_install')
@@ -766,9 +768,19 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(quote['amount_out'], 176.0)
         # The manager lowers the sell margin: 97 x 2 / 1.05 = 184.76 -> 184.
         self.setting.exchange_sell_margin_percent = 5.0
-        with self.assertRaisesRegex(UserError, 'quote changed'):
+        with self.assertRaisesRegex(UserError, 'quote changed') as caught:
             Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, amount_out=quote['amount_out'])
         self.assertFalse(Exchange.search([('session_id', '=', session.id)]))
+        # The register tells this refusal from the others by a code sent
+        # with the error, not by its translated text.
+        self.assertIsInstance(caught.exception, NmQuoteChangedError)
+        data = serialize_exception(caught.exception)
+        self.assertEqual(data['context'], {'nm_exchange_error': QUOTE_CHANGED, 'amount_out': 184.0, 'quoted': 176.0})
+        # The other refusals carry no such code.
+        with self.assertRaises(UserError) as caught:
+            Exchange.create_from_ui(session.id, self.main.id, 0.0, self.fx.id, amount_out=quote['amount_out'])
+        self.assertNotIsInstance(caught.exception, NmQuoteChangedError)
+        self.assertEqual(serialize_exception(caught.exception)['context'], {})
         receipt = Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id, amount_out=184.0)
         self.assertEqual(Exchange.browse(receipt['id']).amount_out, 184.0)
 

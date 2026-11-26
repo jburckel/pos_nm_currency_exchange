@@ -44,6 +44,34 @@ function loseNextConfirmResponse() {
     };
 }
 
+/**
+ * The next create_from_ui sends a quote that is no longer the one of the
+ * server (as when the manager changes a rate meanwhile): the server refuses
+ * it as a changed quote. The quotes requested afterwards are counted.
+ */
+function staleNextConfirmQuote() {
+    return {
+        content: "send a stale quote with the next confirmation",
+        trigger: ".modal .nm-currency-exchange",
+        run: () => {
+            const call = posmodel.data.call.bind(posmodel.data);
+            posmodel.nmTourQuotesAfterRefusal = 0;
+            let refused = false;
+            posmodel.data.call = async (model, method, args = [], kwargs = {}, ...rest) => {
+                if (method === "create_from_ui" && !refused) {
+                    refused = true;
+                    kwargs = { ...kwargs, amount_out: kwargs.amount_out + 1 };
+                } else if (method === "create_from_ui") {
+                    posmodel.data.call = call;
+                } else if (method === "get_quote" && refused) {
+                    posmodel.nmTourQuotesAfterRefusal++;
+                }
+                return call(model, method, args, kwargs, ...rest);
+            };
+        },
+    };
+}
+
 function selectCurrency(side, name) {
     const selector = `.modal .nm-currency-exchange select.nm-exchange-currency-${side}`;
     return {
@@ -432,6 +460,25 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
                 trigger: ".modal .nm-currency-exchange .nm-exchange-confirm[disabled]",
             },
             {
+                content: "tick No expiry date",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-no-expiry",
+                run: "click",
+            },
+            {
+                content: "the expiry date is no longer asked and the document is accepted",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(input.nm-exchange-document-expiry)):not(:has(.nm-exchange-document-error))",
+            },
+            {
+                content: "untick No expiry date",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-document-no-expiry:checked",
+                run: "click",
+            },
+            {
+                content: "the expiry date is required again",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-document-error:contains('expiry date')",
+            },
+            {
                 content: "type a valid expiry date",
                 trigger: ".modal .nm-currency-exchange input.nm-exchange-document-expiry",
                 run: function () {
@@ -443,8 +490,33 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeDocumentTour", {
                 content: "the document is accepted",
                 trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-document-error))",
             },
+            staleNextConfirmQuote(),
             {
-                content: "confirm the operation",
+                content: "confirm the operation with the stale quote",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the popup explains that the quote changed and stays open",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-quote-changed",
+            },
+            {
+                content: "a fresh quote is shown: Confirm is enabled again, without the error of the server",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(.nm-exchange-error)) .nm-exchange-confirm:not([disabled])",
+                run: () => {
+                    if (posmodel.nmTourQuotesAfterRefusal !== 1) {
+                        throw new Error(`Quotes requested after the refusal: ${posmodel.nmTourQuotesAfterRefusal}`);
+                    }
+                },
+            },
+            {
+                content: "nothing is confirmed without the cashier: the popup is still open",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-quote-changed",
+                run: () => new Promise((resolve) => setTimeout(resolve, 500)),
+            },
+            {
+                content: "confirm the operation again",
                 trigger: ".modal .nm-currency-exchange .nm-exchange-confirm:not([disabled])",
                 run: "click",
             },

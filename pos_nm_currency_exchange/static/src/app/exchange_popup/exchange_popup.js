@@ -20,6 +20,9 @@ import {
 const { DateTime } = luxon;
 // Milliseconds before a quote lost with the connection is requested again.
 const QUOTE_RETRY_DELAY = 5000;
+// Code of the refusal of an operation whose quote changed since it was
+// shown (context of the error, see NmQuoteChangedError).
+const QUOTE_CHANGED = "nm_exchange_quote_changed";
 
 /**
  * Currency exchange counter: the customer hands notes in one cash currency
@@ -39,6 +42,11 @@ const QUOTE_RETRY_DELAY = 5000;
  * customer is then loaded, the end of its number only, to be confirmed or
  * updated, and sent with the operation, which keeps a copy of it: the fields
  * left empty keep the values of the customer.
+ *
+ * Quote changed: when the server refuses Confirm because the rates or the
+ * commission changed since the quote was shown, a fresh quote is requested
+ * at once and the cashier is told to check it: it is never confirmed
+ * without a new click on Confirm.
  *
  * Lost connection: a quote is requested again a few seconds later, as long
  * as the inputs do not change. On Confirm, the operation may have been recorded. The inputs are
@@ -86,6 +94,9 @@ export class CurrencyExchangePopup extends Component {
             // again or discarded.
             pending: false,
             saving: false,
+            // Confirm was refused because the quote changed: the new quote
+            // is shown, to be checked before confirming again.
+            quoteChanged: false,
         });
         this.documentTypes = this.pos.config._nm_id_document_types || [];
         this.quoteTimer = null;
@@ -296,13 +307,19 @@ export class CurrencyExchangePopup extends Component {
         this.scheduleQuote();
     }
 
-    scheduleQuote() {
+    /**
+     * Quote of the inputs, requested after ``delay`` milliseconds (the
+     * cashier may still be typing). The notice of a changed quote stays
+     * only for the quote requested because of it (``quoteChanged``).
+     */
+    scheduleQuote({ delay = 300, quoteChanged = false } = {}) {
         clearTimeout(this.quoteTimer);
         // A response to an earlier request is dropped.
         this.quoteSequence++;
         this.state.quote = null;
         this.state.error = "";
         this.state.loading = false;
+        this.state.quoteChanged = quoteChanged;
         if (this.state.reverse) {
             // The request is the amount typed, not the one rounded for
             // other currencies.
@@ -314,7 +331,11 @@ export class CurrencyExchangePopup extends Component {
             return;
         }
         this.state.loading = true;
-        this.quoteTimer = setTimeout(() => this.fetchQuote(), 300);
+        if (delay) {
+            this.quoteTimer = setTimeout(() => this.fetchQuote(), delay);
+        } else {
+            this.fetchQuote();
+        }
     }
     async fetchQuote() {
         const sequence = this.quoteSequence;
@@ -512,6 +533,12 @@ export class CurrencyExchangePopup extends Component {
         } catch (error) {
             if (error instanceof ConnectionLostError) {
                 this.state.pending = true;
+            } else if (error?.data?.context?.nm_exchange_error === QUOTE_CHANGED) {
+                // Nothing was recorded: the quote of the same inputs is
+                // requested again at once, for the cashier to check it with
+                // the customer and confirm again.
+                this.state.pending = false;
+                this.scheduleQuote({ delay: 0, quoteChanged: true });
             } else {
                 // Refused by the server: nothing was recorded with this
                 // identifier, the inputs can be changed again.
