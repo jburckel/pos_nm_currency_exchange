@@ -46,7 +46,8 @@ Prérequis
   plus récent**, inclus dans le prix affiché sur l'Odoo Apps Store (il ne
   vous est pas facturé à nouveau si vous l'avez déjà), avec au moins une
   devise étrangère sur le mode de paiement espèces du point de vente (voir
-  son guide : *Accepter une devise en espèces*). Une version plus ancienne de POS Multi-Currency
+  son guide : *Accepter une devise en espèces*). Une version plus
+  ancienne de POS Multi-Currency
   Cash ne fonctionne pas avec ce module : mettez-la à jour d'abord. Avec
   la 20.0.2.1.1 ou plus récente, l'ouverture du bloc Espèces de la devise
   principale dans la fenêtre de clôture est affichée correctement quand la
