@@ -171,3 +171,56 @@ drawer revaluation, counts per cashier).
   existing message is looked up), telling to correct the drawer with a cash move.
   The scripts are idempotent (empty values filled, rate recomputed from the
   amounts): they can run twice.
+
+## Exchange office (20.0.3.0.0)
+
+- `pos.nm.exchange.office`: company, address, licence, compliance officer,
+  counters (`pos.config.nm_exchange_office_id`, same currency as the
+  company), reference counter, rules (thresholds, customer always, linked
+  period), board token and refresh. `pos.config._nm_rules()` returns the
+  rules of the office, else of the point of sale (`RULE_FIELDS`): every
+  check reads it, never the fields directly.
+- *Apply Rates to the Counters* writes `SYNCED_SETTING_FIELDS` of each
+  setting of the reference counter on the other counters (create when
+  missing and the cash method accepts the currency), so the chatter of the
+  settings logs it (`_NM_LOGGED_FIELDS`).
+
+## Compliance
+
+- `_nm_identification` adds `origin_required` and `review_required`.
+  Origin of funds above its threshold is required like the document
+  (customer, origin, details for Other), checked server side
+  (`_nm_identification_error`). The register sends `declaration`
+  (`funds_origin`, `funds_origin_note`, `purpose`, `pep`), cleaned by
+  `_nm_declaration_values`.
+- Review (threshold or PEP declared): `compliance_state = 'to_review'`,
+  `review_reason`, activity to the compliance officer of the office
+  (`mail.activity.mixin`). Never refused at the counter.
+- `write`: POS managers change `note`, `compliance_state`,
+  `compliance_note` only (`MANAGER_FIELDS`).
+
+## Register hash
+
+- `_nm_hash_register` (after the statement lines, in `create_from_ui`):
+  advisory transaction lock per company (`HASH_LOCK`), previous hash =
+  last hashed operation of the company by id, SHA-256 of
+  `_nm_hash_string` (amounts with the decimals of their currency, rate with
+  12). `cancel_hash` chains the cancellation to the operation hash.
+- A hashed operation refuses any change of `_nm_hashed_fields`, sudo
+  included; the database itself is checked by
+  `_nm_check_register_integrity` (first broken operation and why).
+- `pos.nm.exchange.register.closing._nm_close`: period over, sessions of
+  its operations closed, no overlap with a closing of the same office or
+  of the company, integrity intact; PDF rendered with `raw` and attached.
+  `_nm_cancel` refuses an operation inside a closing.
+
+## Rate board page
+
+- `controllers/rate_board.py`: public routes, token compared with
+  `consteq`, `sudo().with_company()`. HTML page `rate_board_page` without
+  Odoo assets (`static/board/`, outside `static/src` so that the POS
+  bundle does not load it) and a JSON route for the refresh.
+- Customer display: `_get_customer_display_data` adds `nm_rate_board_url`
+  when the option is ticked; `static/src/customer_display_board/` (removed
+  from `_assets_pos`, added to `point_of_sale.customer_display_assets`)
+  replaces the idle logo and *Welcome* with an iframe of the board.

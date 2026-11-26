@@ -38,6 +38,13 @@ Features
   side, with the commission on a dedicated income account: the operations
   appear in the closing control, the Currency Position report and the Sales
   Details report
+* Exchange offices: several counters sharing a licence, identification
+  rules and the same rates, applied from a reference counter
+* Compliance: origin of funds and review thresholds, politically exposed
+  person, review by the compliance officer; inalterable register (hash
+  chain, integrity check) and closings of the register per period
+* Rate board on a screen facing the customers (TV, tablet or the customer
+  display of Odoo), refreshed by itself
 * Operations listed per point of sale, session and cashier, with a pivot of
   the commissions and rate margins; exchange register exported to Excel or
   printed in PDF for a period
@@ -49,7 +56,7 @@ Requirements
   included in the price shown on the Odoo Apps Store (already bought it?
   Contact us at odoo@natimai.solutions before buying this module)
     """,
-    "version": "20.0.2.0.0",
+    "version": "20.0.3.0.0",
     "category": "Sales/Point of Sale",
     "author": "Natimai Solutions",
     "website": "https://www.natimai.solutions",
@@ -72,10 +79,16 @@ Requirements
         "views/pos_session_views.xml",
         "views/res_config_settings.xml",
         "views/res_partner_views.xml",
+        "views/pos_exchange_office_views.xml",
+        "views/rate_board_templates.xml",
     ],
     "assets": {
         "point_of_sale._assets_pos": [
             "pos_nm_currency_exchange/static/src/**/*",
+            ("remove", "pos_nm_currency_exchange/static/src/customer_display_board/**/*"),
+        ],
+        "point_of_sale.customer_display_assets": [
+            "pos_nm_currency_exchange/static/src/customer_display_board/**/*",
         ],
         "web.assets_tests": [
             "pos_nm_currency_exchange/static/tests/tours/**/*",

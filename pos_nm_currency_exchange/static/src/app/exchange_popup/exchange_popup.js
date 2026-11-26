@@ -87,6 +87,9 @@ export class CurrencyExchangePopup extends Component {
             storedDocument: null,
             documentPartnerId: null,
             documentWarning: "",
+            // Declarations of the customer above the origin of funds
+            // threshold (or the review threshold), frozen on the operation.
+            declaration: this.emptyDeclaration(),
             quote: null,
             loading: false,
             error: "",
@@ -99,6 +102,8 @@ export class CurrencyExchangePopup extends Component {
             quoteChanged: false,
         });
         this.documentTypes = this.pos.config._nm_id_document_types || [];
+        this.fundsOrigins = this.pos.config._nm_funds_origins || [];
+        this.purposes = this.pos.config._nm_purposes || [];
         this.quoteTimer = null;
         this.quoteSequence = 0;
         // Sent with the operation: confirmed again after a lost response,
@@ -167,8 +172,39 @@ export class CurrencyExchangePopup extends Component {
             this.isQuoteCurrent &&
             !this.errorMessage &&
             (!this.state.quote.customer_required || !!this.state.partner) &&
-            !this.documentError
+            !this.documentError &&
+            !this.declarationError
         );
+    }
+    /**
+     * The customer declares the origin of the funds (origin of funds
+     * threshold); above the review threshold the declarations are asked
+     * too, without being required.
+     */
+    get declarationShown() {
+        return (
+            !!this.state.partner &&
+            (!!this.state.quote?.origin_required || !!this.state.quote?.review_required)
+        );
+    }
+    get declarationError() {
+        if (!this.state.partner || !this.state.quote?.origin_required) {
+            return "";
+        }
+        const { funds_origin, funds_origin_note } = this.state.declaration;
+        if (!funds_origin) {
+            return _t("The customer must declare the origin of the funds for this amount.");
+        }
+        if (funds_origin === "other" && !funds_origin_note.trim()) {
+            return _t("Give the details of the origin of the funds declared as Other.");
+        }
+        return "";
+    }
+    emptyDeclaration() {
+        return { funds_origin: "", funds_origin_note: "", purpose: "", pep: false };
+    }
+    onDeclarationInput(key, ev) {
+        this.state.declaration[key] = key === "pep" ? ev.target.checked : ev.target.value;
     }
     get documentRequired() {
         return !!this.state.quote?.document_required && !!this.state.partner;
@@ -421,6 +457,7 @@ export class CurrencyExchangePopup extends Component {
         this.scheduleQuote();
     }
     resetDocument() {
+        this.state.declaration = this.emptyDeclaration();
         this.state.document = this.emptyDocument();
         this.state.storedDocument = null;
         this.state.documentPartnerId = null;
@@ -506,6 +543,7 @@ export class CurrencyExchangePopup extends Component {
                         uuid: this.uuid,
                         // Saved on the customer, frozen on the operation.
                         document: this.documentRequired ? this.state.document : undefined,
+                        declaration: this.state.partner ? this.state.declaration : undefined,
                     }
                 );
             } finally {

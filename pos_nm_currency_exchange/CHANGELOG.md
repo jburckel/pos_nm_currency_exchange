@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Version 20.0.3.0.0 in progress: the exchange office vertical (see
+[`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)). Lots 1
+to 3 are done; the note stock by denomination (lot 4) and the transfers
+between counters (lot 5) are not started. Upgrade with
+`-u pos_nm_currency_exchange`: the migration freezes the licence on the
+existing operations and chains them into the register hash, in order.
+
+### Added
+- **Exchange Offices** (*Point of Sale -> Configuration*): the counters
+  (points of sale) of one licensed place of business. The office carries
+  the licence, the address, the compliance officer and the identification
+  rules, which replace those of its counters. *Apply Rates to the
+  Counters* copies the cash rate, the roundings of the coins and notes,
+  the sell margin and the commissions of every currency of the reference
+  counter to the others; *Rate Differences* lists what differs. The
+  counters of an office use the currency of its company.
+- **Origin of funds** threshold: above it the customer declares the origin
+  of the funds (and its details for *Other*); purpose of the operation and
+  *Politically exposed person* asked in the popup too. Frozen on the
+  operation with the address of the customer.
+- **Review** threshold: the operation is flagged *To Review* (never
+  refused) and an activity goes to the compliance officer of the office;
+  a declared politically exposed person is flagged too. *Compliance*
+  status (To Review, Reviewed, Reported) and note, set by POS
+  Administrators, filter *To Review*.
+- **Inalterable register**: every operation is hashed (SHA-256) with the
+  hash of the previous operation of the company, and its cancellation
+  too. *Check Integrity* (Print Register) finds the first altered
+  operation. A hashed operation cannot be changed, even with sudo.
+- **Register closings** (*Close Period* in Print Register, menu *Exchange
+  Register Closings*): the register of a period, for an office or the
+  company, is closed once its sessions are closed: counts, commissions,
+  last reference and hash frozen, PDF attached. An operation of a closed
+  period cannot be cancelled; periods cannot overlap; closings are
+  gapless (`EXR/YYYY/NNNN`) and cannot be changed or deleted.
+- The PDF register gains the office, its address and licence, the
+  customer address, nationality and date of birth, the declarations, the
+  compliance status and the hash of each operation.
+- **Rate board for the customers**: a full-screen page per counter
+  (`/pos_nm_exchange/board/<id>`, with the access token of the point of
+  sale) and per office (`/pos_nm_exchange/office_board/<id>`, own token,
+  *New Address* to revoke it), for a TV, a tablet or any screen. It reloads
+  the rates by itself (every 60 s, *Board Refresh* on the office) and keeps
+  the last rates on screen when the connection is lost. *Rate Board on the
+  Customer Display*: the customer display of Odoo shows it while no order
+  is in progress.
+
 ## [20.0.2.0.0] - 2026-11-25
 
 Requires `pos_nm_multicurrencies` 20.0.2.1.0 or later (the installation and

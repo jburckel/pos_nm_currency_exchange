@@ -17,14 +17,32 @@ class ReportExchangeRegister(models.AbstractModel):
         date_start = fields.Datetime.to_datetime(data.get('date_start'))
         date_stop = fields.Datetime.to_datetime(data.get('date_stop'))
         configs = self.env['pos.config'].browse(data.get('config_ids') or [])
+        office = self.env['pos.nm.exchange.office'].browse(data.get('office_id') or [])
+        company = self.env['res.company'].browse(data.get('company_id') or [])
+        closing = self.env['pos.nm.exchange.register.closing'].sudo().browse(data.get('closing_id') or [])
         domain = [('date', '>=', date_start), ('date', '<=', date_stop)]
-        if configs:
+        if office:
+            domain.append(('office_id', '=', office.id))
+        elif configs:
             domain.append(('config_id', 'in', configs.ids))
+        if company:
+            domain.append(('company_id', '=', company.id))
         exchanges = Exchange.search(domain, order='name, id')
         return {
+            'office_name': office.name or '',
+            'office_address': office.partner_id._display_address(without_name=True).replace('\n', ', ')
+            if office.partner_id else '',
+            'office_licence': office.licence or '',
+            'closing': {
+                'name': closing.name,
+                'user': closing.user_id.name,
+                'last_operation': closing.last_operation or '',
+                'last_hash': closing.last_hash or '',
+                'integrity': closing.integrity or '',
+            } if closing else False,
             'date_start': Exchange._nm_local_datetime(date_start),
             'date_stop': Exchange._nm_local_datetime(date_stop),
-            'config_names': ', '.join(configs.mapped('name')) or _('All'),
+            'config_names': ', '.join((office.config_ids if office else configs).mapped('name')) or _('All'),
             'operations': [self._nm_operation_row(exchange) for exchange in exchanges],
             'totals': self._nm_totals(exchanges.filtered(lambda e: e.state == 'done')),
             'cancelled_count': len(exchanges.filtered(lambda e: e.state == 'cancelled')),
@@ -52,6 +70,17 @@ class ReportExchangeRegister(models.AbstractModel):
             'document_country': exchange.id_document_country_id.name or '',
             'document_expiry': fields.Date.to_string(exchange.id_document_expiry) or '',
             'document_no_expiry': exchange.id_document_no_expiry,
+            'customer_address': exchange.customer_address or '',
+            'nationality': exchange.id_nationality_id.name or '',
+            'birthdate': fields.Date.to_string(exchange.id_birthdate) or '',
+            'funds_origin': dict(exchange._fields['funds_origin']._description_selection(self.env)).get(
+                exchange.funds_origin, ''),
+            'funds_origin_note': exchange.funds_origin_note or '',
+            'purpose': dict(exchange._fields['purpose']._description_selection(self.env)).get(exchange.purpose, ''),
+            'pep': exchange.pep,
+            'compliance': dict(exchange._fields['compliance_state']._description_selection(self.env)).get(
+                exchange.compliance_state, '') if exchange.compliance_state != 'none' else '',
+            'register_hash': (exchange.register_hash or '')[:12],
             'cancelled': exchange.state == 'cancelled',
             'state': dict(exchange._fields['state']._description_selection(self.env))[exchange.state],
         }

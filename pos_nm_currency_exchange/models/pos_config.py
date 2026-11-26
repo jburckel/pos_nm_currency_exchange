@@ -6,6 +6,8 @@ from odoo import api, fields, models, _
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tools.misc import formatLang
 
+from .pos_exchange_office import RULE_FIELDS
+
 # Also set on the field of the settings: a related field does not copy the
 # domain of its target.
 EXCHANGE_INCOME_ACCOUNT_DOMAIN = [('account_type', 'in', ('income', 'income_other'))]
@@ -58,7 +60,79 @@ class PosConfig(models.Model):
         help='Licence or registration number of the currency exchange activity, printed on the '
              'exchange receipts and the rate board when set.',
     )
+    nm_exchange_origin_threshold = fields.Monetary(
+        string='Exchange Origin of Funds Required Above',
+        currency_field='currency_id',
+        help='Value, in the currency of the point of sale, above which the customer declares the origin of '
+             'the funds (with the linked operations when a period is set). 0: never required.',
+    )
+    nm_exchange_review_threshold = fields.Monetary(
+        string='Exchange Review Above',
+        currency_field='currency_id',
+        help='Value, in the currency of the point of sale, above which the operation is flagged To Review '
+             'for the compliance officer (with the linked operations when a period is set). It is never '
+             'refused at the counter. 0: never flagged.',
+    )
+    nm_exchange_office_id = fields.Many2one(
+        'pos.nm.exchange.office',
+        string='Exchange Office',
+        check_company=True,
+        index='btree_not_null',
+        help='Office of this counter: its licence and its identification and review rules replace those '
+             'of the point of sale, and it can apply the rates of its reference counter to this one.',
+    )
+    nm_exchange_board_on_display = fields.Boolean(
+        string='Rate Board on the Customer Display',
+        help='The customer display shows the exchange rates of the counter while no order is in progress.',
+    )
+    nm_exchange_board_url = fields.Char(
+        string='Rate Board Address', compute='_compute_nm_exchange_board_url',
+        groups='point_of_sale.group_pos_manager',
+        help='Page of the rate board of this counter, for a screen facing the customers. It holds the '
+             'access token of the point of sale, the one of the customer display.',
+    )
     nm_exchange_count = fields.Integer(string='Exchanges', compute='_compute_nm_exchange_count')
+
+    @api.depends('access_token')
+    def _compute_nm_exchange_board_url(self):
+        base = self.get_base_url()
+        for config in self:
+            config.nm_exchange_board_url = (
+                f"{base}/pos_nm_exchange/board/{config.id}?access_token={config.access_token}"
+                if config.id and config.access_token else False)
+
+    def _nm_rules(self):
+        """Rules of the counter: those of its exchange office, else those
+        of the point of sale (licence, thresholds, linked operations
+        period). Keys of RULE_FIELDS."""
+        self.ensure_one()
+        office = self.nm_exchange_office_id
+        if office:
+            return office._nm_rules()
+        return {rule: self[config_field] for rule, (_office_field, config_field) in RULE_FIELDS.items()}
+
+    @api.constrains('nm_exchange_office_id', 'currency_id')
+    def _check_nm_exchange_office(self):
+        for config in self:
+            office = config.nm_exchange_office_id
+            if office and config.currency_id != office.currency_id:
+                raise ValidationError(_(
+                    "The counter %(config)s uses %(currency)s: the counters of the exchange office %(office)s use "
+                    "the currency of its company, %(office_currency)s, in which its thresholds are set.",
+                    config=config.name, currency=config.currency_id.name, office=office.name,
+                    office_currency=office.currency_id.name))
+
+    def action_nm_open_rate_board(self):
+        self.ensure_one()
+        return {'type': 'ir.actions.act_url', 'url': self.nm_exchange_board_url, 'target': 'new'}
+
+    def _get_customer_display_data(self):
+        data = super()._get_customer_display_data()
+        # The idle screen of the customer display shows the rate board.
+        data['nm_rate_board_url'] = (
+            f"/pos_nm_exchange/board/{self.id}?access_token={self.access_token}&display=1"
+            if self.nm_exchange_enabled and self.nm_exchange_board_on_display else False)
+        return data
 
     def _compute_nm_exchange_count(self):
         counts = dict(self.env['pos.nm.exchange']._read_group(
@@ -77,10 +151,12 @@ class PosConfig(models.Model):
                                 "counter."))
         return super().write(vals)
 
-    @api.constrains('nm_exchange_customer_threshold', 'nm_exchange_document_threshold', 'nm_exchange_linked_days')
+    @api.constrains('nm_exchange_customer_threshold', 'nm_exchange_document_threshold', 'nm_exchange_linked_days',
+                    'nm_exchange_origin_threshold', 'nm_exchange_review_threshold')
     def _check_nm_exchange_customer_threshold(self):
         for config in self:
-            if config.nm_exchange_customer_threshold < 0 or config.nm_exchange_document_threshold < 0:
+            if min(config.nm_exchange_customer_threshold, config.nm_exchange_document_threshold,
+                   config.nm_exchange_origin_threshold, config.nm_exchange_review_threshold) < 0:
                 raise ValidationError(_("The identification threshold cannot be negative."))
             if config.nm_exchange_linked_days < 0:
                 raise ValidationError(_("The linked operations period cannot be negative."))
@@ -99,6 +175,9 @@ class PosConfig(models.Model):
             read_records[0]['_nm_exchange_account_set'] = bool(config.nm_exchange_income_account_id)
             read_records[0]['_nm_id_document_types'] = self.env['pos.nm.exchange']._fields[
                 'id_document_type']._description_selection(self.env)
+            exchange_fields = self.env['pos.nm.exchange']._fields
+            read_records[0]['_nm_funds_origins'] = exchange_fields['funds_origin']._description_selection(self.env)
+            read_records[0]['_nm_purposes'] = exchange_fields['purpose']._description_selection(self.env)
         return read_records
 
     def _nm_exchange_currencies(self):
@@ -198,7 +277,7 @@ class PosConfig(models.Model):
             })
         return {
             'config_name': self.name,
-            'licence': self.nm_exchange_licence or '',
+            'licence': self._nm_rules()['licence'] or '',
             'date': Exchange._nm_local_datetime(fields.Datetime.now()),
             'currency': main.name,
             'rows': rows,

@@ -118,8 +118,20 @@
                 <div class="page small">
                     <h2>Exchange Register</h2>
                     <p>
+                        <t t-if="office_name">
+                            <strong t-out="office_name"/>
+                            <t t-if="office_address"> - <span t-out="office_address"/></t>
+                            <t t-if="office_licence"><br/>Licence <span t-out="office_licence"/></t>
+                            <br/>
+                        </t>
                         <span t-out="date_start"/> - <span t-out="date_stop"/><br/>
                         Points of sale: <span t-out="config_names"/>
+                    </p>
+                    <p t-if="closing">
+                        Closing <strong t-out="closing['name']"/> by <span t-out="closing['user']"/>:
+                        <span t-out="closing['integrity']"/>.
+                        <t t-if="closing['last_hash']"><br/>Hash of the last operation of the register
+                            (<span t-out="closing['last_operation']"/>): <code t-out="closing['last_hash']"/></t>
                     </p>
                     <table class="table table-sm nm-exchange-register">
                         <thead>
@@ -136,6 +148,7 @@
                                 <th class="text-end">Rate Margin</th>
                                 <th>Customer</th>
                                 <th>Identity Document</th>
+                                <th>Declarations</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -151,7 +164,12 @@
                                 <td class="text-end" t-out="operation['rate']"/>
                                 <td class="text-end" t-out="operation['commission']"/>
                                 <td class="text-end" t-out="operation['rate_margin']"/>
-                                <td t-out="operation['customer']"/>
+                                <td>
+                                    <span t-out="operation['customer']"/>
+                                    <t t-if="operation['customer_address']"><br/><span t-out="operation['customer_address']"/></t>
+                                    <t t-if="operation['nationality']"><br/>Nationality <span t-out="operation['nationality']"/></t>
+                                    <t t-if="operation['birthdate']"><br/>Born <span t-out="operation['birthdate']"/></t>
+                                </td>
                                 <td>
                                     <t t-if="operation['document_type']">
                                         <span t-out="operation['document_type']"/> <span t-out="operation['document_number']"/>
@@ -160,10 +178,20 @@
                                         <t t-elif="operation['document_no_expiry']"><br/>No expiry date</t>
                                     </t>
                                 </td>
-                                <td t-out="operation['state']"/>
+                                <td>
+                                    <t t-if="operation['funds_origin']">Origin: <span t-out="operation['funds_origin']"/>
+                                        <t t-if="operation['funds_origin_note']">(<span t-out="operation['funds_origin_note']"/>)</t><br/></t>
+                                    <t t-if="operation['purpose']">Purpose: <span t-out="operation['purpose']"/><br/></t>
+                                    <t t-if="operation['pep']">Politically exposed person<br/></t>
+                                    <t t-if="operation['compliance']"><strong t-out="operation['compliance']"/></t>
+                                </td>
+                                <td>
+                                    <span t-out="operation['state']"/>
+                                    <t t-if="operation['register_hash']"><br/><code t-out="operation['register_hash']"/></t>
+                                </td>
                             </tr>
                             <tr t-if="not operations">
-                                <td colspan="13">No exchange operation over this period.</td>
+                                <td colspan="14">No exchange operation over this period.</td>
                             </tr>
                         </tbody>
                     </table>

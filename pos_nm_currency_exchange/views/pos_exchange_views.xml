@@ -9,6 +9,7 @@
                 <field name="name"/>
                 <field name="date"/>
                 <field name="operation_type" optional="hide"/>
+                <field name="office_id" optional="hide"/>
                 <field name="config_id" optional="show"/>
                 <field name="session_id" optional="hide"/>
                 <field name="cashier_name" optional="show"/>
@@ -22,6 +23,12 @@
                 <field name="value_in" sum="Received Value" optional="hide"/>
                 <field name="commission" sum="Commission"/>
                 <field name="rate_margin" sum="Rate Margin" optional="show"/>
+                <field name="compliance_state" widget="badge" optional="show"
+                       groups="point_of_sale.group_pos_manager"
+                       decoration-warning="compliance_state == 'to_review'"
+                       decoration-danger="compliance_state == 'reported'"
+                       decoration-success="compliance_state == 'reviewed'"
+                       invisible="compliance_state == 'none'"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
                        decoration-danger="state == 'cancelled'" optional="show"/>
                 <field name="company_currency_id" column_invisible="True"/>
@@ -60,8 +67,10 @@
                         <group string="Operation">
                             <field name="date"/>
                             <field name="operation_type"/>
+                            <field name="office_id" invisible="not office_id"/>
                             <field name="session_id"/>
                             <field name="config_id"/>
+                            <field name="licence" invisible="not licence"/>
                             <field name="cashier_name"/>
                             <field name="user_id"/>
                             <field name="partner_id"/>
@@ -94,7 +103,27 @@
                         <group>
                             <field name="id_nationality_id"/>
                             <field name="id_birthdate"/>
+                            <field name="customer_address"/>
                         </group>
+                    </group>
+                    <group string="Declarations and Compliance" name="compliance"
+                           groups="point_of_sale.group_pos_manager">
+                        <group>
+                            <field name="funds_origin" invisible="not funds_origin"/>
+                            <field name="funds_origin_note" invisible="not funds_origin_note"/>
+                            <field name="purpose" invisible="not purpose"/>
+                            <field name="pep" invisible="not pep"/>
+                        </group>
+                        <group>
+                            <field name="compliance_state"/>
+                            <field name="review_reason" invisible="not review_reason"/>
+                            <field name="compliance_note"/>
+                        </group>
+                    </group>
+                    <group string="Register" name="register_hash">
+                        <field name="register_hash"/>
+                        <field name="register_previous_hash"/>
+                        <field name="cancel_hash" invisible="not cancel_hash"/>
                     </group>
                 </sheet>
                 <chatter/>
@@ -136,8 +165,11 @@
                 <filter string="Cross exchange" name="cross" domain="[('operation_type', '=', 'cross')]"/>
                 <separator/>
                 <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="To Review" name="to_review" domain="[('compliance_state', '=', 'to_review')]"
+                        groups="point_of_sale.group_pos_manager"/>
                 <filter string="Cancelled" name="cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <group>
+                    <filter string="Exchange Office" name="group_by_office" domain="[]" context="{'group_by': 'office_id'}"/>
                     <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
                     <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
                     <filter string="Cashier" name="group_by_cashier" domain="[]" context="{'group_by': 'cashier_name'}"/>
@@ -191,6 +223,8 @@
                 </header>
                 <field name="name"/>
                 <field name="date"/>
+                <field name="office_id" optional="hide"/>
+                <field name="licence" optional="hide"/>
                 <field name="config_id"/>
                 <field name="cashier_name"/>
                 <field name="operation_type"/>
@@ -210,6 +244,12 @@
                 <field name="id_document_no_expiry" optional="hide"/>
                 <field name="id_nationality_id" optional="hide"/>
                 <field name="id_birthdate" optional="hide"/>
+                <field name="customer_address" optional="hide"/>
+                <field name="funds_origin" optional="show"/>
+                <field name="purpose" optional="hide"/>
+                <field name="pep" optional="hide"/>
+                <field name="compliance_state" optional="show"/>
+                <field name="register_hash" optional="hide"/>
                 <field name="state" widget="badge" decoration-success="state == 'done'"
                        decoration-danger="state == 'cancelled'"/>
                 <field name="company_currency_id" column_invisible="True"/>

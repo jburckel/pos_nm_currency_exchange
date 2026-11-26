@@ -16,30 +16,55 @@
                                 <label string="Commission account" for="pos_nm_exchange_income_account_id" class="col-lg-5 o_light_label"/>
                                 <field name="pos_nm_exchange_income_account_id" class="col-lg-6" options="{'no_create': True}"/>
                             </div>
-                            <div class="row mt8">
+                            <div class="row mt8" invisible="pos_nm_exchange_office_id">
                                 <label string="Exchange licence number" for="pos_nm_exchange_licence" class="col-lg-5 o_light_label"/>
                                 <field name="pos_nm_exchange_licence" class="col-lg-6"/>
                             </div>
                             <div class="row mt8">
-                                <label string="Customer required above" for="pos_nm_exchange_customer_threshold" class="col-lg-5 o_light_label"/>
-                                <field name="pos_nm_exchange_customer_threshold" class="col-lg-3"/>
+                                <label string="Exchange office" for="pos_nm_exchange_office_id" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_office_id" class="col-lg-6"/>
+                            </div>
+                            <div class="text-muted mt8" invisible="not pos_nm_exchange_office_id">
+                                The licence and the identification thresholds of the office apply to this counter.
+                            </div>
+                            <div invisible="pos_nm_exchange_office_id">
+                                <div class="row mt8">
+                                    <label string="Customer required above" for="pos_nm_exchange_customer_threshold" class="col-lg-5 o_light_label"/>
+                                    <field name="pos_nm_exchange_customer_threshold" class="col-lg-3"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Customer required for every operation" for="pos_nm_exchange_customer_always" class="col-lg-5 o_light_label"/>
+                                    <field name="pos_nm_exchange_customer_always" class="col-lg-1"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Identity document required above" for="pos_nm_exchange_document_threshold" class="col-lg-5 o_light_label"/>
+                                    <field name="pos_nm_exchange_document_threshold" class="col-lg-3"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Linked operations period (days)" for="pos_nm_exchange_linked_days" class="col-lg-5 o_light_label"/>
+                                    <field name="pos_nm_exchange_linked_days" class="col-lg-3"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Origin of funds required above" for="pos_nm_exchange_origin_threshold" class="col-lg-5 o_light_label"/>
+                                    <field name="pos_nm_exchange_origin_threshold" class="col-lg-3"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label string="Review above" for="pos_nm_exchange_review_threshold" class="col-lg-5 o_light_label"/>
+                                    <field name="pos_nm_exchange_review_threshold" class="col-lg-3"/>
+                                </div>
+                                <div class="text-muted mt8">
+                                    Thresholds at 0: never required. With a linked operations period, the value compared to the
+                                    thresholds is the operation plus the operations of the same customer over that many days, at every
+                                    Point of Sale of the company.
+                                </div>
                             </div>
                             <div class="row mt8">
-                                <label string="Customer required for every operation" for="pos_nm_exchange_customer_always" class="col-lg-5 o_light_label"/>
-                                <field name="pos_nm_exchange_customer_always" class="col-lg-1"/>
+                                <label string="Rate board on the customer display" for="pos_nm_exchange_board_on_display" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_board_on_display" class="col-lg-1"/>
                             </div>
                             <div class="row mt8">
-                                <label string="Identity document required above" for="pos_nm_exchange_document_threshold" class="col-lg-5 o_light_label"/>
-                                <field name="pos_nm_exchange_document_threshold" class="col-lg-3"/>
-                            </div>
-                            <div class="row mt8">
-                                <label string="Linked operations period (days)" for="pos_nm_exchange_linked_days" class="col-lg-5 o_light_label"/>
-                                <field name="pos_nm_exchange_linked_days" class="col-lg-3"/>
-                            </div>
-                            <div class="text-muted mt8">
-                                Thresholds at 0: never required. With a linked operations period, the value compared to the
-                                thresholds is the operation plus the operations of the same customer over that many days, at every
-                                Point of Sale of the company.
+                                <label string="Rate board address" for="pos_nm_exchange_board_url" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_board_url" class="col-lg-6" widget="url" readonly="1"/>
                             </div>
                             <div class="mt8">
                                 <button name="action_nm_print_rate_board" type="object" string="Print Exchange Rates"

@@ -3,6 +3,7 @@
 from odoo.exceptions import UserError
 from odoo.tools import parse_version
 
+from . import controllers
 from . import models
 from . import wizard
 

@@ -3,3 +3,8 @@ access_pos_nm_exchange_user,pos.nm.exchange.user,pos.nm.exchange,point_of_sale.g
 access_pos_nm_exchange_manager,pos.nm.exchange.manager,pos.nm.exchange,point_of_sale.group_pos_manager,ru,
 rule_pos_nm_exchange_multi_company,POS Currency Exchange multi-company,pos.nm.exchange,,crud,"[('company_id', 'in', company_ids)]"
 access_pos_nm_exchange_register_wizard,pos.nm.exchange.register.wizard.manager,pos.nm.exchange.register.wizard,point_of_sale.group_pos_manager,crud,
+access_pos_nm_exchange_office_user,pos.nm.exchange.office.user,pos.nm.exchange.office,point_of_sale.group_pos_user,r,
+access_pos_nm_exchange_office_manager,pos.nm.exchange.office.manager,pos.nm.exchange.office,point_of_sale.group_pos_manager,crud,
+rule_pos_nm_exchange_office_multi_company,Exchange Office multi-company,pos.nm.exchange.office,,crud,"[('company_id', 'in', company_ids)]"
+access_pos_nm_exchange_register_closing_manager,pos.nm.exchange.register.closing.manager,pos.nm.exchange.register.closing,point_of_sale.group_pos_manager,r,
+rule_pos_nm_exchange_register_closing_multi_company,Exchange Register Closing multi-company,pos.nm.exchange.register.closing,,crud,"[('company_id', 'in', company_ids)]"
