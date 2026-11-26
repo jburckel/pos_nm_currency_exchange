@@ -1407,7 +1407,13 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(nm_default_sell_margin(10.0), 10.0)
         self.assertEqual(nm_default_sell_margin(0.0), 0.0)
         self.assertAlmostEqual(nm_default_sell_margin(-2.0), 2.0 / 0.98, places=10)
-        chf = self._add_cash_currency('CHF', 0.8, margin_percent=4.0)
+        # -100 % or less is refused by the constraint of the cash rate
+        # margin, not by a division by zero.
+        self.assertEqual(nm_default_sell_margin(-100.0), 0.0)
+        self.assertEqual(nm_default_sell_margin(-150.0), 0.0)
+        with self.assertRaises(ValidationError):
+            self._add_cash_currency('NOK', 11.0, margin_percent=-100.0)
+        chf =self._add_cash_currency('CHF', 0.8, margin_percent=4.0)
         jpy = self._add_cash_currency('JPY', 150.0, margin_percent=-2.0)
         gbp = self._add_cash_currency('GBP', 0.85, margin_percent=4.0, exchange_sell_margin_percent=1.5)
         sek = self._add_cash_currency('SEK', 11.0)

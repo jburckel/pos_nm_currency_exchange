@@ -15,8 +15,12 @@ def nm_default_sell_margin(margin_percent):
     -m / (1 + m / 100) keeps that sell rate (2.04 % for -2 %).
 
     Used by the upgrade to 20.0.2.0.0 and for the currencies added since.
+    A cash rate margin of -100 % or less is refused by POS Multi-Currency
+    Cash: 0 is returned for it, so that its constraint gives the error.
     """
     margin = margin_percent or 0.0
+    if margin <= -100:
+        return 0.0
     if margin < 0:
         return -margin / (1 + margin / 100.0)
     return margin
