@@ -134,9 +134,21 @@ class PosConfig(models.Model):
     def _nm_board_amount(self, currency):
         """Typical amount of ``currency`` on the rate board: the power of 10
         nearest to 100 units of the currency of the point of sale (100 USD,
-        10,000 XPF, 1,000,000 VND)."""
+        10,000 XPF, 1,000,000 VND), rounded to the nearest amount the counter
+        takes and hands back as is: a multiple of the payment step of the
+        currency (the notes received) and of its change step (the notes
+        handed back), the steps of the quote. With 3 CHF coins, 99 CHF."""
+        self.ensure_one()
         rate = self._nm_odoo_rate(currency)
-        return 10.0 ** max(0, round(math.log10(100 * rate))) if rate > 0 else 100.0
+        amount = 10.0 ** max(0, round(math.log10(100 * rate))) if rate > 0 else 100.0
+        Exchange = self.env['pos.nm.exchange']
+        # Both steps in units of the rounding of the currency: their least
+        # common multiple is the smallest amount that is a multiple of both.
+        units = math.lcm(*(
+            max(1, round(step / currency.rounding))
+            for step in (Exchange._nm_payment_step(self, currency), Exchange._nm_change_step(self, currency))))
+        step = units * currency.rounding
+        return currency.round(max(1, round(amount / step)) * step)
 
     def _nm_format_percent(self, percent):
         """``percent`` with its 4 decimals at most, without trailing zeros

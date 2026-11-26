@@ -91,7 +91,9 @@ quatre valeurs, les montants étant dans la devise du point de vente :
 
 * **Marge de vente de change (%)** : marge du guichet sur les billets de
   cette devise qu'il rend (voir *Taux* ci-dessous). Masquée avec un taux de
-  caisse fixe, où elle n'est pas utilisée ;
+  caisse fixe, où elle n'est pas utilisée. Une nouvelle devise part de sa
+  Marge du taux de caisse (une marge négative devient la marge de vente qui
+  garde le même taux de vente, comme à la mise à jour) ;
 * **Commission de change (%)** : pourcentage de la valeur des billets
   reçus ;
 * **Commission de change fixe** : partie fixe ajoutée au pourcentage ;
@@ -281,7 +283,9 @@ taux du guichet, une ligne par devise étrangère en espèces :
 * **Commission** : pourcentage, part fixe et minimum.
 
 Le montant type est la puissance de 10 la plus proche de 100 unités de la
-devise du point de vente (100 EUR, 10 000 XPF, 1 000 000 VND). Les montants
+devise du point de vente (100 EUR, 10 000 XPF, 1 000 000 VND), arrondie
+aux pièces que le guichet prend et rend dans cette devise (son Arrondi des
+paiements et son Arrondi de la monnaie : 99 CHF avec des pièces de 3 CHF). Les montants
 sont calculés par la cotation du guichet : ils correspondent aux
 opérations. **Imprimer** imprime le tableau sur l'imprimante de tickets.
 

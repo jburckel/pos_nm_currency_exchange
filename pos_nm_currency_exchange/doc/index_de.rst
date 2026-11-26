@@ -89,7 +89,9 @@ Werte, wobei die Beträge in der Währung der Kasse sind:
 
 * **Wechsel-Verkaufsmarge (%)**: Marge des Schalters auf die Scheine
   dieser Währung, die er auszahlt (siehe *Kurse* unten). Bei einem festen
-  Kassenkurs ausgeblendet, da dort nicht verwendet;
+  Kassenkurs ausgeblendet, da dort nicht verwendet. Eine neue Währung
+  beginnt mit ihrer Kassenkurs-Marge (eine negative wird zur
+  Verkaufsmarge, die denselben Verkaufskurs behält, wie beim Update);
 * **Wechselprovision (%)**: Prozentsatz des Wertes der erhaltenen
   Scheine;
 * **Feste Wechselprovision**: fester Teil, der zum Prozentsatz hinzukommt;
@@ -281,7 +283,9 @@ Schalters, eine Zeile je Fremdwährung in bar:
 * **Provision**: Prozentsatz, fester Teil und Minimum.
 
 Der typische Betrag ist die Zehnerpotenz, die 100 Einheiten der Währung
-der Kasse am nächsten liegt (100 EUR, 10.000 XPF, 1.000.000 VND). Die
+der Kasse am nächsten liegt (100 EUR, 10.000 XPF, 1.000.000 VND), gerundet
+auf die Münzen, die der Schalter in dieser Währung annimmt und auszahlt
+(Zahlungsrundung und Wechselgeldrundung: 99 CHF bei 3-CHF-Münzen). Die
 Beträge werden mit dem Angebot des Schalters berechnet und stimmen daher
 mit den Vorgängen überein. **Drucken** druckt die Tafel auf dem
 Bondrucker.

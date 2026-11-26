@@ -84,8 +84,10 @@ of the currency. The *Currency Exchange* group holds four values, the
 amounts being in the currency of the point of sale:
 
 * **Exchange Sell Margin (%)**: margin of the counter on the notes of this
-  currency it hands back (see *Rates* below). Hidden with a fixed cash
-  rate, where it is not used;
+  currency it hands back (see *Rates* below). A new currency starts from
+  its Cash Rate Margin (a negative one becomes the sell margin keeping the
+  same sell rate, as on upgrade). Hidden with a fixed cash rate, where it
+  is not used;
 * **Exchange Commission (%)**: percentage of the value of the notes
   received;
 * **Fixed Exchange Commission**: fixed part added to the percentage;
@@ -266,7 +268,9 @@ the counter, one line per foreign cash currency:
 * **Commission**: percentage, fixed part and minimum.
 
 The typical amount is the power of 10 nearest to 100 units of the currency
-of the point of sale (100 EUR, 10,000 XPF, 1,000,000 VND). The amounts are
+of the point of sale (100 EUR, 10,000 XPF, 1,000,000 VND), rounded to the
+coins the counter takes and hands back in that currency (its Payment
+Rounding and Change Rounding: 99 CHF with 3 CHF coins). The amounts are
 computed by the quote of the counter, so they match the operations.
 **Print** prints the board on the receipt printer.
 

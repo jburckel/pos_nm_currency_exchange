@@ -81,7 +81,11 @@ cannot record operations.
   date and time with seconds, masked document number; reprint marked
   *COPY*, cancelled operations marked *CANCELLED*.
 - **Register menu**: *Exchange Operations* (operations of the session,
-  *Reprint*) and *Exchange Rates* (rate board, *Print*).
+  *Reprint*) and *Exchange Rates* (rate board, *Print*). The typical
+  amount of the rate board (register and PDF) is a multiple of the Payment
+  Rounding and of the Change Rounding of the currency (99 CHF with 3 CHF
+  coins): its figures are those of the quote and the counter takes them
+  as they are.
 - **Back office**: *Print* (PDF *Exchange Receipt*) and *Send by E-mail*
   on the operation, chatter on the operations; *Operation Type* column,
   filters and grouping; *Print Exchange Rates* in the settings and the

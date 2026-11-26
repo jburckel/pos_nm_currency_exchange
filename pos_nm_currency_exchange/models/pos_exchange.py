@@ -291,11 +291,9 @@ class PosNmExchange(models.Model):
         value_out = company_currency.round(max(0.0, value_in - commission))
         if currency_out == company_currency:
             rate_out = 1.0
-            step = config.rounding_method.rounding if config.cash_rounding else 0.0
         else:
             rate_out = config._nm_exchange_sell_rate(currency_out)
-            step = config._nm_get_currency_setting(currency_out).change_rounding
-        amount_out = float_round(value_out * rate_out, precision_rounding=max(step, currency_out.rounding),
+        amount_out = float_round(value_out * rate_out, precision_rounding=self._nm_change_step(config, currency_out),
                                  rounding_method='DOWN')
         value_out = company_currency.round(amount_out / rate_out) if rate_out else 0.0
         return {
@@ -449,6 +447,18 @@ class PosNmExchange(models.Model):
             if not value and (same_document or field in ('id_nationality_id', 'id_birthdate')):
                 values[field] = stored[field]
         return values
+
+    @api.model
+    def _nm_change_step(self, config, currency):
+        """Smallest coin or note of ``currency`` handed back by the counter,
+        the step the quote rounds the notes handed back down to: the change
+        rounding of a foreign currency, the cash rounding of the point of
+        sale for its own currency; at least the rounding of the currency."""
+        if currency == config.currency_id:
+            step = config.rounding_method.rounding if config.cash_rounding else 0.0
+        else:
+            step = config._nm_get_currency_setting(currency).change_rounding
+        return max(step, currency.rounding)
 
     @api.model
     def _nm_payment_step(self, config, currency):

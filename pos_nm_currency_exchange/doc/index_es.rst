@@ -91,7 +91,9 @@ los importes en la moneda del punto de venta:
 
 * **Margen de venta de cambio (%)**: margen de la ventanilla sobre los
   billetes de esta moneda que entrega (consulte *Tipos* más abajo). Oculto
-  con un tipo de caja fijo, donde no se usa;
+  con un tipo de caja fijo, donde no se usa. Una moneda nueva parte de su
+  Margen del tipo de caja (uno negativo se convierte en el margen de venta
+  que mantiene el mismo tipo de venta, como en la actualización);
 * **Comisión de cambio (%)**: porcentaje del valor de los billetes
   recibidos;
 * **Comisión de cambio fija**: parte fija que se suma al porcentaje;
@@ -280,7 +282,9 @@ tipos de la ventanilla, una línea por moneda extranjera en efectivo:
 * **Comisión**: porcentaje, parte fija y mínimo.
 
 El importe típico es la potencia de 10 más cercana a 100 unidades de la
-moneda del punto de venta (100 EUR, 10.000 XPF, 1.000.000 VND). Los
+moneda del punto de venta (100 EUR, 10.000 XPF, 1.000.000 VND), redondeada
+a las monedas que la ventanilla acepta y entrega en esa moneda (su
+Redondeo de los pagos y su Redondeo del cambio: 99 CHF con monedas de 3 CHF). Los
 importes se calculan con la cotización de la ventanilla, por lo que
 coinciden con las operaciones. **Imprimir** imprime la tabla en la
 impresora de recibos.

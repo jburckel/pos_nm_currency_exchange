@@ -1569,6 +1569,41 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self.assertEqual(self.pos_config._nm_board_amount(xpf), 10000.0)
         self.assertEqual(self.pos_config._nm_board_amount(self.fx), 100.0)
 
+    def test_rate_board_amount_steps(self):
+        """The typical amount is rounded to the coins the counter takes and
+        hands back: with 3 CHF accepted (Payment Rounding) and 0.20 CHF
+        handed back (Change Rounding), 99 CHF instead of 100, which is not a
+        multiple of 3. The board figures are those of the quote for 99 CHF,
+        and the counter records both operations of the board as shown."""
+        chf = self._add_cash_currency('CHF', 0.8, margin_percent=4.0, payment_rounding=3.0, change_rounding=0.2,
+                                      exchange_commission_percent=1.0)
+        Exchange = self.env['pos.nm.exchange']
+        self.assertEqual(Exchange._nm_payment_step(self.pos_config, chf), 3.0)
+        self.assertEqual(Exchange._nm_change_step(self.pos_config, chf), 0.2)
+        row = next(row for row in self.pos_config._nm_rate_board()['rows'] if row['currency_id'] == chf.id)
+        self.assertEqual(row['amount'], 99.0)
+        self.assertEqual(row['amount_formatted'], chf.format(99.0))
+        # A multiple of both steps: no coin warning, nothing rounded away.
+        for step in (3.0, 0.2):
+            units = row['amount'] / step
+            self.assertAlmostEqual(units, round(units), places=6)
+        # The figures of the quote.
+        self.assertEqual(row['buy_amount'], self._quote(chf, 99.0, self.main)['amount_out'])
+        self.assertEqual(self._quote(self.main, row['sell_amount'], chf)['amount_out'], 99.0)
+        # Recorded as shown on the board.
+        session = self._open(main=500.0, counts={chf: 500.0})
+        bought = Exchange.create_from_ui(session.id, chf.id, row['amount'], self.main.id,
+                                         amount_out=row['buy_amount'])
+        self.assertEqual(Exchange.browse(bought['id']).amount_out, row['buy_amount'])
+        sold = Exchange.create_from_ui(session.id, self.main.id, row['sell_amount'], chf.id, amount_out=99.0)
+        self.assertEqual(Exchange.browse(sold['id']).amount_out, 99.0)
+        # The register popup shows the same board.
+        board = Exchange.with_user(self.pos_user).get_rate_board(self.pos_config.id)
+        self.assertIn(row, board['rows'])
+        # A step larger than the amount: one step.
+        self.pos_config._nm_get_currency_setting(chf).payment_rounding = 500.0
+        self.assertEqual(self.pos_config._nm_board_amount(chf), 500.0)
+
     def test_exchange_register(self):
         """The register lists every operation of the period on the points of
         sale chosen, in the order of the references, the cancelled ones
