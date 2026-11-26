@@ -28,8 +28,9 @@ Fremdwährung zurück; dieses Modul fügt den Vorgang ohne Verkauf hinzu:
   Schublade ihrer Währung ein, und die ausgezahlten Scheine verlassen die
   andere, auf dem Kassenjournal der Sitzung, mit der Provision gebucht auf
   ein eigenes Ertragskonto;
-* ein Manager kann einen fehlerhaften Vorgang stornieren, solange die
-  Sitzung geöffnet ist;
+* ein Kassenadministrator kann einen fehlerhaften Vorgang stornieren,
+  solange die Sitzung geöffnet ist und die Schublade die erhaltenen Scheine
+  noch enthält;
 * die Vorgänge erscheinen in der Abschlusskontrolle, im Bericht
   *Währungsposition* und im Bericht *Verkaufsdetails*, in einer Liste mit
   einer Pivot-Ansicht der Provisionen und Kursmargen und in einem
@@ -43,8 +44,9 @@ Voraussetzungen
 
 * Die Anwendung **Kassensystem** (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0
-  oder neuer**, im auf dem Odoo Apps Store angezeigten Preis enthalten
-  (bereits gekauft? Kontaktieren Sie uns vor dem Kauf dieses Moduls unter
+  oder neuer**, im auf dem Odoo Apps Store angezeigten Preis enthalten:
+  insgesamt 178 EUR, 59 EUR für dieses Modul plus 119 EUR für POS
+  Multi-Currency Cash (bereits gekauft? Kontaktieren Sie uns vor dem Kauf dieses Moduls unter
   odoo@natimai.solutions), mit
   mindestens einer Fremdwährung auf der Bargeld-Zahlungsmethode der Kasse
   (siehe dessen Anleitung: *Eine Währung in bar akzeptieren*). Eine
@@ -63,7 +65,7 @@ Konfiguration
 Den Wechselschalter aktivieren
 ------------------------------
 
-Gehen Sie zu *Kassensystem -> Konfiguration -> Einstellungen*, wählen Sie
+Gehen Sie zu *Kassensystem → Konfiguration → Einstellungen*, wählen Sie
 Ihre Kasse und suchen Sie den Abschnitt **Geldwechsel**:
 
 * **Geldwechsel** (standardmäßig aktiviert): zeigt die Einträge des
@@ -90,7 +92,7 @@ Schwellen auf 0 werden nie angewendet.
 Provisionen und Verkaufsmarge je Währung
 ----------------------------------------
 
-Gehen Sie zu *Kassensystem -> Konfiguration -> Bargeldwährungen* und
+Gehen Sie zu *Kassensystem → Konfiguration → Bargeldwährungen* und
 öffnen Sie die Zeile der Währung. Die Gruppe *Geldwechsel* enthält vier
 Werte, wobei die Beträge in der Währung der Kasse sind:
 
@@ -127,13 +129,14 @@ Multi-Currency Cash:
   Kurs zahlt weniger Scheine aus.
 
 Beispiel: Kasse in USD, Odoo-Kurs 2 EUR für 1 USD, Kassenkurs-Marge und
-Wechsel-Verkaufsmarge von 10 %: Der Schalter kauft Euro zu 2,20 EUR für
-1 USD (100 erhaltene EUR sind 45,45 $ wert) und verkauft sie zu 1,82 EUR
-für 1 USD (100 ausgezahlte EUR sind 55,00 $ wert), vor der Provision.
+Wechsel-Verkaufsmarge von 10 %: Der Schalter kauft Euro zu
+2 × 1,10 = 2,20 EUR für 1 USD (100 erhaltene EUR sind 45,45 $ wert) und
+verkauft sie zu 2 / 1,10 = 1,8182 EUR für 1 USD (100 ausgezahlte EUR sind
+55,00 $ wert), vor der Provision.
 
 Der Unterschied zu den Odoo-Kursen ist die **Kursmarge** des Vorgangs
-(siehe *Buchhalterische Hinweise*). Bei einer Aktualisierung von einer
-Version vor 20.0.2.0.0 wird die Wechsel-Verkaufsmarge jeder Währung auf
+(siehe *Buchhalterische Hinweise*). Bei einer Aktualisierung von 20.0.1.x
+wird die Wechsel-Verkaufsmarge jeder Währung auf
 ihre Kassenkurs-Marge gesetzt: Prüfen Sie sie.
 
 Münzen und Scheine
@@ -166,8 +169,8 @@ Wer darf was
   ihre Belege nach und zeigen die Kurstafel. Sie können die Vorgänge lesen,
   aber nicht ändern.
 * **Kassenadministratoren** (Zugriff *Kassensystem*: *Administrator*)
-  sehen zusätzlich die Menüs *Kassensystem -> Aufträge -> Geldwechsel* und
-  *Kassensystem -> Berichtswesen -> Wechselregister* und die
+  sehen zusätzlich die Menüs *Kassensystem → Aufträge → Geldwechsel* und
+  *Kassensystem → Berichtswesen → Wechselregister* und die
   Ausweisdokumente der Kunden, können die Notiz eines Vorgangs bearbeiten
   und einen Vorgang stornieren.
 * Niemand kann einen Vorgang oder eine seiner Kontoauszugszeilen löschen.
@@ -305,7 +308,7 @@ Vorgang korrigiert: Ein Gegenvorgang würde die Provision erneut berechnen
 und die Scheine erneut runden, und eine Bargeldbewegung würde die
 Provision auf dem Provisionskonto lassen.
 
-Ein Kassenadministrator öffnet den Vorgang (*Kassensystem -> Aufträge ->
+Ein Kassenadministrator öffnet den Vorgang (*Kassensystem → Aufträge →
 Geldwechsel*), tippt auf **Vorgang stornieren** und bestätigt. Das ist
 möglich, solange die Sitzung des Vorgangs geöffnet ist und die Schublade
 die erhaltenen Scheine noch enthält (der Kunde erhält sie zurück). Zwei
@@ -384,7 +387,7 @@ Die Vorgänge prüfen
 Geldwechsel
 -----------
 
-*Kassensystem -> Aufträge -> Geldwechsel* (Kassenadministratoren) listet
+*Kassensystem → Aufträge → Geldwechsel* (Kassenadministratoren) listet
 die Vorgänge mit Referenz, Datum, Kasse, Kassierer, Kunde, den erhaltenen
 und ausgezahlten Scheinen, der Provision, der Kursmarge und dem Status.
 Die Liste öffnet sich mit dem Filter **Erledigt**; der Filter
@@ -392,7 +395,8 @@ Die Liste öffnet sich mit dem Filter **Erledigt**; der Filter
 *Ankauf von Fremdwährung*, *Verkauf von Fremdwährung*, *Kreuzwechsel*;
 Gruppierung nach Kasse, Sitzung, Kassierer, Vorgangsart, Status, Währung
 oder Datum. Die Pivot-Ansicht liefert Provisionen, Kursmargen und
-erhaltene Werte je Tag, Status und Währung.
+erhaltene Werte je Tag, Status und erhaltener Währung; gruppieren Sie sie
+bei Bedarf nach Kasse, Sitzung oder Kassierer.
 
 Die Vorgangsart ist aus Sicht des Geschäfts angegeben: *Ankauf von
 Fremdwährung*, wenn es Fremdwährungsscheine erhält, *Verkauf von
@@ -424,7 +428,7 @@ jeder Vorgang mit seiner Sitzung, seinen Beträgen, seiner Provision und
 seiner Kursmarge, dann die Summen, eine Zeile je Währung der Kassen, und
 die Liste der stornierten Vorgänge, die nicht gezählt werden. Aus einer
 Sitzung gedruckt, umfasst er die Vorgänge der Sitzung; über *Kassensystem
--> Berichtswesen -> Verkaufsdetails* für einen Zeitraum erstellt, umfasst
+→ Berichtswesen → Verkaufsdetails* für einen Zeitraum erstellt, umfasst
 er die Vorgänge dieses Zeitraums an den gewählten Kassen (allen, wenn
 keine gewählt ist), geöffnete Sitzungen eingeschlossen. Der Bericht
 *Währungsposition* von POS Multi-Currency Cash spiegelt die bewegten
@@ -433,7 +437,7 @@ Scheine wider.
 Wechselregister
 ---------------
 
-*Kassensystem -> Berichtswesen -> Wechselregister*
+*Kassensystem → Berichtswesen → Wechselregister*
 (Kassenadministratoren) listet jeden Vorgang in der Reihenfolge seiner
 Referenz, einschließlich der stornierten (ausgegraut, mit ihrem Status),
 mit Kassierer, Vorgangsart, Beträgen, Kurs, Provision, Kursmarge,
@@ -453,7 +457,7 @@ Kurstafel als PDF
 
 Die oben beschriebene Kurstafel wird auch als PDF (*Wechselkurse*)
 gedruckt, mit **Wechselkurse drucken** in den Einstellungen oder über das
-Menü *Drucken* der Kassen (Listenansicht von *Kassensystem ->
+Menü *Drucken* der Kassen (Listenansicht von *Kassensystem →
 Dashboard*).
 
 Buchhalterische Hinweise

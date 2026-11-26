@@ -30,7 +30,7 @@
                  t-out="extra_data['receipt_header']"/>
             <div class="text-center text-large fw-bold">CURRENCY EXCHANGE</div>
             <div class="text-center" t-if="extra_data.get('licence')">
-                Licence No. <span t-out="extra_data['licence']"/>
+                License No. <span t-out="extra_data['licence']"/>
             </div>
             <div class="text-center text-large nm-exchange-operation-type" t-out="extra_data['operation_type']"/>
             <div class="text-center">
@@ -93,7 +93,7 @@
                         </div>
                         <div class="text-center text-large fw-bold">EXCHANGE RATES</div>
                         <div class="text-center" t-if="extra_data.get('licence')">
-                            Licence No. <span t-out="extra_data['licence']"/>
+                            License No. <span t-out="extra_data['licence']"/>
                         </div>
                         <div class="text-center" t-out="extra_data['date']"/>
                         <t t-foreach="extra_data['rows']" t-as="row">

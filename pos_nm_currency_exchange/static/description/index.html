@@ -3,7 +3,7 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">POS Currency Exchange</h2>
         <h3 class="oe_slogan">Buy and sell foreign notes at your Point of Sale</h3>
         <p class="oe_mt8" style="text-align: center;">
-            A currency exchange counter inside the Odoo Point of Sale: the customer brings notes
+            A currency exchange counter inside the Odoo 20 Point of Sale: the customer brings notes
             in one currency and leaves with another, without buying a product. Built on the
             drawers, cash rates and coins and notes of <b>POS Multi-Currency Cash</b>.
         </p>
@@ -71,11 +71,12 @@
                 <h4 class="oe_mb8"><b>A Receipt for the Customer</b></h4>
                 <p class="oe_mt8">
                     Every operation prints an exchange receipt on the receipt printer of the point
-                    of sale: the header and footer of the point of sale, your exchange licence
+                    of sale: the header and footer of the point of sale, your exchange license
                     number, purchase or sale of foreign currency, reference, date and time,
-                    cashier, customer, notes received, notes handed back, rate applied and
-                    commission. Reprint it from the register (marked COPY), print it in PDF or
-                    send it by e-mail from the back office.
+                    cashier, customer and, when recorded, the type of identity document with the
+                    last 4 characters of its number, notes received, notes handed back, rate
+                    applied, commission and note. Reprint it from the register (marked COPY), print
+                    it in PDF or send it by email from the back office.
                 </p>
             </div>
             <div class="col-md-6" style="padding-left: 16px; padding-right: 16px; margin-bottom: 24px;">
@@ -87,7 +88,9 @@
                     Each operation posts two lines on the cash journal of the session, in the
                     currency of each side: the drawer of every currency is updated, and the
                     closing control of POS Multi-Currency Cash lists the operations under the
-                    cash moves of each currency. The register refuses to hand back more than the
+                    cash moves of each currency, plus a Currency Exchange block with the number
+                    of operations, each operation, the commissions, the rate margin and the
+                    cancelled operations. The register refuses to hand back more than the
                     drawer holds, in every currency. The commission lands on a dedicated income
                     account.
                 </p>
@@ -119,10 +122,13 @@
                 <p class="oe_mt8">
                     Require a customer above a value, or for every operation, and an identity
                     document above another value. Operations of the same customer over a period
-                    of days can be added up. The document is entered at the register, refused
-                    when expired (or marked without expiry date), kept on the operation and
-                    visible to managers only: it helps you apply the identification rules of
-                    your country.
+                    of days can be added up. The document is entered at the register and refused
+                    when expired (a document without expiry date is accepted with
+                    <i>No expiry date</i> ticked). The full document is kept on the operation and
+                    visible to POS Administrators only; at the register the cashier sees its type,
+                    issuing country, expiry date and the last 4 characters of its number, and the
+                    receipt prints its type and those 4 characters. It helps you apply the
+                    identification rules of your country.
                 </p>
             </div>
         </div>
@@ -137,10 +143,11 @@
         </div>
         <h4 class="oe_mb8" style="margin-top: 32px;"><b>Mistakes Undone Cleanly</b></h4>
         <p class="oe_mt8">
-            A manager cancels an operation while the session is open: two opposite lines
-            put both drawers and the commission account back where they were. Operations
-            cannot be edited or deleted, cashiers only read them, and the references
-            follow each other without gap.
+            A POS Administrator cancels an operation while the session is open and the
+            drawer still holds the notes received: two opposite lines put both drawers and
+            the commission account back where they were. Operations cannot be deleted nor
+            edited, except their note by a POS Administrator; cashiers only read them, and
+            the references follow each other without gap.
         </p>
         <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
             <img src="screenshot_exchange_cancelled.png" alt="Cancelled exchange operation with its status and the cancellation in the chatter" style="display: block; width: 100%; height: auto;"/>
@@ -160,7 +167,7 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">Know Your Exchange Business</h2>
         <h4 class="oe_mb8"><b>Every Operation on Record</b></h4>
         <p class="oe_mt8">
-            Point of Sale &gt; Orders &gt; Currency Exchanges (POS Administrators) lists every
+            Point of Sale &rarr; Orders &rarr; Currency Exchanges (POS Administrators) lists every
             operation with its point of sale, session, cashier, customer, notes received,
             notes handed back, commission, rate margin and status. Each record links to its
             statement lines, and keeps a chatter of its changes.
@@ -170,8 +177,9 @@
         </div>
         <h4 class="oe_mb8" style="margin-top: 32px;"><b>Commissions at a Glance</b></h4>
         <p class="oe_mt8">
-            A pivot of the commissions, rate margins and values received, per currency, per
-            day, per point of sale or per cashier. The session form carries the number of
+            A pivot of the commissions, rate margins and values received, per day, status
+            and currency received, which you can regroup per point of sale, session or
+            cashier. The session form carries the number of
             operations and the commissions of the session.
         </p>
         <div style="border: 1px solid #dfe3ea; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); background: #ffffff; line-height: 0; margin-bottom: 16px;">
@@ -188,7 +196,7 @@
         </div>
         <h4 class="oe_mb8" style="margin-top: 32px;"><b>The Exchange Register</b></h4>
         <p class="oe_mt8">
-            Point of Sale &gt; Reporting &gt; Exchange Register lists every operation in the
+            Point of Sale &rarr; Reporting &rarr; Exchange Register (POS Administrators) lists every operation in the
             order of its reference, cancelled ones included, with the customer and the
             identity document. Export it to Excel, or print it in PDF for a period with the
             totals per currency.
@@ -199,7 +207,7 @@
         <h4 class="oe_mb8" style="margin-top: 32px;"><b>Settings per Point of Sale</b></h4>
         <p class="oe_mt8">
             Enable the counter, pick the income account of the commissions, print your
-            exchange licence number on the receipts and set the identification rules: the
+            exchange license number on the receipts and set the identification rules: the
             register then asks for a customer, and for an identity document, before
             confirming the operation.
         </p>
@@ -214,9 +222,9 @@
         <h2 class="oe_slogan" style="color: #4A6BB5;">How It Works</h2>
         <ol>
             <li><b>Configure</b>: install POS Multi-Currency Cash, list the currencies on the cash payment method, set the sell margin and the commissions on each cash currency, the commission account and the identification rules on the point of sale.</li>
-            <li><b>Exchange</b>: at the register, menu &gt; Currency Exchange, currencies, amount received or handed back, customer and identity document if required, Confirm. The receipt prints.</li>
-            <li><b>Correct</b>: a manager cancels a mistaken operation while the session is open.</li>
-            <li><b>Close</b>: the closing control shows the notes received and handed back in each drawer; the commission is already on its income account.</li>
+            <li><b>Exchange</b>: at the register, menu &rarr; Currency Exchange, currencies, amount received or handed back, customer and identity document if required, Confirm. The receipt prints.</li>
+            <li><b>Correct</b>: a POS Administrator cancels a mistaken operation while the session is open and the drawer still holds the notes received.</li>
+            <li><b>Close</b>: the closing control lists the notes received and handed back in the cash moves of each drawer, and sums the operations up in a Currency Exchange block; the commission is already on its income account.</li>
             <li><b>Review</b>: Currency Exchanges, the pivot of the commissions and rate margins, the Exchange Register, the Currency Position report and the Sales Details report.</li>
         </ol>
     </div>
@@ -244,7 +252,7 @@
         <div>
             <ul>
                 <li><b>Odoo Version:</b> 20.0, Odoo Community and Enterprise</li>
-                <li><b>Dependencies:</b> Point of Sale (point_of_sale), <a href="https://apps.odoo.com/apps/modules/20.0/pos_nm_multicurrencies"><b>POS Multi-Currency Cash</b></a> (pos_nm_multicurrencies) <b>20.0.2.1.0 or later</b>, included in the price shown on the Odoo Apps Store (already bought it? Contact us at <a href="mailto:odoo@natimai.solutions?subject=Already%20own%20POS%20Multi-Currency%20Cash%20-%20POS%20Currency%20Exchange">odoo@natimai.solutions</a> before buying this module); 20.0.2.1.1 or later shows the opening of the main Cash block of the closing popup correctly</li>
+                <li><b>Dependencies:</b> Point of Sale (point_of_sale), <a href="https://apps.odoo.com/apps/modules/20.0/pos_nm_multicurrencies"><b>POS Multi-Currency Cash</b></a> (pos_nm_multicurrencies) <b>20.0.2.1.0 or later</b>, included in the price shown on the Odoo Apps Store: <b>178 EUR in total</b>, 59 EUR for this module plus 119 EUR for POS Multi-Currency Cash (already bought it? Contact us at <a href="mailto:odoo@natimai.solutions?subject=Already%20own%20POS%20Multi-Currency%20Cash%20-%20POS%20Currency%20Exchange">odoo@natimai.solutions</a> before buying this module); 20.0.2.1.1 or later shows the opening of the main Cash block of the closing popup correctly</li>
                 <li><b>License:</b> OPL-1 (Odoo Proprietary License)</li>
                 <li><b>Translations:</b> English, French, German and Spanish included.</li>
                 <li><b>Quality:</b> automated tests of the quote, the operation, its accounting, its cancellation, the identification rules and the reports, plus end-to-end tours of the register.</li>
@@ -265,7 +273,8 @@
         </div>
         <div>
             <h4><b>Do I need to buy POS Multi-Currency Cash separately?</b></h4>
-            <p>No. It is included in the price shown on the Odoo Apps Store, and Add to Cart adds both
+            <p>No. It is included in the price shown on the Odoo Apps Store: you pay 178 EUR in total,
+            59 EUR for this module plus 119 EUR for POS Multi-Currency Cash, and Add to Cart adds both
             modules. If you have already bought POS Multi-Currency Cash, contact us at
             <a href="mailto:odoo@natimai.solutions?subject=Already%20own%20POS%20Multi-Currency%20Cash%20-%20POS%20Currency%20Exchange">odoo@natimai.solutions</a>
             before buying this module.</p>
@@ -274,7 +283,7 @@
             <h4><b>Which rates are applied?</b></h4>
             <p>The notes received are bought at the cash rate of POS Multi-Currency Cash: the rate of Odoo
             with its margin, or the fixed rate you set. The notes handed back are sold at the rate of
-            Odoo less the exchange sell margin of their currency, or with fixed rates at the lower of
+            Odoo divided by 1 + the exchange sell margin of their currency, or with fixed rates at the lower of
             the fixed rate and the fixed change rate. Then the commission of the currency applies.</p>
         </div>
         <div>
@@ -292,15 +301,18 @@
         </div>
         <div>
             <h4><b>How do I correct a mistaken operation?</b></h4>
-            <p>A manager opens it and presses Cancel Operation while the session is open: two opposite
+            <p>A POS Administrator opens it and presses Cancel Operation while the session is open and
+            the drawer still holds the notes received: two opposite
             lines give the customer the notes back and take back the notes handed back, and the
             commission is reversed. Operations cannot be deleted, so the register stays complete.</p>
         </div>
         <div>
             <h4><b>Can my cashiers see or change the operations?</b></h4>
             <p>Cashiers record operations at the register, reprint the receipts of the session and show
-            the rate board. The Currency Exchanges and Exchange Register menus, the identity documents
-            and the cancellation are for POS Administrators.</p>
+            the rate board. The Currency Exchanges and Exchange Register menus, the full identity
+            documents, the note of an operation and the cancellation are for POS Administrators; at the
+            register the cashier only sees the type, issuing country, expiry date and last 4 characters
+            of the document of the selected customer.</p>
         </div>
         <div>
             <h4><b>What do I get with my purchase?</b></h4>
@@ -323,7 +335,7 @@
                 address - answered within 48 hours.
             </p>
             <p>
-                <b>www.natimai.solutions</b>
+                <a href="https://www.natimai.solutions"><b>https://www.natimai.solutions</b></a>
             </p>
         </div>
     </div>

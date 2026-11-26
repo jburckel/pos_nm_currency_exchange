@@ -204,7 +204,7 @@ class PosNmExchange(models.Model):
                                  help='Notes handed to the customer.')
     value_out = fields.Monetary(string='Handed Value', currency_field='company_currency_id', readonly=True,
                                 help='Value of the notes handed back at the sell rate of the counter (the '
-                                     'rate of Odoo less the exchange sell margin, or the lower fixed rate).')
+                                     'rate of Odoo divided by 1 + the exchange sell margin, or the lower fixed rate).')
     commission = fields.Monetary(string='Commission', currency_field='company_currency_id', readonly=True,
                                  help='Received value minus handed value: the commission of the counter, '
                                       'rounding of the notes handed back included.')

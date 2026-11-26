@@ -29,8 +29,9 @@ l'opération sans vente :
   leur devise et les billets rendus sortent de l'autre, sur le journal
   d'espèces de la session, avec la commission comptabilisée sur un compte
   de produits dédié ;
-* un responsable peut annuler une opération erronée tant que la session est
-  ouverte ;
+* un administrateur du Point de Vente peut annuler une opération erronée
+  tant que la session est ouverte et que le tiroir contient encore les
+  billets reçus ;
 * les opérations apparaissent dans le contrôle de clôture, dans le rapport
   *Position de change* et dans le rapport *Détails des ventes*, dans une
   liste avec un tableau croisé des commissions et des marges de taux, et
@@ -43,8 +44,9 @@ Prérequis
 
 * L'application **Point de Vente** (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 ou
-  plus récent**, inclus dans le prix affiché sur l'Odoo Apps Store (vous
-  l'avez déjà acheté ? Contactez-nous à odoo@natimai.solutions avant
+  plus récent**, inclus dans le prix affiché sur l'Odoo Apps Store : 178 EUR
+  au total, 59 EUR pour ce module plus 119 EUR pour POS Multi-Currency Cash
+  (vous l'avez déjà acheté ? Contactez-nous à odoo@natimai.solutions avant
   d'acheter ce module), avec au moins une
   devise étrangère sur le mode de paiement espèces du point de vente (voir
   son guide : *Accepter une devise en espèces*). Une version plus
@@ -63,7 +65,7 @@ Configuration
 Activer le guichet
 ------------------
 
-Allez dans *Point de Vente -> Configuration -> Paramètres*, sélectionnez
+Allez dans *Point de Vente → Configuration → Paramètres*, sélectionnez
 votre point de vente et repérez la section **Opération de change** :
 
 * **Opération de change** (activée par défaut) : affiche les entrées du
@@ -92,7 +94,7 @@ Les seuils à 0 ne sont jamais appliqués.
 Commissions et marge de vente par devise
 ----------------------------------------
 
-Allez dans *Point de Vente -> Configuration -> Devises en espèces* et
+Allez dans *Point de Vente → Configuration → Devises en espèces* et
 ouvrez la ligne de la devise. Le groupe *Opération de change* contient
 quatre valeurs, les montants étant dans la devise du point de vente :
 
@@ -129,12 +131,12 @@ unité de la devise du point de vente, comme dans POS Multi-Currency Cash :
 
 Exemple, point de vente en USD, taux d'Odoo de 2 EUR pour 1 USD, Marge du
 taux de caisse et Marge de vente de change de 10 % : le guichet achète les
-euros à 2,20 EUR pour 1 USD (100 EUR reçus valent 45,45 $) et les vend à
-1,82 EUR pour 1 USD (100 EUR rendus valent 55,00 $), avant la commission.
+euros à 2 × 1,10 = 2,20 EUR pour 1 USD (100 EUR reçus valent 45,45 $) et
+les vend à 2 / 1,10 = 1,8182 EUR pour 1 USD (100 EUR rendus valent
+55,00 $), avant la commission.
 
 L'écart avec les taux d'Odoo est la **Marge de taux** de l'opération (voir
-*Notes comptables*). Lors d'une mise à jour depuis une version antérieure
-à 20.0.2.0.0, la Marge de vente de change de chaque devise prend la valeur
+*Notes comptables*). Lors d'une mise à jour depuis 20.0.1.x, la Marge de vente de change de chaque devise prend la valeur
 de sa Marge du taux de caisse : vérifiez-la.
 
 Pièces et billets
@@ -168,8 +170,8 @@ Qui peut faire quoi
   opérations à la caisse, réimpriment leurs tickets et affichent le tableau
   des taux. Ils peuvent lire les opérations mais pas les modifier.
 * Les **administrateurs du Point de Vente** (accès *Point de Vente* :
-  *Administrateur*) voient en plus les menus *Point de Vente -> Commandes
-  -> Opérations de change* et *Point de Vente -> Analyse -> Registre de
+  *Administrateur*) voient en plus les menus *Point de Vente → Commandes
+  → Opérations de change* et *Point de Vente → Analyse → Registre de
   change* et les pièces d'identité des clients, peuvent modifier la note
   d'une opération et annuler une opération.
 * Personne ne peut supprimer une opération ni l'une de ses lignes de
@@ -304,8 +306,8 @@ opération : une opération inverse prélèverait à nouveau la commission et
 arrondirait à nouveau les billets, et un mouvement d'espèces laisserait la
 commission sur le compte de commission.
 
-Un administrateur du Point de Vente ouvre l'opération (*Point de Vente ->
-Commandes -> Opérations de change*), appuie sur **Annuler l'opération**,
+Un administrateur du Point de Vente ouvre l'opération (*Point de Vente →
+Commandes → Opérations de change*), appuie sur **Annuler l'opération**,
 puis confirme. C'est possible tant que la session de l'opération est
 ouverte et que le tiroir contient encore les billets reçus (le client les
 récupère). Deux lignes de relevé exactement opposées aux lignes d'origine
@@ -385,7 +387,7 @@ Consulter les opérations
 Opérations de change
 --------------------
 
-*Point de Vente -> Commandes -> Opérations de change* (administrateurs du
+*Point de Vente → Commandes → Opérations de change* (administrateurs du
 Point de Vente) liste les opérations avec leur référence, leur date, le
 point de vente, le caissier, le client, les billets reçus et rendus, la
 commission, la marge de taux et le statut. La liste s'ouvre avec le filtre
@@ -394,7 +396,8 @@ Autres filtres : *Aujourd'hui*, *Avec client*, *Achat de devises*, *Vente
 de devises*, *Change croisé* ; regroupement par point de vente, session,
 caissier, type d'opération, statut, devise ou date. Le tableau croisé
 donne les commissions, marges de taux et valeurs reçues par jour, statut
-et devise.
+et devise reçue ; regroupez-le par point de vente, session ou caissier au
+besoin.
 
 Le type d'opération est vu du commerce : *Achat de devises* lorsqu'il
 reçoit des billets étrangers, *Vente de devises* lorsqu'il rend des
@@ -425,7 +428,7 @@ change* : chaque opération avec sa session, ses montants, sa commission et
 sa marge de taux, puis les totaux, une ligne par devise des points de
 vente, et la liste des opérations annulées, qui ne sont pas comptées.
 Imprimé depuis une session, il couvre les opérations de la session ; lancé
-depuis *Point de Vente -> Analyse -> Détails des ventes* pour une période,
+depuis *Point de Vente → Analyse → Détails des ventes* pour une période,
 il couvre les opérations datées de cette période sur les points de vente
 sélectionnés (tous lorsqu'aucun n'est sélectionné), sessions ouvertes
 comprises. Le rapport *Position de change* de POS Multi-Currency Cash
@@ -434,7 +437,7 @@ reflète les billets déplacés.
 Registre de change
 ------------------
 
-*Point de Vente -> Analyse -> Registre de change* (administrateurs du
+*Point de Vente → Analyse → Registre de change* (administrateurs du
 Point de Vente) liste chaque opération dans l'ordre de sa référence, y
 compris les opérations annulées (grisées, avec leur statut), avec le
 caissier, le type d'opération, les montants, le taux, la commission, la
@@ -455,7 +458,7 @@ Tableau des taux en PDF
 Le tableau des taux décrit plus haut s'imprime aussi en PDF (*Taux de
 change*) avec **Imprimer les taux de change** dans les paramètres, ou
 depuis le menu *Imprimer* des points de vente (vue liste de *Point de
-Vente -> Tableau de bord*).
+Vente → Tableau de bord*).
 
 Notes comptables
 ================
