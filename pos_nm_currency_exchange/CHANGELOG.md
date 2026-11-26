@@ -7,6 +7,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Version 20.0.3.0.0 in progress: the exchange office vertical (see
+[`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)). Lots 1
+to 5 are done. Upgrade with
+`-u pos_nm_currency_exchange`: the migration freezes the licence on the
+existing operations and chains them into the register hash, in order.
+
+### Added
+- **Exchange Offices** (*Point of Sale -> Configuration*): the counters
+  (points of sale) of one licensed place of business. The office carries
+  the licence, the address, the compliance officer and the identification
+  rules, which replace those of its counters. *Apply Rates to the
+  Counters* copies the cash rate, the roundings of the coins and notes,
+  the sell margin and the commissions of every currency of the reference
+  counter to the others; *Rate Differences* lists what differs. The
+  counters of an office use the currency of its company.
+- **Origin of funds** threshold: above it the customer declares the origin
+  of the funds (and its details for *Other*); purpose of the operation and
+  *Politically exposed person* asked in the popup too. Frozen on the
+  operation with the address of the customer.
+- **Review** threshold: the operation is flagged *To Review* (never
+  refused) and an activity goes to the compliance officer of the office;
+  a declared politically exposed person is flagged too. *Compliance*
+  status (To Review, Reviewed, Reported) and note, set by POS
+  Administrators, filter *To Review*.
+- **Inalterable register**: every operation is hashed (SHA-256) with the
+  hash of the previous operation of the company, and its cancellation
+  too. *Check Integrity* (Print Register) finds the first altered
+  operation. A hashed operation cannot be changed, even with sudo.
+- **Register closings** (*Close Period* in Print Register, menu *Exchange
+  Register Closings*): the register of a period, for an office or the
+  company, is closed once its sessions are closed: counts, commissions,
+  last reference and hash frozen, PDF attached. An operation of a closed
+  period cannot be cancelled; periods cannot overlap; closings are
+  gapless (`EXR/YYYY/NNNN`) and cannot be changed or deleted.
+- The PDF register gains the office, its address and licence, the
+  customer address, nationality and date of birth, the declarations, the
+  compliance status and the hash of each operation.
+- **Rate board for the customers**: a full-screen page per counter
+  (`/pos_nm_exchange/board/<id>`, with the access token of the point of
+  sale) and per office (`/pos_nm_exchange/office_board/<id>`, own token,
+  *New Address* to revoke it), for a TV, a tablet or any screen. It reloads
+  the rates by itself (every 60 s, *Board Refresh* on the office) and keeps
+  the last rates on screen when the connection is lost. *Rate Board on the
+  Customer Display*: the customer display of Odoo shows it while no order
+  is in progress.
+- **Track the Notes by Denomination** (setting of the point of sale): for
+  the foreign cash currencies with coins and notes, the exchange popup asks
+  the notes received and handed back by denomination, which must add up to
+  the amounts of the operation, and proposes the notes handed back from the
+  stock of the drawer, the largest first. A shortfall of the stock is only
+  a warning (the cash sales move the drawer without denominations); an
+  amount the coins and notes cannot make up is shown as an error.
+- **Note moves**: every operation records the coins and notes received and
+  handed back by denomination, its cancellation the opposite ones; never
+  edited nor deleted (*Point of Sale -> Reporting -> Note Moves*, and a
+  button on the operation). The exchange receipt lists the notes under the
+  amounts.
+- **Note Stock** report (*Point of Sale -> Reporting*): per session,
+  currency and denomination, the opening count, the notes received and
+  handed back, the stock, the closing count and the difference. The
+  closing popup gets the expected quantity of each coin and note.
+- **Note Transfers** (*Point of Sale -> Orders*): notes moved from the
+  drawer of one counter of an office to another counter of the same
+  office. *Send* posts a cash out on the open session of the sending
+  counter and *Receive* a cash in of the same value on the open session of
+  the receiving counter, both on the new *Notes in Transit Account* of the
+  office (a current assets account): its balance is the value of the
+  notes in transit. Gapless references `TRF/YYYY/NNNNN` given at sending;
+  the drawer must hold the amount; with *Track the Notes by Denomination*
+  the notes sent are counted by denomination and move the note stock of
+  both drawers (counted at receiving when only the receiving counter
+  tracks them). A transfer worth less than a cent of the company currency
+  is refused. A transfer in transit can be cancelled while the sending
+  session is open (by a POS Administrator or the cashier who sent it); its
+  state, number, value, sessions and lines are only set by sending,
+  receiving and cancelling, and a transfer sent cannot be edited, but its
+  note, nor its cash moves deleted. *Send Notes* and *Receive Notes* in the
+  menu of the register (counters of an office with another enabled
+  counter); transfer slip printed at the register.
+- **Drawers** page of the office: expected cash of every currency at each
+  counter with an open session, operations of the day and their
+  commissions, notes in transit per currency and their total value;
+  *Transfers* smart button.
+
 ## [20.0.2.0.0] - 2026-11-25
 
 Requires `pos_nm_multicurrencies` 20.0.2.1.0 or later (the installation and

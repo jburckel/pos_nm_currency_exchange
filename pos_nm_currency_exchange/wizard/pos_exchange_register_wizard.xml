@@ -8,10 +8,21 @@
                 <group>
                     <field name="date_start"/>
                     <field name="date_stop"/>
-                    <field name="config_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="office_id" options="{'no_create': True}"/>
+                    <field name="config_ids" widget="many2many_tags" options="{'no_create': True}"
+                           invisible="office_id"/>
                 </group>
+                <div class="text-muted">
+                    Close Period freezes the figures of the period with the hash of its last operation and attaches the
+                    PDF register; the operations of a closed period can no longer be cancelled.
+                </div>
                 <footer>
                     <button name="action_print" string="Print" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button name="action_close_period" string="Close Period" type="object"
+                            confirm="Close the register of this period? The closing cannot be undone."/>
+                    <button name="action_check_integrity" string="Check Integrity" type="object"/>
                     <button class="btn-secondary" special="cancel" data-hotkey="x"/>
                 </footer>
             </form>

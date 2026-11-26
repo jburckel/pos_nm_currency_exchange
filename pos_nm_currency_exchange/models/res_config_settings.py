@@ -41,5 +41,29 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
     )
 
+    pos_nm_exchange_office_id = fields.Many2one(
+        related='pos_config_id.nm_exchange_office_id',
+        readonly=False,
+    )
+    pos_nm_exchange_origin_threshold = fields.Monetary(
+        related='pos_config_id.nm_exchange_origin_threshold',
+        readonly=False,
+    )
+    pos_nm_exchange_review_threshold = fields.Monetary(
+        related='pos_config_id.nm_exchange_review_threshold',
+        readonly=False,
+    )
+    pos_nm_exchange_board_on_display = fields.Boolean(
+        related='pos_config_id.nm_exchange_board_on_display',
+        readonly=False,
+    )
+    pos_nm_exchange_track_notes = fields.Boolean(
+        related='pos_config_id.nm_exchange_track_notes',
+        readonly=False,
+    )
+    pos_nm_exchange_board_url = fields.Char(
+        related='pos_config_id.nm_exchange_board_url',
+    )
+
     def action_nm_print_rate_board(self):
         return self.pos_config_id.action_nm_print_rate_board()

@@ -20,6 +20,24 @@
                onClick="() => this.pos.nmExchangeRates()"
                btnLabel.translate="Exchange Rates"
             />
+            <t t-if="this.pos.nmShowNoteStock"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'payments'"
+               onClick="() => this.pos.nmNoteStock()"
+               btnLabel.translate="Note Stock"
+            />
+            <t t-if="this.pos.nmShowTransfers"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'send'"
+               onClick="() => this.pos.nmSendNotes()"
+               btnLabel.translate="Send Notes"
+            />
+            <t t-if="this.pos.nmShowTransfers"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'download'"
+               onClick="() => this.pos.nmReceiveNotes()"
+               btnLabel.translate="Receive Notes"
+            />
         </xpath>
     </t>
 </templates>

@@ -55,9 +55,15 @@
                         <td class="text-start" t-out="extra_data['label_in']"/>
                         <td class="text-end font-monospace" t-out="extra_data['amount_in']" />
                     </tr>
+                    <tr t-if="extra_data.get('notes_in')" class="nm-exchange-notes-in">
+                        <td colspan="2" class="text-end text-small" t-out="extra_data['notes_in']"/>
+                    </tr>
                     <tr class="text-bold fw-bold">
                         <td class="text-start" t-out="extra_data['label_out']"/>
                         <td class="text-end font-monospace" t-out="extra_data['amount_out']" />
+                    </tr>
+                    <tr t-if="extra_data.get('notes_out')" class="nm-exchange-notes-out">
+                        <td colspan="2" class="text-end text-small" t-out="extra_data['notes_out']"/>
                     </tr>
                     <tr>
                         <td class="text-start">Rate applied</td>
@@ -120,6 +126,60 @@
                         <div class="text-center text-small mt-3">
                             Rates before the commission; the amounts include it and are rounded to the notes and coins.
                         </div>
+                        <t t-call="point_of_sale.company_info_receipt"/>
+                    </div>
+                </body>
+            </html>
+        </template>
+
+        <!-- Transfer slip printed from the register when the notes are sent
+            and when they are received: extra_data is
+            pos.nm.exchange.transfer._nm_transfer_data(). -->
+        <template id="pos_exchange_transfer_receipt">
+            <html id="pos-receipt">
+                <head>
+                    <meta charset="UTF-8"></meta>
+                    <t t-call="point_of_sale.pos_order_receipt_style" />
+                </head>
+                <body>
+                    <div class="pos-receipt">
+                        <div class="text-center text-large fw-bold">NOTE TRANSFER</div>
+                        <div class="text-center">
+                            <span t-out="extra_data['name']"/> - <span t-out="extra_data['date']"/>
+                        </div>
+                        <div class="text-center text-large fw-bold nm-transfer-state" t-out="extra_data['state_label']"/>
+                        <table class="w-100 mt-3">
+                            <tbody>
+                                <tr>
+                                    <td class="text-start">From</td>
+                                    <td class="text-end" t-out="extra_data['config_from']"/>
+                                </tr>
+                                <tr>
+                                    <td class="text-start">To</td>
+                                    <td class="text-end" t-out="extra_data['config_to']"/>
+                                </tr>
+                                <tr class="text-large fw-bold">
+                                    <td class="text-start">Amount</td>
+                                    <td class="text-end font-monospace" t-out="extra_data['amount_formatted']"/>
+                                </tr>
+                                <tr t-if="extra_data.get('notes_label')" class="nm-transfer-notes">
+                                    <td colspan="2" class="text-end text-small" t-out="extra_data['notes_label']"/>
+                                </tr>
+                                <tr t-if="extra_data.get('sent_date')">
+                                    <td class="text-start">Sent on</td>
+                                    <td class="text-end" t-out="extra_data['sent_date']"/>
+                                </tr>
+                                <tr t-if="extra_data.get('received_date')">
+                                    <td class="text-start">Received on</td>
+                                    <td class="text-end" t-out="extra_data['received_date']"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="text-center mt-2" t-if="extra_data.get('cashier_name')">
+                            Cashier: <span t-out="extra_data['cashier_name']"/>
+                        </div>
+                        <div t-if="extra_data.get('note')" class="text-center mt-2" t-out="extra_data['note']"/>
+                        <div class="mt-4">Signature:</div>
                         <t t-call="point_of_sale.company_info_receipt"/>
                     </div>
                 </body>

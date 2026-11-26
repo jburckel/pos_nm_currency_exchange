@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.ReceiveNotesPopup">
+        <Dialog title.translate="Receive Notes" size="'lg'" contentClass="'nm-receive-notes'">
+            <div t-if="this.state.error" class="alert alert-danger py-2 nm-transfer-error" role="alert" t-out="this.state.error"/>
+            <div t-if="this.state.loaded and !this.state.transfers.length" class="text-muted nm-transfer-empty">
+                No notes in transit to this counter.
+            </div>
+            <table t-elif="this.state.transfers.length" class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Sent</th>
+                        <th>From</th>
+                        <th class="text-end">Amount</th>
+                        <th>Notes</th>
+                        <th/>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-foreach="this.state.transfers" t-as="transfer" t-key="transfer.id"
+                        class="nm-transfer-incoming" t-att-data-name="transfer.name">
+                        <td>
+                            <t t-out="transfer.name"/>
+                            <div t-if="transfer.note" class="small text-muted nm-transfer-incoming-note" t-out="transfer.note"/>
+                        </td>
+                        <td t-out="transfer.sent_date"/>
+                        <td t-out="transfer.config_from"/>
+                        <td class="text-end fw-bold nm-transfer-incoming-amount" t-out="transfer.amount_formatted"/>
+                        <td class="small nm-transfer-incoming-notes" t-out="transfer.notes_label"/>
+                        <td class="text-end">
+                            <button class="btn btn-primary nm-transfer-receive" type="button"
+                                    t-att-disabled="this.state.receiving" t-on-click="() => this.receive(transfer)">
+                                Receive
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <fieldset t-if="this.state.counting" class="d-flex flex-column gap-1 nm-transfer-receive-notes"
+                      t-att-disabled="this.state.receiving">
+                <div class="fw-bold" t-out="this.state.counting.name"/>
+                <div class="small text-muted">
+                    The sending counter did not count these notes by denomination: count them before receiving them.
+                </div>
+                <t t-call="pos_nm_currency_exchange.CurrencyExchangeNotes" title.translate="Notes received"
+                   notes="this.notesGrid" quantities="this.state.notes" total="this.notesTotal" checkStock="false"/>
+                <div t-if="this.notesError" class="text-danger small nm-transfer-notes-error" t-out="this.notesError"/>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-secondary nm-transfer-receive-back" type="button"
+                            t-on-click="() => this.state.counting = null">Back</button>
+                    <button class="btn btn-primary nm-transfer-receive-confirm" type="button"
+                            t-att-disabled="this.state.receiving or this.notesError"
+                            t-on-click="() => this.receive(this.state.counting)">Confirm Receipt</button>
+                </div>
+            </fieldset>
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary btn-lg nm-transfer-refresh" t-att-disabled="this.state.receiving"
+                        t-on-click="() => this.loadTransfers()">Refresh</button>
+                <button class="btn btn-secondary btn-lg" t-att-disabled="this.state.receiving" t-on-click="() => this.props.close()">Close</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

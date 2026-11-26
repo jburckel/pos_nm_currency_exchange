@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Rate board on a screen facing the customers: a standalone page
+        (no Odoo assets), refreshed by static/board/rate_board.js. -->
+    <template id="rate_board_page" name="Exchange Rate Board">
+        &lt;!DOCTYPE html&gt;
+        <html t-att-lang="request.env.lang and request.env.lang.replace('_', '-') or 'en'">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex"/>
+                <title>Exchange Rates</title>
+                <link rel="stylesheet" href="/pos_nm_currency_exchange/static/board/rate_board.css"/>
+            </head>
+            <body t-att-class="'nm-board nm-board-display' if display else 'nm-board'"
+                  t-att-data-url="data_url" t-att-data-refresh="refresh">
+                <header class="nm-board-header">
+                    <div>
+                        <h1 class="nm-board-title" t-out="board['config_name']"/>
+                        <div class="nm-board-address" t-if="board.get('address')" t-out="board['address']"/>
+                    </div>
+                    <div class="nm-board-clock">
+                        <div class="nm-board-time" id="nm-board-time"/>
+                        <div class="nm-board-licence" t-if="board['licence']">Licence <span t-out="board['licence']"/></div>
+                    </div>
+                </header>
+                <table class="nm-board-table">
+                    <thead>
+                        <tr>
+                            <th class="nm-col-currency">Currency</th>
+                            <th class="nm-col-rate">We buy</th>
+                            <th class="nm-col-rate">We sell</th>
+                            <th class="nm-col-amount">You receive for</th>
+                            <th class="nm-col-amount">You pay for</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nm-board-rows">
+                        <tr t-foreach="board['rows']" t-as="row">
+                            <td class="nm-col-currency"><span class="nm-code" t-out="row['currency']"/></td>
+                            <td class="nm-col-rate" t-out="row['buy_rate_label']"/>
+                            <td class="nm-col-rate" t-out="row['sell_rate_label']"/>
+                            <td class="nm-col-amount"><small t-out="row['amount_formatted']"/><br/><t t-out="row['buy_amount_formatted']"/></td>
+                            <td class="nm-col-amount"><small t-out="row['amount_formatted']"/><br/><t t-out="row['sell_amount_formatted']"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <ul class="nm-board-commissions" id="nm-board-commissions">
+                    <li t-foreach="board['rows']" t-as="row"><strong t-out="row['currency']"/>: <t t-out="row['commission_label']"/></li>
+                </ul>
+                <footer class="nm-board-footer">
+                    <span>Rates of <span id="nm-board-date" t-out="board['date']"/>, commission included in the amounts.</span>
+                    <span class="nm-board-offline" id="nm-board-offline" hidden="hidden">Connection lost: last rates shown</span>
+                </footer>
+                <script src="/pos_nm_currency_exchange/static/board/rate_board.js"/>
+            </body>
+        </html>
+    </template>
+</odoo>

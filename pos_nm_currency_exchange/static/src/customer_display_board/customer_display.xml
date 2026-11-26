@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <!-- Idle screen of the customer display: the rate board of the
+        counter (page of the board, reloaded by itself) instead of the
+        logo, when Rate Board on the Customer Display is ticked. -->
+    <t t-name="pos_nm_currency_exchange.CustomerDisplay" t-inherit="point_of_sale.CustomerDisplay" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('pos-logo')]/.." position="attributes">
+            <attribute name="t-if">!this.session.nm_rate_board_url</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('pos-logo')]/.." position="after">
+            <iframe t-if="this.session.nm_rate_board_url" t-att-src="this.session.nm_rate_board_url"
+                    class="o_nm_rate_board w-100 h-100 border-0 rounded-3" title="Exchange Rates"/>
+        </xpath>
+        <!-- No order in progress: the board instead of Welcome. -->
+        <xpath expr="//h1[hasclass('display-2')]" position="attributes">
+            <attribute name="t-if">!this.session.nm_rate_board_url</attribute>
+        </xpath>
+        <xpath expr="//h1[hasclass('display-2')]" position="after">
+            <iframe t-if="this.session.nm_rate_board_url" t-att-src="this.session.nm_rate_board_url"
+                    class="o_nm_rate_board w-100 h-100 border-0" title="Exchange Rates"/>
+        </xpath>
+    </t>
+</templates>

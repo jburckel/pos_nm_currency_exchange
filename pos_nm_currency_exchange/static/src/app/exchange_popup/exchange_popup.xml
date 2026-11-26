@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
     <t t-name="pos_nm_currency_exchange.CurrencyExchangePopup">
-        <Dialog title.translate="Currency Exchange" size="'md'" contentClass="'nm-currency-exchange'">
+        <Dialog title.translate="Currency Exchange" size="this.noteGridsExpected ? 'lg' : 'md'" contentClass="'nm-currency-exchange'">
             <div class="d-flex flex-column gap-3">
                 <div class="row g-3">
                     <div class="col-12 col-md-5">
@@ -59,6 +59,23 @@
                         <span>In the drawer</span><span t-out="this.state.quote.drawer_balance_formatted"/>
                     </div>
                 </div>
+                <fieldset t-if="this.notesInShown or this.notesOutShown" class="row g-3 nm-exchange-notes" t-att-disabled="this.state.pending">
+                    <div t-if="this.notesInShown" class="col-12 d-flex flex-column gap-1 nm-exchange-notes-in"
+                         t-att-class="{'col-md-6': this.notesOutShown}">
+                        <t t-call="pos_nm_currency_exchange.CurrencyExchangeNotes" title.translate="Notes received"
+                           notes="this.state.quote.notes_in" quantities="this.state.notesIn" total="this.notesInTotal"/>
+                        <div t-if="this.notesInError" class="text-danger small nm-exchange-notes-error" t-out="this.notesInError"/>
+                    </div>
+                    <div t-if="this.notesOutShown" class="col-12 d-flex flex-column gap-1 nm-exchange-notes-out"
+                         t-att-class="{'col-md-6': this.notesInShown}">
+                        <t t-call="pos_nm_currency_exchange.CurrencyExchangeNotes" title.translate="Notes handed back"
+                           notes="this.state.quote.notes_out" quantities="this.state.notesOut" total="this.notesOutTotal"
+                           checkStock="true"/>
+                        <div t-if="this.state.quote.notes_out.shortfall" class="text-warning small nm-exchange-notes-shortfall"
+                             t-out="this.state.quote.notes_out.shortfall"/>
+                        <div t-if="this.notesOutError" class="text-danger small nm-exchange-notes-error" t-out="this.notesOutError"/>
+                    </div>
+                </fieldset>
                 <div t-if="this.state.reverse and this.state.quote" class="small text-muted nm-exchange-reverse-hint">
                     Amount to receive computed from the amount handed back.
                 </div>
@@ -135,6 +152,40 @@
                     </div>
                     <div t-if="this.documentError" class="text-danger small nm-exchange-document-error" t-out="this.documentError"/>
                 </div>
+                <div t-if="this.declarationShown" class="d-flex flex-column gap-2 nm-exchange-declaration">
+                    <div class="fw-bold">Declarations of the customer</div>
+                    <fieldset class="row g-2" t-att-disabled="this.state.pending">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-0">Origin of the funds</label>
+                            <select class="form-select nm-exchange-funds-origin" t-on-change="(ev) => this.onDeclarationInput('funds_origin', ev)">
+                                <option value="" t-att-selected="!this.state.declaration.funds_origin"/>
+                                <option t-foreach="this.fundsOrigins" t-as="origin" t-key="origin[0]" t-att-value="origin[0]"
+                                        t-att-selected="origin[0] === this.state.declaration.funds_origin" t-out="origin[1]"/>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small mb-0">Purpose of the operation</label>
+                            <select class="form-select nm-exchange-purpose" t-on-change="(ev) => this.onDeclarationInput('purpose', ev)">
+                                <option value="" t-att-selected="!this.state.declaration.purpose"/>
+                                <option t-foreach="this.purposes" t-as="purpose" t-key="purpose[0]" t-att-value="purpose[0]"
+                                        t-att-selected="purpose[0] === this.state.declaration.purpose" t-out="purpose[1]"/>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <input type="text" class="form-control nm-exchange-funds-origin-note" placeholder="Details of the origin of the funds"
+                                   t-att-value="this.state.declaration.funds_origin_note"
+                                   t-on-input="(ev) => this.onDeclarationInput('funds_origin_note', ev)"/>
+                        </div>
+                        <div class="col-12 form-check ms-1">
+                            <input type="checkbox" class="form-check-input nm-exchange-pep" id="nm_exchange_pep"
+                                   t-att-checked="this.state.declaration.pep" t-on-change="(ev) => this.onDeclarationInput('pep', ev)"/>
+                            <label class="form-check-label small" for="nm_exchange_pep">
+                                Politically exposed person (or a relative or close associate of one)
+                            </label>
+                        </div>
+                    </fieldset>
+                    <div t-if="this.declarationError" class="text-danger small nm-exchange-declaration-error" t-out="this.declarationError"/>
+                </div>
                 <input type="text" class="form-control nm-exchange-note" placeholder="Note (optional)"
                        t-att-value="this.state.note" t-att-readonly="this.state.pending" t-on-input="(ev) => this.state.note = ev.target.value"/>
             </div>
@@ -143,5 +194,35 @@
                 <button class="btn btn-secondary btn-lg nm-exchange-discard" t-att-disabled="this.state.saving" t-on-click="() => this.props.close()">Discard</button>
             </t>
         </Dialog>
+    </t>
+
+    <!-- Grid of the notes of one side of the operation: denomination, stock
+        in the drawer, quantity and total. -->
+    <t t-name="pos_nm_currency_exchange.CurrencyExchangeNotes">
+        <div class="fw-bold" t-out="title"/>
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr class="small text-muted">
+                    <th>Denomination</th>
+                    <th class="text-end">In the drawer</th>
+                    <th class="text-center">Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr t-foreach="notes.rows" t-as="row" t-key="row.key" class="nm-exchange-note" t-att-data-key="row.key">
+                    <td t-out="row.label"/>
+                    <td class="text-end nm-exchange-note-stock"
+                        t-att-class="checkStock and this.noteQuantity(quantities, row.key) gt row.stock ? 'text-danger' : 'text-muted'"
+                        t-out="row.stock"/>
+                    <td>
+                        <NumericInput class="'nm-exchange-note-qty flex-nowrap'" tModel="[quantities, row.key]" min="0"/>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-between fw-bold">
+            <span>Total</span>
+            <span class="nm-exchange-notes-total" t-out="this.format(total, this.notesCurrency(notes))"/>
+        </div>
     </t>
 </templates>

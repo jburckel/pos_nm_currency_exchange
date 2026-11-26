@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.SendNotesPopup">
+        <Dialog title.translate="Send Notes" size="'md'" contentClass="'nm-send-notes'">
+            <div t-if="this.state.loadError" class="alert alert-danger nm-transfer-error" role="alert" t-out="this.state.loadError"/>
+            <div t-elif="!this.state.counters.length" class="text-muted nm-transfer-empty">
+                No other counter in the exchange office of this Point of Sale.
+            </div>
+            <div t-else="" class="d-flex flex-column gap-3">
+                <div>
+                    <label class="form-label">Send to</label>
+                    <select class="form-select form-select-lg nm-transfer-counter" t-att-disabled="this.state.pending"
+                            t-on-change="this.onCounterChange">
+                        <option t-foreach="this.state.counters" t-as="counter" t-key="counter.id"
+                                t-att-value="counter.id" t-att-selected="counter.id === this.state.configToId"
+                                t-out="counter.name"/>
+                    </select>
+                    <div t-if="this.counterTo and !this.counterTo.session_open" class="small text-warning mt-1 nm-transfer-closed">
+                        No register open at this counter: the notes stay in transit until they are received there.
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Amount sent</label>
+                    <div class="input-group">
+                        <select class="form-select form-select-lg nm-transfer-currency" t-att-disabled="this.state.pending"
+                                t-on-change="this.onCurrencyChange">
+                            <option t-foreach="this.state.currencies" t-as="currency" t-key="currency.id"
+                                    t-att-value="currency.id" t-att-selected="currency.id === this.state.currencyId"
+                                    t-out="currency.name"/>
+                        </select>
+                        <input type="text" class="form-control form-control-lg text-end nm-transfer-amount"
+                               t-att-placeholder="this.amountPlaceholder()"
+                               t-att-value="this.state.amount" t-att-readonly="this.state.pending"
+                               t-att-class="{'is-invalid': this.state.amount and !this.pos.isValidFloat(this.state.amount)}"
+                               t-on-input="this.onAmountInput" t-on-blur="this.onAmountBlur"
+                               t-on-focus="(ev) => ev.target.select()"/>
+                    </div>
+                </div>
+                <fieldset t-if="this.notesGrid and this.amount" class="d-flex flex-column gap-1 nm-transfer-notes"
+                          t-att-disabled="this.state.pending">
+                    <t t-call="pos_nm_currency_exchange.CurrencyExchangeNotes" title.translate="Notes sent"
+                       notes="this.notesGrid" quantities="this.state.notes" total="this.notesTotal" checkStock="true"/>
+                    <div t-if="this.notesShortfall" class="text-warning small nm-transfer-notes-shortfall" t-out="this.notesShortfall"/>
+                    <div t-if="this.notesError" class="text-danger small nm-transfer-notes-error" t-out="this.notesError"/>
+                </fieldset>
+                <div t-if="this.state.error" class="alert alert-danger py-2 mb-0 nm-transfer-error" role="alert" t-out="this.state.error"/>
+                <div t-if="this.state.pending" class="alert alert-warning py-2 mb-0 nm-transfer-retry" role="alert">
+                    The connection was lost: the transfer may have been recorded. Confirm again once the connection is back: a transfer already recorded is not recorded twice.
+                </div>
+                <input type="text" class="form-control nm-transfer-note" placeholder="Note (optional)"
+                       t-att-value="this.state.note" t-att-readonly="this.state.pending" t-on-input="(ev) => this.state.note = ev.target.value"/>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary btn-lg nm-transfer-confirm" t-att-disabled="!this.isValid or this.state.saving" t-on-click="this.confirm">Confirm</button>
+                <button class="btn btn-secondary btn-lg nm-transfer-discard" t-att-disabled="this.state.saving" t-on-click="() => this.props.close()">Discard</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

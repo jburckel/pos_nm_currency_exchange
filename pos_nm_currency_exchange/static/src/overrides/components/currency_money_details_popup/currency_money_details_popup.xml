@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.CurrencyMoneyDetailsPopup" t-inherit="pos_nm_multicurrencies.CurrencyMoneyDetailsPopup" t-inherit-mode="extension">
+        <xpath expr="//label[hasclass('oe_link_icon')]" position="after">
+            <span t-if="this.nmExpectedNotes" class="small text-muted text-nowrap nm-expected-notes">
+                expected <t t-out="this.nmExpectedQuantity(moneyValue)"/>
+            </span>
+        </xpath>
+    </t>
+</templates>

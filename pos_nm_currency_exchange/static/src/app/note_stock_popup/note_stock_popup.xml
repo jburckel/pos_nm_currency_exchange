@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_nm_currency_exchange.NoteStockPopup">
+        <Dialog title.translate="Note Stock" size="'md'" contentClass="'nm-note-stock'">
+            <div t-if="this.state.error" class="alert alert-danger nm-note-stock-error" role="alert" t-out="this.state.error"/>
+            <div t-elif="!this.state.currencies.length" class="text-muted nm-note-stock-empty">
+                No register open or no notes tracked at this Point of Sale.
+            </div>
+            <div t-else="" class="d-flex flex-column gap-3">
+                <div t-foreach="this.state.currencies" t-as="currency" t-key="currency.currency_id"
+                     class="nm-note-stock-currency" t-att-data-currency="currency.name">
+                    <div class="fw-bold" t-out="currency.name"/>
+                    <div t-if="!currency.counted" class="text-warning small nm-note-stock-uncounted">
+                        Opening not counted by coins/notes: the stock counts the exchanges only
+                    </div>
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr class="small text-muted">
+                                <th>Denomination</th>
+                                <th class="text-end">Opening</th>
+                                <th class="text-end">Exchanges</th>
+                                <th class="text-end">In the drawer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="currency.rows" t-as="row" t-key="row.key" class="nm-note-stock-row" t-att-data-key="row.key">
+                                <td t-out="row.label"/>
+                                <td class="text-end nm-note-stock-opening" t-out="row.opening"/>
+                                <td class="text-end nm-note-stock-moves" t-out="row.moves ? this.formatQuantity(row.moves) : ''"/>
+                                <td class="text-end fw-bold nm-note-stock-quantity" t-att-class="{'text-danger': row.stock lt 0}" t-out="row.stock"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary btn-lg" t-on-click="() => this.props.close()">Close</button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

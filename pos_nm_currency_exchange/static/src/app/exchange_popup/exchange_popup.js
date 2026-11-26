@@ -8,6 +8,7 @@ import { formatCurrency } from "@web/core/currency";
 import { formatDate } from "@web/core/l10n/dates";
 import { makeAwaitable } from "@point_of_sale/app/utils/make_awaitable_dialog";
 import { PartnerList } from "@point_of_sale/app/screens/partner_list/partner_list";
+import { NumericInput } from "@point_of_sale/app/components/inputs/numeric_input/numeric_input";
 import { uuidv4 } from "@point_of_sale/utils";
 import {
     formatAmountInput,
@@ -52,10 +53,16 @@ const QUOTE_CHANGED = "nm_exchange_quote_changed";
  * as the inputs do not change. On Confirm, the operation may have been recorded. The inputs are
  * frozen until it is confirmed again with the same identifier (the server
  * then returns the operation already recorded) or discarded.
+ *
+ * Notes by denomination: when the point of sale tracks the notes of a
+ * currency of the operation, the quote lists its coins and notes with their
+ * stock in the drawer. The cashier counts the notes received and checks the
+ * notes handed back, prefilled with the breakdown proposed by the server
+ * from the stock: both must add up to the amounts of the quote.
  */
 export class CurrencyExchangePopup extends Component {
     static template = "pos_nm_currency_exchange.CurrencyExchangePopup";
-    static components = { Dialog };
+    static components = { Dialog, NumericInput };
     props = useProps({
         getPayload: t.function().optional(),
         close: t.function(),
@@ -87,6 +94,9 @@ export class CurrencyExchangePopup extends Component {
             storedDocument: null,
             documentPartnerId: null,
             documentWarning: "",
+            // Declarations of the customer above the origin of funds
+            // threshold (or the review threshold), frozen on the operation.
+            declaration: this.emptyDeclaration(),
             quote: null,
             loading: false,
             error: "",
@@ -97,8 +107,18 @@ export class CurrencyExchangePopup extends Component {
             // Confirm was refused because the quote changed: the new quote
             // is shown, to be checked before confirming again.
             quoteChanged: false,
+            // Notes received and handed back by denomination ({key: qty}),
+            // when their currency is tracked: the received ones are kept
+            // while the currency received does not change, the handed back
+            // ones are prefilled with the breakdown of each new quote.
+            notesIn: {},
+            notesInCurrencyId: null,
+            notesOut: {},
+            notesOutQuote: "",
         });
         this.documentTypes = this.pos.config._nm_id_document_types || [];
+        this.fundsOrigins = this.pos.config._nm_funds_origins || [];
+        this.purposes = this.pos.config._nm_purposes || [];
         this.quoteTimer = null;
         this.quoteSequence = 0;
         // Sent with the operation: confirmed again after a lost response,
@@ -167,8 +187,154 @@ export class CurrencyExchangePopup extends Component {
             this.isQuoteCurrent &&
             !this.errorMessage &&
             (!this.state.quote.customer_required || !!this.state.partner) &&
-            !this.documentError
+            !this.documentError &&
+            !this.declarationError &&
+            !this.notesInError &&
+            !this.notesOutError
         );
+    }
+    /**
+     * The point of sale tracks the notes of one currency of the operation:
+     * the popup is widened for the grids of its notes.
+     */
+    get noteGridsExpected() {
+        const tracked = this.pos.config._nm_note_currency_ids || [];
+        return tracked.includes(this.state.currencyInId) || tracked.includes(this.state.currencyOutId);
+    }
+    get notesInShown() {
+        return !!this.state.quote?.notes_in;
+    }
+    get notesOutShown() {
+        return !!this.state.quote?.notes_out;
+    }
+    get notesInTotal() {
+        return this.notesTotal(this.state.quote?.notes_in, this.state.notesIn);
+    }
+    get notesOutTotal() {
+        return this.notesTotal(this.state.quote?.notes_out, this.state.notesOut);
+    }
+    /**
+     * The notes received do not add up to the amount received, else an
+     * empty string.
+     */
+    get notesInError() {
+        if (!this.notesInShown) {
+            return "";
+        }
+        const mismatch = this.notesMismatch(this.state.quote.notes_in, this.state.notesIn, this.state.quote.amount_in);
+        if (mismatch === true) {
+            return _t("The quantities of notes cannot be negative.");
+        }
+        return mismatch ? _t("The notes received add up to %(total)s instead of %(amount)s.", mismatch) : "";
+    }
+    /**
+     * The amount handed back cannot be made up with the coins and notes of
+     * its currency, or the notes handed back do not add up to it, else an
+     * empty string.
+     */
+    get notesOutError() {
+        if (!this.notesOutShown) {
+            return "";
+        }
+        if (this.state.quote.notes_out.error) {
+            return this.state.quote.notes_out.error;
+        }
+        const mismatch = this.notesMismatch(this.state.quote.notes_out, this.state.notesOut, this.state.quote.amount_out);
+        if (mismatch === true) {
+            return _t("The quantities of notes cannot be negative.");
+        }
+        return mismatch ? _t("The notes handed back add up to %(total)s instead of %(amount)s.", mismatch) : "";
+    }
+    noteQuantity(quantities, key) {
+        const quantity = quantities[key];
+        return Number.isInteger(quantity) ? quantity : 0;
+    }
+    notesTotal(notes, quantities) {
+        if (!notes) {
+            return 0;
+        }
+        return notes.rows.reduce((total, row) => total + row.value * this.noteQuantity(quantities, row.key), 0);
+    }
+    /**
+     * True when a quantity is negative, the total and the amount (formatted)
+     * when the notes do not add up to the amount, else null.
+     */
+    notesMismatch(notes, quantities, amount) {
+        if (notes.rows.some((row) => this.noteQuantity(quantities, row.key) < 0)) {
+            return true;
+        }
+        const currency = this.notesCurrency(notes);
+        const total = this.notesTotal(notes, quantities);
+        if (currency && !currency.isZero(total - amount)) {
+            return { total: this.format(total, currency), amount: this.format(amount, currency) };
+        }
+        return null;
+    }
+    notesCurrency(notes) {
+        return this.currencies.find((currency) => currency.id === notes.currency_id);
+    }
+    /**
+     * Quantity of each denomination sent with the operation.
+     */
+    notesPayload(notes, quantities) {
+        return Object.fromEntries(notes.rows.map((row) => [row.key, this.noteQuantity(quantities, row.key)]));
+    }
+    /**
+     * The grids of a new quote: the notes received are kept for the same
+     * currency (reset for another one), the notes handed back are prefilled
+     * with the breakdown proposed for each new quote.
+     */
+    syncNoteGrids(quote) {
+        const notesIn = quote.notes_in;
+        if (notesIn) {
+            const keep = this.state.notesInCurrencyId === notesIn.currency_id;
+            this.state.notesIn = Object.fromEntries(
+                notesIn.rows.map((row) => [row.key, keep ? this.noteQuantity(this.state.notesIn, row.key) : 0])
+            );
+            this.state.notesInCurrencyId = notesIn.currency_id;
+        } else {
+            this.state.notesIn = {};
+            this.state.notesInCurrencyId = null;
+        }
+        const notesOut = quote.notes_out;
+        const quoteId = `${quote.key}|${quote.amount_out}`;
+        if (notesOut && this.state.notesOutQuote !== quoteId) {
+            this.state.notesOut = Object.fromEntries(notesOut.rows.map((row) => [row.key, row.proposed || 0]));
+            this.state.notesOutQuote = quoteId;
+        } else if (!notesOut) {
+            this.state.notesOut = {};
+            this.state.notesOutQuote = "";
+        }
+    }
+    /**
+     * The customer declares the origin of the funds (origin of funds
+     * threshold); above the review threshold the declarations are asked
+     * too, without being required.
+     */
+    get declarationShown() {
+        return (
+            !!this.state.partner &&
+            (!!this.state.quote?.origin_required || !!this.state.quote?.review_required)
+        );
+    }
+    get declarationError() {
+        if (!this.state.partner || !this.state.quote?.origin_required) {
+            return "";
+        }
+        const { funds_origin, funds_origin_note } = this.state.declaration;
+        if (!funds_origin) {
+            return _t("The customer must declare the origin of the funds for this amount.");
+        }
+        if (funds_origin === "other" && !funds_origin_note.trim()) {
+            return _t("Give the details of the origin of the funds declared as Other.");
+        }
+        return "";
+    }
+    emptyDeclaration() {
+        return { funds_origin: "", funds_origin_note: "", purpose: "", pep: false };
+    }
+    onDeclarationInput(key, ev) {
+        this.state.declaration[key] = key === "pep" ? ev.target.checked : ev.target.value;
     }
     get documentRequired() {
         return !!this.state.quote?.document_required && !!this.state.partner;
@@ -374,6 +540,7 @@ export class CurrencyExchangePopup extends Component {
                     ...quote,
                     key: this.quoteKey(currencyInId, currencyOutId, amountIn, partnerId),
                 };
+                this.syncNoteGrids(this.state.quote);
                 const partner = this.state.partner;
                 if (quote.document_required && partner && this.state.documentPartnerId !== partner.id) {
                     this.loadDocument(partner);
@@ -421,6 +588,7 @@ export class CurrencyExchangePopup extends Component {
         this.scheduleQuote();
     }
     resetDocument() {
+        this.state.declaration = this.emptyDeclaration();
         this.state.document = this.emptyDocument();
         this.state.storedDocument = null;
         this.state.documentPartnerId = null;
@@ -506,6 +674,14 @@ export class CurrencyExchangePopup extends Component {
                         uuid: this.uuid,
                         // Saved on the customer, frozen on the operation.
                         document: this.documentRequired ? this.state.document : undefined,
+                        declaration: this.state.partner ? this.state.declaration : undefined,
+                        // Notes by denomination of the tracked currencies.
+                        notes_in: this.notesInShown
+                            ? this.notesPayload(this.state.quote.notes_in, this.state.notesIn)
+                            : undefined,
+                        notes_out: this.notesOutShown
+                            ? this.notesPayload(this.state.quote.notes_out, this.state.notesOut)
+                            : undefined,
                     }
                 );
             } finally {

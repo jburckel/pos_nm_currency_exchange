@@ -65,14 +65,16 @@ class TestPosCurrencyExchange(TestPosAccounting):
     def _refresh_journal(self):
         self.cash_journal.invalidate_recordset(['current_statement_balance', 'has_statement_lines'])
 
-    def _open(self, fx=0.0, main=0.0, counts=None):
+    def _open(self, fx=0.0, main=0.0, counts=None, details=None):
         """Open a session with ``main`` in the main drawer, ``fx`` in the EUR
-        drawer and ``counts`` ({currency: amount}) in the other drawers."""
+        drawer and ``counts`` ({currency: amount}) in the other drawers;
+        ``details``: counts by denomination ({currency: {value key: qty}})."""
         self._refresh_journal()
         self.pos_config.open_ui()
         session = self.get_pos_session()
         session.set_multicurrency_counts({
-            str(self.fx.id): fx, **{str(currency.id): amount for currency, amount in (counts or {}).items()}})
+            str(self.fx.id): fx, **{str(currency.id): amount for currency, amount in (counts or {}).items()}},
+            None, {str(currency.id): money for currency, money in (details or {}).items()})
         session.set_opening_control(main, '')
         session.bank_statement_id.flush_recordset()
         return session
@@ -82,6 +84,15 @@ class TestPosCurrencyExchange(TestPosAccounting):
         session.set_multicurrency_counts({self.fx.id: fx})
         result = session.close_session_from_ui({self.cash_pm.id: main})
         self.assertTrue(result['status'], result)
+
+    def _backdate(self, exchange, date):
+        """Move an operation in time behind the ORM (the register refuses
+        to change a hashed operation), and hash it again in place."""
+        self.env.cr.execute("UPDATE pos_nm_exchange SET date = %s WHERE id = %s", [date, exchange.id])
+        exchange.invalidate_recordset(['date'])
+        new_hash = exchange._nm_compute_hash(exchange.register_previous_hash)
+        self.env.cr.execute("UPDATE pos_nm_exchange SET register_hash = %s WHERE id = %s", [new_hash, exchange.id])
+        exchange.invalidate_recordset(['register_hash'])
 
     def _quote(self, currency_in, amount_in, currency_out):
         return self.env['pos.nm.exchange']._nm_quote(self.pos_config, currency_in, amount_in, currency_out)
@@ -972,7 +983,7 @@ class TestPosCurrencyExchange(TestPosAccounting):
         session = self._open(fx=500.0)
         Exchange = self.env['pos.nm.exchange']
         earlier = Exchange.browse(Exchange.create_from_ui(session.id, self.main.id, 100.0, self.fx.id)['id'])
-        earlier.sudo().date = fields.Datetime.now() - timedelta(days=1)
+        self._backdate(earlier, fields.Datetime.now() - timedelta(days=1))
         exchange = Exchange.browse(Exchange.create_from_ui(session.id, self.fx.id, 220.0, self.main.id)['id'])
 
         report = self._sale_details(config_ids=self.pos_config.ids)
@@ -1098,7 +1109,7 @@ class TestPosCurrencyExchange(TestPosAccounting):
             Exchange.create_from_ui(session.id, self.main.id, 1100.0, self.fx.id)
 
         # Outside the period, the first operation no longer counts.
-        first.sudo().write({'date': fields.Datetime.now() - timedelta(days=8)})
+        self._backdate(first, fields.Datetime.now() - timedelta(days=8))
         receipt = Exchange.create_from_ui(session.id, self.main.id, 900.0, self.fx.id, customer.id)
         self.assertEqual(Exchange.browse(receipt['id']).linked_value, 900.0)
         self.assertFalse(receipt['id_document'])

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_nm_exchange_office_list" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.office.list</field>
+        <field name="model">pos.nm.exchange.office</field>
+        <field name="arch" type="xml">
+            <list string="Exchange Offices">
+                <field name="name"/>
+                <field name="licence"/>
+                <field name="partner_id"/>
+                <field name="config_count"/>
+                <field name="compliance_user_id" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_exchange_office_form" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.office.form</field>
+        <field name="model">pos.nm.exchange.office</field>
+        <field name="arch" type="xml">
+            <form string="Exchange Office">
+                <header>
+                    <button name="action_nm_apply_rates" type="object" string="Apply Rates to the Counters"
+                            class="btn-primary" invisible="config_count &lt; 2"
+                            confirm="Copy the rates and commissions of every currency of the reference counter to the other counters of the office?"/>
+                    <button name="action_nm_view_rate_differences" type="object" string="Rate Differences"
+                            invisible="config_count &lt; 2"/>
+                    <button name="action_nm_open_board" type="object" string="Open Rate Board"
+                            invisible="not config_count"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_nm_view_configs" type="object" class="oe_stat_button" icon="fa-desktop">
+                            <field name="config_count" widget="statinfo" string="Counters"/>
+                        </button>
+                        <button name="action_nm_view_exchanges" type="object" class="oe_stat_button"
+                                icon="fa-exchange" string="Operations"/>
+                        <button name="action_nm_view_transfers" type="object" class="oe_stat_button"
+                                icon="fa-truck">
+                            <field name="transfer_count" widget="statinfo" string="Transfers"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Main Street Office"/></h1>
+                    </div>
+                    <group>
+                        <group string="Office">
+                            <field name="partner_id"/>
+                            <field name="licence"/>
+                            <field name="compliance_user_id"/>
+                            <field name="transit_account_id"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Identification">
+                            <field name="customer_always"/>
+                            <field name="customer_threshold"/>
+                            <field name="document_threshold"/>
+                            <field name="origin_threshold"/>
+                            <field name="review_threshold"/>
+                            <label for="linked_days"/>
+                            <div class="o_row">
+                                <field name="linked_days" class="oe_inline"/> days
+                            </div>
+                        </group>
+                    </group>
+                    <div class="text-muted mb-3">
+                        Thresholds in the currency of the company, at 0: never required. They replace the thresholds of
+                        the points of sale of the office. The legal thresholds depend on the country: in France for
+                        example, a money changer identifies the customer of an operation above 1,000 EUR, linked
+                        operations included.
+                    </div>
+                    <notebook>
+                        <page string="Counters" name="counters">
+                            <field name="config_ids" options="{'no_create': True}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="nm_exchange_enabled"/>
+                                    <field name="current_session_state"/>
+                                </list>
+                            </field>
+                            <group>
+                                <field name="reference_config_id" options="{'no_create': True}"/>
+                            </group>
+                            <div class="text-muted">
+                                Apply Rates to the Counters copies the cash rate (rate mode, margin, fixed rates), the roundings of the coins and notes, the
+                                exchange sell margin and the commissions of every currency of the reference counter to
+                                the other counters: the customers get the same rates at every counter.
+                            </div>
+                        </page>
+                        <page string="Drawers" name="drawers" groups="point_of_sale.group_pos_manager"
+                              invisible="not id">
+                            <field name="drawers_html" readonly="1" nolabel="1"/>
+                            <div class="text-muted">
+                                Cash expected in the drawers of the counters with an open session (opening, sales,
+                                cash moves, exchanges and transfers), notes sent by a counter and not received yet,
+                                and operations of the day.
+                            </div>
+                        </page>
+                        <page string="Rate Board" name="board" groups="point_of_sale.group_pos_manager">
+                            <group>
+                                <field name="board_url" widget="url" readonly="1"/>
+                                <field name="board_refresh"/>
+                            </group>
+                            <div class="text-muted">
+                                Open this address on a screen facing the customers (a TV, a tablet, the customer display):
+                                it shows the rates of the reference counter of the office and reloads them by itself.
+                            </div>
+                            <button name="action_nm_regenerate_board_token" type="object" string="New Address"
+                                    class="btn-link"
+                                    confirm="The screens showing the current address will stop showing the rates. Continue?"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_exchange_office" model="ir.actions.act_window">
+        <field name="name">Exchange Offices</field>
+        <field name="res_model">pos.nm.exchange.office</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create an exchange office</p>
+            <p>
+                An exchange office groups the counters (points of sale) of one licensed place of business: they share
+                its licence, its identification thresholds, its rates and its rate board.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_pos_nm_exchange_office"
+        name="Exchange Offices"
+        parent="point_of_sale.menu_point_config_product"
+        sequence="40"
+        action="action_pos_nm_exchange_office"
+        groups="point_of_sale.group_pos_manager"/>
+
+    <!-- Register closings -->
+    <record id="view_pos_nm_exchange_register_closing_list" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.register.closing.list</field>
+        <field name="model">pos.nm.exchange.register.closing</field>
+        <field name="arch" type="xml">
+            <list string="Register Closings" create="false" edit="false" delete="false">
+                <field name="name"/>
+                <field name="office_id"/>
+                <field name="date_start"/>
+                <field name="date_stop"/>
+                <field name="operation_count"/>
+                <field name="cancelled_count" optional="hide"/>
+                <field name="commission" sum="Commissions"/>
+                <field name="rate_margin" sum="Rate Margins" optional="show"/>
+                <field name="user_id"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_exchange_register_closing_form" model="ir.ui.view">
+        <field name="name">pos.nm.exchange.register.closing.form</field>
+        <field name="model">pos.nm.exchange.register.closing</field>
+        <field name="arch" type="xml">
+            <form string="Register Closing" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_download" type="object" string="Download Register" class="btn-primary"
+                            invisible="not attachment_id"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="office_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="date_start"/>
+                            <field name="date_stop"/>
+                            <field name="user_id"/>
+                            <field name="attachment_id"/>
+                        </group>
+                        <group>
+                            <field name="operation_count"/>
+                            <field name="cancelled_count"/>
+                            <field name="first_operation"/>
+                            <field name="last_operation"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="commission"/>
+                            <field name="rate_margin"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="integrity"/>
+                        <field name="last_hash"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_exchange_register_closing" model="ir.actions.act_window">
+        <field name="name">Register Closings</field>
+        <field name="res_model">pos.nm.exchange.register.closing</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">No closing of the exchange register yet</p>
+            <p>Close the register of a period from Exchange Register > Print Register > Close Period.</p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_pos_nm_exchange_register_closing"
+        name="Exchange Register Closings"
+        parent="point_of_sale.menu_point_rep"
+        sequence="7"
+        action="action_pos_nm_exchange_register_closing"
+        groups="point_of_sale.group_pos_manager"/>
+</odoo>

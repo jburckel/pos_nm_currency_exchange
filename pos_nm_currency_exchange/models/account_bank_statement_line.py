@@ -24,3 +24,14 @@ class AccountBankStatementLine(models.Model):
             raise UserError(_(
                 "This cash move belongs to the currency exchange operation %s and cannot be deleted. "
                 "A Point of Sale manager can cancel the operation instead.", exchanges.name))
+        transfers = self.env['pos.nm.exchange.transfer'].sudo().search([
+            '|', '|',
+            ('statement_line_from_id', 'in', self.ids),
+            ('statement_line_to_id', 'in', self.ids),
+            ('statement_line_cancel_id', 'in', self.ids),
+        ], limit=1)
+        if transfers:
+            raise UserError(_(
+                "This cash move belongs to the note transfer %s and cannot be deleted: the notes in transit "
+                "would no longer match the drawers. Cancel the transfer instead while it is in transit.",
+                transfers.name))

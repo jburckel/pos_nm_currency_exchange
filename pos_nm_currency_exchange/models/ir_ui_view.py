@@ -12,4 +12,5 @@ class IrUiView(models.Model):
             'pos_nm_currency_exchange.pos_exchange_receipt_body',
             'pos_nm_currency_exchange.pos_exchange_receipt',
             'pos_nm_currency_exchange.pos_exchange_rates_receipt',
+            'pos_nm_currency_exchange.pos_exchange_transfer_receipt',
         ]
