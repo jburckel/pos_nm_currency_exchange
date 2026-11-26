@@ -35,7 +35,7 @@
         <field name="arch" type="xml">
             <form string="Currency Exchange" create="false" delete="false">
                 <header>
-                    <button name="action_send_mail" type="object" string="Send by E-mail" class="btn-primary"
+                    <button name="action_send_mail" type="object" string="Send by Email" class="btn-primary"
                             invisible="not partner_id"/>
                     <button name="%(action_report_pos_nm_exchange)d" type="action" string="Print"/>
                     <button name="action_cancel" type="object" string="Cancel Operation"

@@ -6,7 +6,7 @@
             <t t-else="">
                 <div class="text-muted mb-2">
                     <t t-out="this.state.board.date"/>
-                    <t t-if="this.state.board.licence"> - Licence No. <t t-out="this.state.board.licence"/></t>
+                    <t t-if="this.state.board.licence"> - License No. <t t-out="this.state.board.licence"/></t>
                 </div>
                 <table class="table table-sm align-middle">
                     <thead>

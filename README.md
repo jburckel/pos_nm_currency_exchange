@@ -29,11 +29,12 @@ rate of the parent) and sell rate (Exchange Sell Margin) in favour of the shop,
 rate margin of every operation; commission per currency (percentage, fixed part,
 minimum) with the notes handed back rounded down to the coins (cash rounding of
 the point of sale for its own currency); drawer check in every currency;
-receipt with the header and footer of the point of sale and the licence number,
-reprint, PDF and e-mail; rate board (register, receipt printer, PDF); customer
+receipt with the header and footer of the point of sale and the license number,
+reprint, PDF and email; rate board (register, receipt printer, PDF); customer
 identification with thresholds, linked operations and identity document;
-cancellation by a manager while the session is open, read-only operations,
-gapless references; exchange register (list, Excel, PDF per period); closing
+cancellation by a POS Administrator while the session is open and the drawer
+still holds the notes received, read-only operations (only the note editable by
+a POS Administrator), gapless references; exchange register (list, Excel, PDF per period); closing
 control, Currency Position and Sales Details. See
 [`pos_nm_currency_exchange/CHANGELOG.md`](pos_nm_currency_exchange/CHANGELOG.md)
 and [`docs/DESIGN.md`](docs/DESIGN.md).

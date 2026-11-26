@@ -54,8 +54,8 @@ class PosConfig(models.Model):
              'is set). 0: never required.',
     )
     nm_exchange_licence = fields.Char(
-        string='Exchange Licence Number',
-        help='Licence or registration number of the currency exchange activity, printed on the '
+        string='Exchange License Number',
+        help='License or registration number of the currency exchange activity, printed on the '
              'exchange receipts and the rate board when set.',
     )
     nm_exchange_count = fields.Integer(string='Exchanges', compute='_compute_nm_exchange_count')
@@ -119,7 +119,7 @@ class PosConfig(models.Model):
         counter for one unit of the POS currency, always in favour of the
         counter.
 
-        Rate of Odoo: the rate of Odoo less the exchange sell margin, the
+        Rate of Odoo: the rate of Odoo divided by 1 + the exchange sell margin, the
         mirror of the cash rate of the notes received (the rate of Odoo plus
         the margin of POS Multi-Currency Cash).
         Fixed cash rate: the lower of the fixed rate and the fixed change

@@ -27,7 +27,8 @@ module adds the operation without a sale:
 * both drawers move: the notes received enter the drawer of their currency
   and the notes handed back leave the other one, on the cash journal of the
   session, with the commission posted on a dedicated income account;
-* a manager can cancel a mistaken operation while the session is open;
+* a POS Administrator can cancel a mistaken operation while the session is
+  open and the drawer still holds the notes received;
 * the operations appear in the closing control, in the *Currency Position*
   report and in the *Sales Details* report, in a list with a pivot of the
   commissions and rate margins, and in an exchange register that can be
@@ -40,9 +41,10 @@ Requirements
 
 * The **Point of Sale** application (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 or
-  later**, included in the price shown on the Odoo Apps Store (already
-  bought it? Contact us at odoo@natimai.solutions before buying this
-  module), with at least one foreign currency on the
+  later**, included in the price shown on the Odoo Apps Store: 178 EUR in
+  total, 59 EUR for this module plus 119 EUR for POS Multi-Currency Cash
+  (already bought it? Contact us at odoo@natimai.solutions before buying
+  this module), with at least one foreign currency on the
   cash payment method of the point of sale (see its guide: *Accept a
   currency in cash*). An older version of POS Multi-Currency Cash does not
   work with
@@ -59,14 +61,14 @@ Configuration
 Enable the counter
 ------------------
 
-Go to *Point of Sale -> Configuration -> Settings*, select your point of
+Go to *Point of Sale → Configuration → Settings*, select your point of
 sale and look at the **Currency Exchange** section:
 
 * **Currency Exchange** (enabled by default): shows the entries of the
   counter in the menu of the register.
 * **Commission account**: income account receiving the commissions. Only
   income accounts can be chosen. It is required to record an operation.
-* **Exchange licence number**: licence or registration number of your
+* **Exchange license number**: license or registration number of your
   exchange activity, printed on the receipts and the rate board when set.
 * **Customer required above**: value of an operation, in the currency of
   the point of sale, above which the customer must be identified.
@@ -85,7 +87,7 @@ Thresholds at 0 are never applied.
 Commissions and sell margin per currency
 ----------------------------------------
 
-Go to *Point of Sale -> Configuration -> Cash Currencies* and open the line
+Go to *Point of Sale → Configuration → Cash Currencies* and open the line
 of the currency. The *Currency Exchange* group holds four values, the
 amounts being in the currency of the point of sale:
 
@@ -120,13 +122,13 @@ the currency of the point of sale, like in POS Multi-Currency Cash:
 
 Example, point of sale in USD, rate of Odoo 2 EUR for 1 USD, Cash Rate
 Margin and Exchange Sell Margin of 10 %: the counter buys euros at
-2.20 EUR for 1 USD (100 EUR received are worth $ 45.45) and sells them at
-1.82 EUR for 1 USD (100 EUR handed back are worth $ 55.00), before the
-commission.
+2 × 1.10 = 2.20 EUR for 1 USD (100 EUR received are worth $ 45.45) and
+sells them at 2 / 1.10 = 1.8182 EUR for 1 USD (100 EUR handed back are
+worth $ 55.00), before the commission.
 
 The difference with the rates of Odoo is the **Rate Margin** of the
-operation (see *Accounting Notes*). On upgrade from a version before
-20.0.2.0.0, the Exchange Sell Margin of each currency is set to its Cash
+operation (see *Accounting Notes*). On upgrade from 20.0.1.x, the
+Exchange Sell Margin of each currency is set to its Cash
 Rate Margin: check it.
 
 Coins and notes
@@ -149,7 +151,7 @@ Receipt
 The exchange receipt prints the logo, the **Header** and **Footer** of the
 point of sale (*Settings*, section *Bills & Receipts*, *Custom Header &
 Footer*), the
-exchange licence number and the company details. Write there the legal
+exchange license number and the company details. Write there the legal
 notices your activity must show to the customer.
 
 Who can do what
@@ -159,8 +161,8 @@ Who can do what
   their receipts and show the rate board. They can read the operations but
   cannot change them.
 * **POS Administrators** (*Point of Sale* access *Administrator*) also see
-  the menus *Point of Sale -> Orders -> Currency Exchanges* and *Point of
-  Sale -> Reporting -> Exchange Register*, the identity documents of the
+  the menus *Point of Sale → Orders → Currency Exchanges* and *Point of
+  Sale → Reporting → Exchange Register*, the identity documents of the
   customers, can edit the note of an operation and cancel an operation.
 * Nobody can delete an operation or one of its statement lines.
 * With several companies, each user sees the operations of the companies
@@ -287,7 +289,7 @@ opposite operation would charge the commission again and round the notes
 again, and a cash move would leave the commission on the commission
 account.
 
-A POS Administrator opens the operation (*Point of Sale -> Orders ->
+A POS Administrator opens the operation (*Point of Sale → Orders →
 Currency Exchanges*) and presses **Cancel Operation**, then confirms. This
 is possible while the session of the operation is open and when the drawer
 still holds the notes received (the customer gets them back). Two statement
@@ -336,7 +338,7 @@ documents against any register.
   applies.
 * Above **Customer required above**, the operation needs a customer.
 * Above **Identity document required above**, it needs a customer and a
-  valid identity document: type (Passport, Identity Card, Driving Licence,
+  valid identity document: type (Passport, Identity Card, Driving License,
   Residence Permit, Other), number, issuing country, expiry date (or
   **No expiry date** for a document without one), nationality and date of
   birth. An expired document is refused.
@@ -363,7 +365,7 @@ Reviewing the operations
 Currency Exchanges
 ------------------
 
-*Point of Sale -> Orders -> Currency Exchanges* (POS Administrators) lists
+*Point of Sale → Orders → Currency Exchanges* (POS Administrators) lists
 the operations with their reference, date, point of sale, cashier,
 customer, the notes received and handed back, the commission, the rate
 margin and the status. It opens with the filter **Done**; the filter
@@ -371,7 +373,8 @@ margin and the status. It opens with the filter **Done**; the filter
 Customer*, *Purchase of foreign currency*, *Sale of foreign currency*,
 *Cross exchange*; group by point of sale, session, cashier, operation type,
 status, currency or date. The pivot gives the commissions, rate margins and
-values received per day, status and currency.
+values received per day, status and currency received; regroup it per
+point of sale, session or cashier as needed.
 
 The operation type is seen from the shop: *Purchase of foreign currency*
 when it receives foreign notes, *Sale of foreign currency* when it hands
@@ -381,7 +384,7 @@ The form of an operation shows its amounts, the **Rate Applied**
 ("1 USD = 119.33 XPF"), the commission, the rate margin, the identity
 document and the chatter. Its buttons:
 
-* **Send by E-mail** (when the operation has a customer): sends the
+* **Send by Email** (when the operation has a customer): sends the
   receipt in PDF with the template *Currency Exchange: Send Receipt*;
 * **Print**: the receipt in PDF (*Exchange Receipt*);
 * **Cancel Operation** (see above);
@@ -401,8 +404,8 @@ The *Sales Details* report ends with a *Currency Exchange* table: every
 operation with its session, amounts, commission and rate margin, then the
 totals, one line per currency of the points of sale, and the list of the
 cancelled operations, which are not counted. Printed from a session, it
-covers the operations of the session; run from *Point of Sale ->
-Reporting -> Sales Details* for a period, it covers the operations dated
+covers the operations of the session; run from *Point of Sale →
+Reporting → Sales Details* for a period, it covers the operations dated
 in that period on the selected points of sale (all of them when none is
 selected), open sessions included. The *Currency Position* report of POS
 Multi-Currency Cash reflects the notes moved.
@@ -410,7 +413,7 @@ Multi-Currency Cash reflects the notes moved.
 Exchange Register
 -----------------
 
-*Point of Sale -> Reporting -> Exchange Register* (POS Administrators)
+*Point of Sale → Reporting → Exchange Register* (POS Administrators)
 lists every operation in the order of its reference, the cancelled ones
 included (greyed, with their status), with the cashier, the operation
 type, the amounts, the rate, the commission, the rate margin, the customer
@@ -429,7 +432,7 @@ Rate board in PDF
 
 The rate board described above is also printed in PDF (*Exchange Rates*)
 with **Print Exchange Rates** in the settings, or from the *Print* menu of
-the point of sale records (list view of *Point of Sale -> Dashboard*).
+the point of sale records (list view of *Point of Sale → Dashboard*).
 
 Accounting Notes
 ================

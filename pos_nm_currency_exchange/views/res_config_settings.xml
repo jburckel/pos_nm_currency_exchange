@@ -17,7 +17,7 @@
                                 <field name="pos_nm_exchange_income_account_id" class="col-lg-6" options="{'no_create': True}"/>
                             </div>
                             <div class="row mt8">
-                                <label string="Exchange licence number" for="pos_nm_exchange_licence" class="col-lg-5 o_light_label"/>
+                                <label string="Exchange license number" for="pos_nm_exchange_licence" class="col-lg-5 o_light_label"/>
                                 <field name="pos_nm_exchange_licence" class="col-lg-6"/>
                             </div>
                             <div class="row mt8">

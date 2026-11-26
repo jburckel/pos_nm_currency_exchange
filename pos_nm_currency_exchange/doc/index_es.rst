@@ -28,8 +28,9 @@ cambio en una moneda extranjera; este módulo añade la operación sin venta:
   su moneda y los billetes entregados salen del otro, en el diario de
   efectivo de la sesión, con la comisión registrada en una cuenta de
   ingresos dedicada;
-* un responsable puede cancelar una operación errónea mientras la sesión
-  está abierta;
+* un administrador del Punto de venta puede cancelar una operación errónea
+  mientras la sesión está abierta y el cajón aún contiene los billetes
+  recibidos;
 * las operaciones aparecen en el control de cierre, en el informe
   *Posición de divisas* y en el informe *Detalles de ventas*, en una lista
   con una tabla dinámica de las comisiones y márgenes de tipo, y en un
@@ -42,8 +43,9 @@ Requisitos
 
 * La aplicación **Punto de venta** (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 o
-  posterior**, incluido en el precio mostrado en la Odoo Apps Store (¿ya
-  lo ha comprado? Contáctenos en odoo@natimai.solutions antes de comprar
+  posterior**, incluido en el precio mostrado en la Odoo Apps Store: 178 EUR
+  en total, 59 EUR por este módulo más 119 EUR por POS Multi-Currency Cash
+  (¿ya lo ha comprado? Contáctenos en odoo@natimai.solutions antes de comprar
   este módulo), con al menos una moneda extranjera en
   el método de pago en efectivo del punto de venta (consulte su guía:
   *Aceptar una divisa en efectivo*). Una versión anterior de POS
@@ -62,7 +64,7 @@ Configuración
 Activar la ventanilla
 ---------------------
 
-Vaya a *Punto de venta -> Configuración -> Ajustes*, seleccione su punto
+Vaya a *Punto de venta → Configuración → Ajustes*, seleccione su punto
 de venta y consulte la sección **Cambio de divisas**:
 
 * **Cambio de divisas** (activado por defecto): muestra las entradas de la
@@ -92,7 +94,7 @@ Los umbrales en 0 nunca se aplican.
 Comisiones y margen de venta por moneda
 ---------------------------------------
 
-Vaya a *Punto de venta -> Configuración -> Monedas en efectivo* y abra la
+Vaya a *Punto de venta → Configuración → Monedas en efectivo* y abra la
 línea de la moneda. El grupo *Cambio de divisas* contiene cuatro valores,
 los importes en la moneda del punto de venta:
 
@@ -128,13 +130,13 @@ Cash:
 
 Ejemplo, punto de venta en USD, tipo de Odoo de 2 EUR por 1 USD, Margen
 del tipo de caja y Margen de venta de cambio del 10 %: la ventanilla
-compra euros a 2,20 EUR por 1 USD (100 EUR recibidos valen 45,45 $) y los
-vende a 1,82 EUR por 1 USD (100 EUR entregados valen 55,00 $), antes de la
-comisión.
+compra euros a 2 × 1,10 = 2,20 EUR por 1 USD (100 EUR recibidos valen
+45,45 $) y los vende a 2 / 1,10 = 1,8182 EUR por 1 USD (100 EUR entregados
+valen 55,00 $), antes de la comisión.
 
 La diferencia con los tipos de Odoo es el **Margen de tipo** de la
-operación (consulte *Notas contables*). Al actualizar desde una versión
-anterior a 20.0.2.0.0, el Margen de venta de cambio de cada moneda toma el
+operación (consulte *Notas contables*). Al actualizar desde 20.0.1.x, el
+Margen de venta de cambio de cada moneda toma el
 valor de su Margen del tipo de caja: compruébelo.
 
 Monedas y billetes
@@ -167,8 +169,8 @@ Quién puede hacer qué
   la caja, reimprimen sus recibos y muestran la tabla de tipos. Pueden
   leer las operaciones pero no modificarlas.
 * Los **administradores del Punto de venta** (acceso *Punto de venta*:
-  *Administrador*) ven además los menús *Punto de venta -> Pedidos ->
-  Cambios de divisas* y *Punto de venta -> Informes -> Registro de
+  *Administrador*) ven además los menús *Punto de venta → Pedidos →
+  Cambios de divisas* y *Punto de venta → Informes → Registro de
   cambios* y los documentos de identidad de los clientes, pueden
   modificar la nota de una operación y cancelar una operación.
 * Nadie puede eliminar una operación ni una de sus líneas de extracto.
@@ -304,8 +306,8 @@ operación inversa cobraría de nuevo la comisión y redondearía de nuevo
 los billetes, y un movimiento de efectivo dejaría la comisión en la cuenta
 de comisión.
 
-Un administrador del Punto de venta abre la operación (*Punto de venta ->
-Pedidos -> Cambios de divisas*), pulsa **Cancelar la operación** y
+Un administrador del Punto de venta abre la operación (*Punto de venta →
+Pedidos → Cambios de divisas*), pulsa **Cancelar la operación** y
 confirma. Es posible mientras la sesión de la operación está abierta y el
 cajón todavía contiene los billetes recibidos (el cliente los recupera).
 Se registran en la sesión dos líneas de extracto exactamente opuestas a
@@ -386,7 +388,7 @@ Consultar las operaciones
 Cambios de divisas
 ------------------
 
-*Punto de venta -> Pedidos -> Cambios de divisas* (administradores del
+*Punto de venta → Pedidos → Cambios de divisas* (administradores del
 Punto de venta) lista las operaciones con su referencia, fecha, punto de
 venta, cajero, cliente, los billetes recibidos y entregados, la comisión,
 el margen de tipo y el estado. Se abre con el filtro **Hecha**; el filtro
@@ -394,7 +396,8 @@ el margen de tipo y el estado. Se abre con el filtro **Hecha**; el filtro
 cliente*, *Compra de divisas*, *Venta de divisas*, *Cambio cruzado*;
 agrupación por punto de venta, sesión, cajero, tipo de operación, estado,
 moneda o fecha. La tabla dinámica da las comisiones, los márgenes de tipo
-y los valores recibidos por día, estado y moneda.
+y los valores recibidos por día, estado y moneda recibida; reagrúpela por
+punto de venta, sesión o cajero si lo necesita.
 
 El tipo de operación se ve desde el comercio: *Compra de divisas* cuando
 recibe billetes extranjeros, *Venta de divisas* cuando entrega billetes
@@ -426,7 +429,7 @@ divisas*: cada operación con su sesión, sus importes, su comisión y su
 margen de tipo, luego los totales, una línea por moneda de los puntos de
 venta, y la lista de las operaciones canceladas, que no se cuentan.
 Impreso desde una sesión, cubre las operaciones de la sesión; lanzado
-desde *Punto de venta -> Informes -> Detalles de ventas* para un periodo,
+desde *Punto de venta → Informes → Detalles de ventas* para un periodo,
 cubre las operaciones fechadas en ese periodo en los puntos de venta
 seleccionados (todos cuando no se selecciona ninguno), sesiones abiertas
 incluidas. El informe *Posición de divisas* de POS Multi-Currency Cash
@@ -435,7 +438,7 @@ refleja los billetes movidos.
 Registro de cambios
 -------------------
 
-*Punto de venta -> Informes -> Registro de cambios* (administradores del
+*Punto de venta → Informes → Registro de cambios* (administradores del
 Punto de venta) lista cada operación en el orden de su referencia,
 incluidas las canceladas (en gris, con su estado), con el cajero, el tipo
 de operación, los importes, el tipo, la comisión, el margen de tipo, el
@@ -455,7 +458,7 @@ Tabla de tipos en PDF
 La tabla de tipos descrita más arriba también se imprime en PDF (*Tipos
 de cambio*) con **Imprimir los tipos de cambio** en los ajustes, o desde
 el menú *Imprimir* de los puntos de venta (vista de lista de *Punto de
-venta -> Tablero*).
+venta → Tablero*).
 
 Notas contables
 ===============

@@ -63,7 +63,7 @@
                         <h2>Exchange Rates</h2>
                         <p>
                             <span t-out="board['config_name']"/> - <span t-out="board['date']"/>
-                            <t t-if="board['licence']"><br/>Licence No. <span t-out="board['licence']"/></t>
+                            <t t-if="board['licence']"><br/>License No. <span t-out="board['licence']"/></t>
                         </p>
                         <table class="table table-sm o_main_table nm-exchange-rate-board">
                             <thead>
