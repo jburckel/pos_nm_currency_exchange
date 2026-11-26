@@ -16,6 +16,11 @@ existing operations (see *Upgrade* below). Close the sessions, or reload
 every register, after the upgrade: a register still running 20.0.1.x
 cannot record operations.
 
+With `pos_nm_multicurrencies` 20.0.2.1.1 or later, the opening of the Cash
+block of the main currency in the closing popup is shown correctly when
+the session has exchange operations. Before, it was only a display error:
+the counted and posted amounts were right.
+
 ### Upgrade: what changes for your counter
 - **The notes handed back are priced at a sell rate, in favour of the
   shop.** Before, they used the marked-up cash rate of the notes received,

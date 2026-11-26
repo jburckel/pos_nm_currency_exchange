@@ -46,6 +46,11 @@ Requisitos
   el método de pago en efectivo del punto de venta (consulte su guía:
   *Aceptar una divisa en efectivo*). Una versión anterior de POS
   Multi-Currency Cash no funciona con este módulo: actualícela primero.
+  Con la 20.0.2.1.1 o posterior, la apertura del bloque Efectivo de la
+  moneda principal en la ventana de cierre se muestra correctamente
+  cuando la sesión tiene operaciones de cambio (antes, solo era un error
+  de visualización: los importes contados y contabilizados eran
+  correctos).
 * Una **cuenta de ingresos para las comisiones** (tipo *Ingreso* u *Otros
   ingresos*).
 

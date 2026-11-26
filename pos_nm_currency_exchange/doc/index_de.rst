@@ -47,6 +47,10 @@ Voraussetzungen
   der Bargeld-Zahlungsmethode der Kasse (siehe dessen Anleitung: *Eine
   Währung in bar akzeptieren*). Eine ältere Version von POS Multi-Currency
   Cash funktioniert mit diesem Modul nicht: Aktualisieren Sie sie zuerst.
+  Ab 20.0.2.1.1 wird der Anfangsbestand des Bargeld-Blocks der
+  Hauptwährung im Abschlussfenster korrekt angezeigt, wenn die Sitzung
+  Geldwechsel-Vorgänge hat (vorher war es nur ein Anzeigefehler: Die
+  gezählten und gebuchten Beträge waren richtig).
 * Ein **Ertragskonto für die Provisionen** (Typ *Einkommen* oder
   *Sonstige betriebliche Erträge*).
 

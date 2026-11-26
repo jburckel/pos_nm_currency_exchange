@@ -46,7 +46,11 @@ Prérequis
   plus récent**, vendu séparément, avec au moins une devise étrangère sur
   le mode de paiement espèces du point de vente (voir son guide : *Accepter
   une devise en espèces*). Une version plus ancienne de POS Multi-Currency
-  Cash ne fonctionne pas avec ce module : mettez-la à jour d'abord.
+  Cash ne fonctionne pas avec ce module : mettez-la à jour d'abord. Avec
+  la 20.0.2.1.1 ou plus récente, l'ouverture du bloc Espèces de la devise
+  principale dans la fenêtre de clôture est affichée correctement quand la
+  session a des opérations de change (avant, ce n'était qu'une erreur
+  d'affichage : les montants comptés et comptabilisés étaient justes).
 * Un **compte de produits pour les commissions** (type *Revenus* ou
   *Autres produits*).
 
