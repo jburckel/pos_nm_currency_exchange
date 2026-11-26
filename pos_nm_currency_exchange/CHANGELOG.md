@@ -25,7 +25,10 @@ cannot record operations.
   Margin (%)* of each currency is set to its Cash Rate Margin on upgrade;
   a negative Cash Rate Margin, which already sold the notes above the
   rate of Odoo, becomes the sell margin that keeps that sell rate (-2 %
-  becomes 2.04 %): check it in *Cash Currencies*. With fixed rates, the
+  becomes 2.04 %): check it in *Cash Currencies*. A currency added after
+  the upgrade starts from its Cash Rate Margin the same way (and follows
+  it in the form until it is saved), instead of selling its notes at the
+  rate of Odoo. With fixed rates, the
   notes are handed back at the lower of the Fixed Rate and the Fixed
   Change Rate.
 - **Operations can no longer be deleted or edited** (only their note, by a

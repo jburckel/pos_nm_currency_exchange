@@ -3,6 +3,7 @@
 from odoo import api, SUPERUSER_ID
 
 from odoo.addons.pos_nm_currency_exchange import _nm_check_parent_version
+from odoo.addons.pos_nm_currency_exchange.models.pos_currency_setting import nm_default_sell_margin
 
 
 def migrate(cr, version):
@@ -15,7 +16,8 @@ def migrate(cr, version):
       the counter now sells the notes at the rate of Odoo less this margin
       instead of plus the margin. A negative cash rate margin m handed back
       fewer notes than the rate of Odoo: the sell margin -m / (1 + m / 100)
-      keeps that sell rate (2.04 % for -2 %).
+      keeps that sell rate (2.04 % for -2 %). Same helper as the currencies
+      added after the upgrade (nm_default_sell_margin).
     - The rate margin of the operations is left empty here and computed by
       the post-migration.
     """
@@ -25,11 +27,8 @@ def migrate(cr, version):
     cr.execute("ALTER TABLE pos_nm_exchange ADD COLUMN IF NOT EXISTS user_id int4")
     cr.execute("UPDATE pos_nm_exchange SET user_id = create_uid WHERE user_id IS NULL")
     cr.execute("ALTER TABLE pos_nm_currency_setting ADD COLUMN IF NOT EXISTS exchange_sell_margin_percent numeric")
-    cr.execute("""
-        UPDATE pos_nm_currency_setting
-           SET exchange_sell_margin_percent = CASE
-                   WHEN margin_percent < 0 THEN -margin_percent / (1 + margin_percent / 100)
-                   ELSE COALESCE(margin_percent, 0) END
-         WHERE exchange_sell_margin_percent IS NULL
-    """)
+    cr.execute("SELECT id, margin_percent FROM pos_nm_currency_setting WHERE exchange_sell_margin_percent IS NULL")
+    for setting_id, margin in cr.fetchall():
+        cr.execute("UPDATE pos_nm_currency_setting SET exchange_sell_margin_percent = %s WHERE id = %s",
+                   [nm_default_sell_margin(float(margin or 0.0)), setting_id])
     cr.execute("ALTER TABLE pos_nm_exchange ADD COLUMN IF NOT EXISTS rate_margin numeric")

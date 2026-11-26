@@ -14,6 +14,7 @@ from odoo.tools import mute_logger
 from odoo.tools.misc import file_path
 from odoo.addons.point_of_sale.tests.test_pos_accounting import TestPosAccounting
 from odoo.addons.pos_nm_currency_exchange import _nm_check_parent_version
+from odoo.addons.pos_nm_currency_exchange.models.pos_currency_setting import nm_default_sell_margin
 from odoo.addons.pos_nm_currency_exchange.models.pos_exchange import QUOTE_CHANGED, NmQuoteChangedError
 
 
@@ -1363,6 +1364,39 @@ class TestPosCurrencyExchange(TestPosAccounting):
         self._run_migration('pre-migrate')
         self.assertAlmostEqual(self.setting.exchange_sell_margin_percent, 2.0408, places=4)
         self.assertAlmostEqual(self.pos_config._nm_exchange_sell_rate(self.fx), 2.0 * 0.98, places=6)
+
+    def test_default_sell_margin(self):
+        """A currency added after the upgrade starts from the sell margin the
+        upgrade gives: its cash rate margin, -m / (1 + m / 100) for a
+        negative one; an explicit sell margin is kept. The form follows the
+        cash rate margin while the currency is not saved, never after."""
+        self.assertEqual(nm_default_sell_margin(10.0), 10.0)
+        self.assertEqual(nm_default_sell_margin(0.0), 0.0)
+        self.assertAlmostEqual(nm_default_sell_margin(-2.0), 2.0 / 0.98, places=10)
+        chf = self._add_cash_currency('CHF', 0.8, margin_percent=4.0)
+        jpy = self._add_cash_currency('JPY', 150.0, margin_percent=-2.0)
+        gbp = self._add_cash_currency('GBP', 0.85, margin_percent=4.0, exchange_sell_margin_percent=1.5)
+        sek = self._add_cash_currency('SEK', 11.0)
+        margins = {setting.currency_id: setting.exchange_sell_margin_percent
+                   for setting in self.pos_config.nm_currency_setting_ids}
+        self.assertEqual(margins[chf], 4.0)
+        self.assertAlmostEqual(margins[jpy], 2.0408, places=4)
+        self.assertEqual(margins[gbp], 1.5)
+        self.assertEqual(margins[sek], 0.0)
+        # Same sell rate as the upgrade: 150 x 0.98 for -2 %.
+        self.assertAlmostEqual(self.pos_config._nm_exchange_sell_rate(jpy), 150.0 * 0.98, places=2)
+        # The form of a new currency follows the cash rate margin.
+        Setting = self.env['pos.nm.currency.setting']
+        result = Setting.onchange({'margin_percent': 6.0, 'exchange_sell_margin_percent': 0.0},
+                                  ['margin_percent'], {'margin_percent': {}, 'exchange_sell_margin_percent': {}})
+        self.assertEqual(result['value']['exchange_sell_margin_percent'], 6.0)
+        # A saved currency keeps its sell margin.
+        setting = self.pos_config._nm_get_currency_setting(gbp)
+        result = setting.onchange({'margin_percent': 6.0}, ['margin_percent'],
+                                  {'margin_percent': {}, 'exchange_sell_margin_percent': {}})
+        self.assertNotIn('exchange_sell_margin_percent', result.get('value', {}))
+        # Sell margin help documents it.
+        self.assertIn('Cash Rate Margin', Setting._fields['exchange_sell_margin_percent'].help)
 
     def test_parent_version_guard(self):
         """Installing or upgrading on POS Multi-Currency Cash older than
