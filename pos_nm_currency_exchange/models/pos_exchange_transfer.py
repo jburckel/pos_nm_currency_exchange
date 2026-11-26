@@ -9,7 +9,7 @@ TRANSFER_STATES = [
     ('draft', 'Draft'),
     ('sent', 'In Transit'),
     ('received', 'Received'),
-    ('cancelled', 'Cancelled'),
+    ('cancelled', 'Transfer Cancelled'),
 ]
 # Fields of a transfer that can still be changed once it is sent: the rest
 # is written by the transfer itself.

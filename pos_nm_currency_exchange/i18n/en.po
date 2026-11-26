@@ -804,7 +804,6 @@ msgstr "Cancellation Line"
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_operations_popup/exchange_operations_popup.xml:0
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_register_closing__cancelled_count
 #: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__state__cancelled
-#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange_transfer__state__cancelled
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_search
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_transfer_form
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_transfer_search
@@ -2442,10 +2441,22 @@ msgid "Note Transfers"
 msgstr "Note Transfers"
 
 #. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/receive_notes_popup/receive_notes_popup.js:0
+msgid "Note transfer %(name)s: %(amount)s received from %(counter)s"
+msgstr "Note transfer %(name)s: %(amount)s received from %(counter)s"
+
+#. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange_transfer.py:0
 msgid "Note transfer %(name)s: %(amount)s received from %(counter)s."
 msgstr "Note transfer %(name)s: %(amount)s received from %(counter)s."
+
+#. module: pos_nm_currency_exchange
+#. odoo-javascript
+#: code:addons/pos_nm_currency_exchange/static/src/app/send_notes_popup/send_notes_popup.js:0
+msgid "Note transfer %(name)s: %(amount)s sent to %(counter)s"
+msgstr "Note transfer %(name)s: %(amount)s sent to %(counter)s"
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -2532,18 +2543,6 @@ msgstr "Notes sent"
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange_transfer.py:0
 msgid "Notes sent by %(user)s: %(amount)s to %(counter)s."
 msgstr "Notes sent by %(user)s: %(amount)s to %(counter)s."
-
-#. module: pos_nm_currency_exchange
-#. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/receive_notes_popup/receive_notes_popup.js:0
-msgid "Note transfer %(name)s: %(amount)s received from %(counter)s"
-msgstr "Note transfer %(name)s: %(amount)s received from %(counter)s"
-
-#. module: pos_nm_currency_exchange
-#. odoo-javascript
-#: code:addons/pos_nm_currency_exchange/static/src/app/send_notes_popup/send_notes_popup.js:0
-msgid "Note transfer %(name)s: %(amount)s sent to %(counter)s"
-msgstr "Note transfer %(name)s: %(amount)s sent to %(counter)s"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__message_needaction_counter
@@ -4498,6 +4497,11 @@ msgstr "Track the notes by denomination"
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_note_move_search
 msgid "Transfer"
 msgstr "Transfer"
+
+#. module: pos_nm_currency_exchange
+#: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange_transfer__state__cancelled
+msgid "Transfer Cancelled"
+msgstr "Transfer Cancelled"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_office__transfer_count
