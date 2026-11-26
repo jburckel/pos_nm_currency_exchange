@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
+import math
 from datetime import timedelta
 
 from odoo import api, fields, models, _
@@ -97,6 +98,13 @@ def _nm_decompose(units, target, limits=None):
         budget[0] -= 1
         if budget[0] < 0:
             return False
+        if index == count - 1:
+            # The smallest coin settles the rest at once: no loop over it.
+            quantity, rest = divmod(remaining, units[index])
+            if rest or (limits is not None and quantity > limits[index]):
+                return False
+            result[index] = quantity
+            return True
         top = remaining // units[index]
         if limits is not None:
             top = min(top, limits[index])
@@ -107,7 +115,11 @@ def _nm_decompose(units, target, limits=None):
         result[index] = 0
         return False
 
-    return result if target >= 0 and search(0, target) else None
+    # Nothing adds up to a target that is not a multiple of the coins (the
+    # cents of an amount without coins): refused without searching.
+    if target < 0 or not units or target % math.gcd(*units):
+        return None
+    return result if search(0, target) else None
 
 
 # The operation from the point of view of the shop.

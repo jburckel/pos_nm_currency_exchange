@@ -203,7 +203,7 @@ class PosConfig(models.Model):
         the option is ticked and the currency has coins and notes at this
         point of sale."""
         self.ensure_one()
-        if not self.nm_exchange_track_notes:
+        if not (self.nm_exchange_enabled and self.nm_exchange_track_notes):
             return self.env['res.currency']
         bills = self.env['pos.bill'].search([
             ('currency_id', 'in', self._nm_get_foreign_cash_currencies().ids),

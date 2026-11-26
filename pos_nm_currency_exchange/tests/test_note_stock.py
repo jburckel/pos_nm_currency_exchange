@@ -284,3 +284,74 @@ class TestNoteStock(ExchangeCase):
         self.assertTrue(self.pos_config.nm_exchange_track_notes)
         settings = self.env['res.config.settings'].create({'pos_config_id': self.pos_config.id})
         self.assertTrue(settings.pos_nm_exchange_track_notes)
+
+    # ------------------------------------------------------------------
+    # Review fixes
+
+    def test_proposal_impossible_is_fast(self):
+        """An amount with cents and no coin below 1 is refused at once, and a
+        large amount with sparse notes does not loop over the smallest one:
+        both used to take tens of seconds."""
+        import time
+        Exchange = self.env['pos.nm.exchange']
+        start = time.monotonic()
+        rows = [{'key': key, 'value': float(key), 'label': key, 'stock': 0} for key in ('1000', '100', '1')]
+        result = Exchange._nm_propose_notes(self.fx, 200000.5, rows)
+        self.assertFalse(result['exact'])
+        self.assertIn('cannot be made up', result['error'])
+        rows = [{'key': key, 'value': float(key), 'label': key, 'stock': 3} for key in ('500', '1')]
+        result = Exchange._nm_propose_notes(self.fx, 1000001.0, rows)
+        self.assertTrue(result['exact'])
+        self.assertLess(time.monotonic() - start, 2.0)
+
+    def test_untracked_drawer_not_in_report(self):
+        """A drawer counted by denomination at a point of sale that does not
+        track its notes is not in the Note Stock report: its differences
+        would only be the cash sales."""
+        self.pos_config.nm_exchange_track_notes = False
+        session = self._open_counted()
+        self.env.flush_all()
+        self.assertFalse(self.env['pos.nm.note.stock'].search([('session_id', '=', session.id)]))
+        self.assertNotIn('nm_expected_notes', session.get_closing_control_data()['multicurrency_details'][0])
+
+    def test_disabled_counter_tracks_nothing(self):
+        self.pos_config.nm_exchange_enabled = False
+        self.assertFalse(self.pos_config._nm_note_currencies())
+        self.assertEqual(self.pos_config._load_pos_data_read(self.pos_config, self.pos_config)[0][
+            '_nm_note_currency_ids'], [])
+
+    def test_opening_by_amount_no_difference(self):
+        """Opening counted by amount only: the stock by denomination is not
+        known, so neither expected quantities at closing nor differences."""
+        session = self._open(fx=380.0, main=2000.0)
+        self.assertNotIn('nm_expected_notes', session.get_closing_control_data()['multicurrency_details'][0])
+        self._refresh_journal()
+        session.set_multicurrency_counts({self.fx.id: 380.0}, None, {self.fx.id: OPENING})
+        self.env.flush_all()
+        self.assertTrue(self.env['pos.nm.note.stock'].search([('session_id', '=', session.id)]))
+        self.env.cr.execute(
+            "SELECT count(*) FROM pos_nm_note_stock WHERE session_id = %s AND difference_qty IS NOT NULL",
+            [session.id])
+        self.assertEqual(self.env.cr.fetchone()[0], 0)
+
+    def test_empty_drawer_at_closing_shows_shortage(self):
+        """Closing counted at 0 (POS Multi-Currency Cash stores no grid for
+        an empty drawer): every note of the stock is missing."""
+        session = self._open_counted()
+        self._refresh_journal()
+        session.set_multicurrency_counts({self.fx.id: 0.0}, None, {self.fx.id: {'50': 0}})
+        self.env.flush_all()
+        fifty = self.env['pos.nm.note.stock'].search([('session_id', '=', session.id), ('value', '=', 50.0)])
+        self.assertEqual(fifty.difference_qty, -4)
+
+    def test_malformed_count_does_not_break_report(self):
+        session = self._open_counted()
+        self.env.flush_all()
+        self.env.cr.execute(
+            "UPDATE pos_session_currency_detail SET opening_details = %s WHERE session_id = %s",
+            ['{"abc": 1, "50": "x", "20": 2}', session.id])
+        self.env.flush_all()
+        rows = self.env['pos.nm.note.stock'].search([('session_id', '=', session.id)])
+        self.assertEqual(rows.mapped('value'), [20.0])
+        session.currency_detail_ids.invalidate_recordset(['opening_details'])
+        self.assertEqual(self._stock(session), {'50': 0, '20': 2, '10': 0, '5': 0, '1': 0})

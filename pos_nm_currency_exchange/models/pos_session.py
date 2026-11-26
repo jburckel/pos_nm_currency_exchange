@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import math
+
 from odoo import api, fields, models, _
 
 from .pos_nm_note_move import _nm_note_key
@@ -79,13 +81,17 @@ class PosSession(models.Model):
         for bill in self.config_id._nm_note_bills(currency):
             values.setdefault(_nm_note_key(bill.value), bill.value)
         for raw_key, quantity in opening_details.items():
+            # A malformed entry of the count is skipped, as in the report.
             try:
                 value = float(raw_key)
-            except ValueError:
+                quantity = int(quantity or 0)
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(value) or value <= 0:
                 continue
             key = _nm_note_key(value)
             values.setdefault(key, value)
-            opening[key] = opening.get(key, 0) + int(quantity or 0)
+            opening[key] = opening.get(key, 0) + quantity
         for value, quantity in self.env['pos.nm.note.move'].sudo()._read_group(
                 [('session_id', '=', self.id), ('currency_id', '=', currency.id)], ['value'], ['quantity:sum']):
             key = _nm_note_key(value)
@@ -112,7 +118,12 @@ class PosSession(models.Model):
         currencies = self.config_id._nm_note_currencies()
         for detail in data.get('multicurrency_details') or []:
             currency = currencies.filtered(lambda c: c.id == detail['currency_id'])
-            if currency:
-                detail['nm_expected_notes'] = {
-                    row['key']: row['stock'] for row in self._nm_note_stock(currency)['rows']}
+            if not currency:
+                continue
+            stock = self._nm_note_stock(currency)
+            # Expected quantities only when the opening is known by
+            # denomination (counted by coins/notes, or an empty drawer): an
+            # opening counted by amount would expect the exchanges alone.
+            if stock['counted'] or currency.is_zero(detail.get('opening') or 0.0):
+                detail['nm_expected_notes'] = {row['key']: row['stock'] for row in stock['rows']}
         return data

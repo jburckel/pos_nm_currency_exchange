@@ -89,12 +89,14 @@ class PosNmNoteStock(models.Model):
                       FROM pos_session_currency_detail detail,
                            jsonb_each_text(CASE WHEN jsonb_typeof(detail.opening_details) = 'object'
                                                 THEN detail.opening_details ELSE '{}'::jsonb END) item
+                     WHERE item.key ~ '^\s*[0-9]+(\.[0-9]+)?\s*$' AND item.value ~ '^\s*-?[0-9]+\s*$'
                     UNION ALL
                     SELECT detail.session_id, detail.currency_id, ROUND(item.key::numeric, 4),
                            0, 0, 0, item.value::numeric
                       FROM pos_session_currency_detail detail,
                            jsonb_each_text(CASE WHEN jsonb_typeof(detail.closing_details) = 'object'
                                                 THEN detail.closing_details ELSE '{}'::jsonb END) item
+                     WHERE item.key ~ '^\s*[0-9]+(\.[0-9]+)?\s*$' AND item.value ~ '^\s*-?[0-9]+\s*$'
                     UNION ALL
                     SELECT move.session_id, move.currency_id, ROUND(move.value::numeric, 4),
                            0, GREATEST(move.quantity, 0), GREATEST(-move.quantity, 0), 0
@@ -119,7 +121,14 @@ class PosNmNoteStock(models.Model):
                        stock.out_qty,
                        stock.opening_qty + stock.in_qty - stock.out_qty AS stock_qty,
                        stock.closing_qty,
-                       CASE WHEN jsonb_typeof(detail.closing_details) = 'object'
+                       -- Only when both counts are known by denomination: a closing
+                       -- counted by coins/notes (or an empty drawer, stored without
+                       -- grid by POS Multi-Currency Cash), against an opening counted
+                       -- by coins/notes or empty.
+                       CASE WHEN (jsonb_typeof(detail.closing_details) = 'object'
+                                  OR (detail.closing_counted AND COALESCE(detail.closing_amount, 0) = 0))
+                             AND (jsonb_typeof(detail.opening_details) = 'object'
+                                  OR COALESCE(detail.opening_amount, 0) = 0)
                             THEN stock.closing_qty - (stock.opening_qty + stock.in_qty - stock.out_qty)
                        END AS difference_qty
                   FROM stock
@@ -127,5 +136,10 @@ class PosNmNoteStock(models.Model):
                   JOIN pos_config config ON config.id = session.config_id
              LEFT JOIN pos_session_currency_detail detail
                     ON detail.session_id = stock.session_id AND detail.currency_id = stock.currency_id
+                 -- The drawers whose notes are tracked: the option is ticked, or
+                 -- the session has note moves (option switched off since).
+                 WHERE config.nm_exchange_track_notes
+                    OR EXISTS (SELECT 1 FROM pos_nm_note_move m
+                                WHERE m.session_id = stock.session_id AND m.currency_id = stock.currency_id)
             )
         """, SQL.identifier(self._table)))
