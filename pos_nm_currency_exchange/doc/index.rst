@@ -40,9 +40,10 @@ Requirements
 
 * The **Point of Sale** application (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 or
-  later**, sold separately, with at least one foreign currency on the cash
-  payment method of the point of sale (see its guide: *Accept a currency in
-  cash*). An older version of POS Multi-Currency Cash does not work with
+  later**, included in the price shown on the Odoo Apps Store (not charged
+  again if you already own it), with at least one foreign currency on the
+  cash payment method of the point of sale (see its guide: *Accept a
+  currency in cash*). An older version of POS Multi-Currency Cash does not work with
   this module: update it first. With 20.0.2.1.1 or later, the opening of
   the Cash block of the main currency in the closing popup is shown
   correctly when the session has exchange operations (before, it was only
