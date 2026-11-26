@@ -59,6 +59,14 @@
                                 </div>
                             </div>
                             <div class="row mt8">
+                                <label string="Track the notes by denomination" for="pos_nm_exchange_track_notes" class="col-lg-5 o_light_label"/>
+                                <field name="pos_nm_exchange_track_notes" class="col-lg-1"/>
+                            </div>
+                            <div class="text-muted" invisible="not pos_nm_exchange_track_notes">
+                                The notes received and handed back in a foreign currency are entered by denomination; the
+                                notes handed back are proposed from the stock of the drawer (opening count and operations).
+                            </div>
+                            <div class="row mt8">
                                 <label string="Rate board on the customer display" for="pos_nm_exchange_board_on_display" class="col-lg-5 o_light_label"/>
                                 <field name="pos_nm_exchange_board_on_display" class="col-lg-1"/>
                             </div>

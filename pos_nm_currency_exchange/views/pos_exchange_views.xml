@@ -54,6 +54,8 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_statement_lines" type="object" class="oe_stat_button" icon="payments"
                                 string="Statement Lines"/>
+                        <button name="action_view_note_moves" type="object" class="oe_stat_button" icon="toll"
+                                string="Note Moves" invisible="not note_move_ids"/>
                     </div>
                     <div class="oe_title">
                         <h1><field name="name"/></h1>

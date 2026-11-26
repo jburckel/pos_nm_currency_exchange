@@ -80,6 +80,7 @@ Requirements
         "views/res_config_settings.xml",
         "views/res_partner_views.xml",
         "views/pos_exchange_office_views.xml",
+        "views/pos_nm_note_stock_views.xml",
         "views/rate_board_templates.xml",
     ],
     "assets": {

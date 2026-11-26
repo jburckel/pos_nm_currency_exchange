@@ -203,3 +203,46 @@ class TestPosCurrencyExchangeUi(TestPointOfSaleHttpCommon):
         lines = exchange.statement_line_in_id | exchange.statement_line_out_id
         self.assertEqual(lines.employee_id, employee)
         self.assertEqual(lines.partner_id, employee.work_contact_id)
+
+    def test_pos_currency_exchange_note_stock_tour(self):
+        """Notes of EUR tracked by denomination (50, 20, 10, 5), opening
+        counted by coins/notes at the register: 1 x 50, 2 x 20, 1 x 10. 50 EUR
+        received as 1 x 50, then 70 EUR handed back as the 1 x 50 and 1 x 20
+        proposed: one note move per denomination, and 1 x 50, 1 x 20, 1 x 10
+        left in the drawer, as counted at closing."""
+        foreign_currency, cash_pm = TestPosMulticurrencyUi._setup_multicurrency(self, 60.0)
+        commission_account = self.env['account.account'].create({
+            'name': 'EX Tour Commissions', 'code': '999053', 'account_type': 'income_other'})
+        self.main_pos_config.write({
+            'nm_exchange_enabled': True,
+            'nm_exchange_income_account_id': commission_account.id,
+            'nm_exchange_track_notes': True,
+        })
+        self.env['pos.nm.currency.setting'].create({
+            'config_id': self.main_pos_config.id, 'currency_id': foreign_currency.id, 'change_rounding': 5.0})
+        self.assertEqual(
+            self.main_pos_config._load_pos_data_read(self.main_pos_config, self.main_pos_config)[0]['_nm_note_currency_ids'],
+            [foreign_currency.id])
+
+        self.main_pos_config.with_user(self.pos_user).open_ui()
+        session = self.main_pos_config.current_session_id
+        TestPosMulticurrencyUi._start_tour(self, 'PosCurrencyExchangeNoteStockTour')
+
+        session.invalidate_recordset()
+        self.assertEqual(session.state, 'closed')
+        detail = session.currency_detail_ids.filtered(lambda d: d.currency_id == foreign_currency)
+        self.assertEqual(detail.opening_details, {'50': 1, '20': 2, '10': 1})
+        self.assertEqual(detail.closing_details, {'50': 1, '20': 1, '10': 1})
+        received, handed = session.nm_exchange_ids.sorted('id')
+        self.assertEqual((received.currency_in_id, received.amount_in), (foreign_currency, 50.0))
+        self.assertEqual((handed.currency_out_id, handed.amount_out), (foreign_currency, 70.0))
+        moves = self.env['pos.nm.note.move'].search([('session_id', '=', session.id)])
+        self.assertEqual(
+            sorted((move.exchange_id.id, move.currency_id.id, move.value, move.quantity, move.origin) for move in moves),
+            sorted([
+                (received.id, foreign_currency.id, 50.0, 1, 'exchange'),
+                (handed.id, foreign_currency.id, 50.0, -1, 'exchange'),
+                (handed.id, foreign_currency.id, 20.0, -1, 'exchange'),
+            ]))
+        stock = {row['key']: row['stock'] for row in session._nm_note_stock(foreign_currency)['rows']}
+        self.assertEqual(stock, {'50': 1, '20': 1, '10': 1, '5': 0})

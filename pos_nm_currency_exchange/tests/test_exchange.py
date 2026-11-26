@@ -65,14 +65,16 @@ class TestPosCurrencyExchange(TestPosAccounting):
     def _refresh_journal(self):
         self.cash_journal.invalidate_recordset(['current_statement_balance', 'has_statement_lines'])
 
-    def _open(self, fx=0.0, main=0.0, counts=None):
+    def _open(self, fx=0.0, main=0.0, counts=None, details=None):
         """Open a session with ``main`` in the main drawer, ``fx`` in the EUR
-        drawer and ``counts`` ({currency: amount}) in the other drawers."""
+        drawer and ``counts`` ({currency: amount}) in the other drawers;
+        ``details``: counts by denomination ({currency: {value key: qty}})."""
         self._refresh_journal()
         self.pos_config.open_ui()
         session = self.get_pos_session()
         session.set_multicurrency_counts({
-            str(self.fx.id): fx, **{str(currency.id): amount for currency, amount in (counts or {}).items()}})
+            str(self.fx.id): fx, **{str(currency.id): amount for currency, amount in (counts or {}).items()}},
+            None, {str(currency.id): money for currency, money in (details or {}).items()})
         session.set_opening_control(main, '')
         session.bank_statement_id.flush_recordset()
         return session

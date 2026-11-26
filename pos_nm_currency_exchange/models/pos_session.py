@@ -2,6 +2,8 @@
 
 from odoo import api, fields, models, _
 
+from .pos_nm_note_move import _nm_note_key
+
 
 class PosSession(models.Model):
     _inherit = 'pos.session'
@@ -60,9 +62,57 @@ class PosSession(models.Model):
         return next((detail['amount'] for detail in data['multicurrency_details']
                      if detail['currency_id'] == currency.id), 0.0)
 
+    def _nm_note_stock(self, currency):
+        """Stock of the coins and notes of the foreign ``currency`` in the
+        drawer: opening count by denomination plus the note moves of the
+        session, for every coin and note of the currency (and the values
+        counted or moved that are no longer one).
+
+        :return: {'counted': the opening was counted by denomination,
+            'rows': [{key, value, label, opening, moves, stock}], the largest
+            value first}
+        """
+        self.ensure_one()
+        detail = self.currency_detail_ids.filtered(lambda d: d.currency_id == currency)[:1]
+        opening_details = detail.opening_details if isinstance(detail.opening_details, dict) else {}
+        values, opening, moves = {}, {}, {}
+        for bill in self.config_id._nm_note_bills(currency):
+            values.setdefault(_nm_note_key(bill.value), bill.value)
+        for raw_key, quantity in opening_details.items():
+            try:
+                value = float(raw_key)
+            except ValueError:
+                continue
+            key = _nm_note_key(value)
+            values.setdefault(key, value)
+            opening[key] = opening.get(key, 0) + int(quantity or 0)
+        for value, quantity in self.env['pos.nm.note.move'].sudo()._read_group(
+                [('session_id', '=', self.id), ('currency_id', '=', currency.id)], ['value'], ['quantity:sum']):
+            key = _nm_note_key(value)
+            values.setdefault(key, value)
+            moves[key] = moves.get(key, 0) + quantity
+        rows = []
+        for key, value in sorted(values.items(), key=lambda item: item[1], reverse=True):
+            rows.append({
+                'key': key,
+                'value': value,
+                'label': currency.format(value),
+                'opening': opening.get(key, 0),
+                'moves': moves.get(key, 0),
+                'stock': opening.get(key, 0) + moves.get(key, 0),
+            })
+        return {'counted': bool(opening_details), 'rows': rows}
+
     def get_closing_control_data(self):
         data = super().get_closing_control_data()
         # The counter may have been disabled since the operations were done.
         if self.config_id.nm_exchange_enabled or self.nm_exchange_ids:
             data['nm_exchange_summary'] = self._nm_exchange_summary()
+        # Expected quantity of each coin and note of the tracked currencies.
+        currencies = self.config_id._nm_note_currencies()
+        for detail in data.get('multicurrency_details') or []:
+            currency = currencies.filtered(lambda c: c.id == detail['currency_id'])
+            if currency:
+                detail['nm_expected_notes'] = {
+                    row['key']: row['stock'] for row in self._nm_note_stock(currency)['rows']}
         return data

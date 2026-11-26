@@ -20,6 +20,12 @@
                onClick="() => this.pos.nmExchangeRates()"
                btnLabel.translate="Exchange Rates"
             />
+            <t t-if="this.pos.nmShowNoteStock"
+               t-call="point_of_sale.BurgerDialogMenuButton"
+               dataIcon="'payments'"
+               onClick="() => this.pos.nmNoteStock()"
+               btnLabel.translate="Note Stock"
+            />
         </xpath>
     </t>
 </templates>

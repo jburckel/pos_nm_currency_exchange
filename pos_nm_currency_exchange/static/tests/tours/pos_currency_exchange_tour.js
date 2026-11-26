@@ -780,3 +780,216 @@ registry.category("web_tour.tours").add("PosCurrencyExchangeEmployeeTour", {
             ProductScreen.isShown(),
         ].flat(),
 });
+
+/**
+ * Quantity of the coin/note of ``value`` in the money details popup of a
+ * foreign currency (largest first).
+ */
+function countNote(value, quantity) {
+    return {
+        content: `count ${quantity} x ${value}`,
+        trigger: `.modal .nm-currency-money-details div.d-flex:has(> label:contains(/^\\D*${value}[.,]00\\D*$/)) input`,
+        run: `edit ${quantity}`,
+    };
+}
+
+function noteSelector(side, key) {
+    return `.modal .nm-currency-exchange .nm-exchange-notes-${side} tr.nm-exchange-note[data-key='${key}']`;
+}
+
+/**
+ * Notes of EUR tracked by denomination (50, 20, 10 and 5), no commission:
+ * - opening counted by coins/notes: 1 x 50, 2 x 20, 1 x 10 (100 EUR);
+ * - 50 EUR received: the grid of the notes received is required, 1 x 50;
+ * - main currency -> 70 EUR (reverse quote): 1 x 50 and 1 x 20 proposed
+ *   from the drawer, confirmed;
+ * - Note Stock: 1 x 50, 1 x 20, 1 x 10;
+ * - closing count: the quantities expected are shown by denomination.
+ */
+registry.category("web_tour.tours").add("PosCurrencyExchangeNoteStockTour", {
+    steps: () =>
+        [
+            {
+                content: "fill the counted amount of the main currency at opening",
+                trigger:
+                    ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) .cash-input-sub-section input",
+                run: "edit 100",
+            },
+            {
+                content: "wait for the debounced input of the main currency",
+                trigger: ".modal .opening-cash-section:not(.nm-multicurrency-opening-section) input:value(100)",
+                run: () => new Promise((resolve) => setTimeout(resolve, 500)),
+            },
+            {
+                content: "count the EUR notes at opening by coins/notes",
+                trigger: ".modal .nm-multicurrency-opening-section .btn:has([data-icon='payments'])",
+                run: "click",
+            },
+            countNote(50, 1),
+            countNote(20, 2),
+            countNote(10, 1),
+            {
+                content: "confirm the count of the EUR notes",
+                trigger: ".modal .nm-currency-money-details .modal-footer .btn-primary:contains('Confirm')",
+                run: "click",
+            },
+            {
+                content: "100 EUR counted",
+                trigger: ".modal .nm-multicurrency-opening-section input.nm-currency-count:value(100)",
+            },
+            Dialog.confirm("Open Register"),
+            ProductScreen.isShown(),
+            stubPrinting(),
+
+            Chrome.clickMenuOption("Currency Exchange"),
+            {
+                content: "type 50 EUR received",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-in",
+                run: "edit 50",
+            },
+            {
+                content: "the grid of the notes received lists the EUR notes with their stock",
+                trigger: `${noteSelector("in", "20")} .nm-exchange-note-stock:contains(/^2$/)`,
+            },
+            {
+                content: "no grid for the notes of the main currency, not tracked",
+                trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-notes-out))",
+            },
+            {
+                content: "the notes received are not counted yet: Confirm disabled",
+                trigger:
+                    ".modal .nm-currency-exchange:has(.nm-exchange-notes-in .nm-exchange-notes-error) .nm-exchange-confirm[disabled]",
+            },
+            {
+                content: "1 x 50 received",
+                trigger: `${noteSelector("in", "50")} .nm-exchange-note-qty input`,
+                run: "edit 1",
+            },
+            {
+                content: "the notes received add up to 50",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-notes-in .nm-exchange-notes-total:contains(/50[.,]00/)",
+            },
+            {
+                content: "confirm the operation",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(.nm-exchange-notes-error)) .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the operation is recorded and the popup closed",
+                trigger: "body:not(:has(.modal .nm-currency-exchange))",
+            },
+
+            Chrome.clickMenuOption("Currency Exchange"),
+            {
+                content: "swap the currencies: main currency received, EUR handed back",
+                trigger: ".modal .nm-currency-exchange .nm-exchange-swap",
+                run: "click",
+            },
+            {
+                content: "the customer wants 70 EUR",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out",
+                run: "edit 70",
+            },
+            {
+                content: "leave the field",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-note",
+                run: "click",
+            },
+            {
+                content: "70 EUR handed back",
+                trigger: ".modal .nm-currency-exchange input.nm-exchange-amount-out:value(/^70[.,]00$/)",
+            },
+            {
+                content: "the stock of the 50 notes counts the one received: 2",
+                trigger: `${noteSelector("out", "50")} .nm-exchange-note-stock:contains(/^2$/)`,
+            },
+            {
+                content: "1 x 50 proposed",
+                trigger: `${noteSelector("out", "50")} .nm-exchange-note-qty input:value(/^1$/)`,
+            },
+            {
+                content: "1 x 20 proposed",
+                trigger: `${noteSelector("out", "20")} .nm-exchange-note-qty input:value(/^1$/)`,
+            },
+            {
+                content: "no 10 proposed",
+                trigger: `${noteSelector("out", "10")} .nm-exchange-note-qty input:value(/^0$/)`,
+            },
+            {
+                content: "the notes handed back add up to 70, no shortfall",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(.nm-exchange-notes-shortfall)) .nm-exchange-notes-out .nm-exchange-notes-total:contains(/70[.,]00/)",
+            },
+            {
+                content: "no grid for the notes of the main currency, not tracked",
+                trigger: ".modal .nm-currency-exchange:not(:has(.nm-exchange-notes-in))",
+            },
+            {
+                content: "confirm the operation",
+                trigger:
+                    ".modal .nm-currency-exchange:not(:has(.nm-exchange-notes-error)) .nm-exchange-confirm:not([disabled])",
+                run: "click",
+            },
+            {
+                content: "the operation is recorded and the popup closed",
+                trigger: "body:not(:has(.modal .nm-currency-exchange))",
+            },
+
+            Chrome.clickMenuOption("Note Stock"),
+            {
+                content: "the EUR notes counted at opening",
+                trigger: ".modal .nm-note-stock .nm-note-stock-currency:not(:has(.nm-note-stock-uncounted))",
+            },
+            {
+                content: "50: 1 at opening, 1 received and 1 handed back, 1 in the drawer",
+                trigger:
+                    ".modal .nm-note-stock tr.nm-note-stock-row[data-key='50']:has(.nm-note-stock-opening:contains(/^1$/)) .nm-note-stock-quantity:contains(/^1$/)",
+            },
+            {
+                content: "20: 2 at opening, 1 handed back, 1 in the drawer",
+                trigger:
+                    ".modal .nm-note-stock tr.nm-note-stock-row[data-key='20']:has(.nm-note-stock-moves:contains(/^-1$/)) .nm-note-stock-quantity:contains(/^1$/)",
+            },
+            {
+                content: "10: 1 in the drawer",
+                trigger: ".modal .nm-note-stock tr.nm-note-stock-row[data-key='10'] .nm-note-stock-quantity:contains(/^1$/)",
+            },
+            Dialog.cancel(),
+
+            Chrome.clickMenuOption("Close Register"),
+            {
+                content: "count the EUR notes at closing by coins/notes",
+                trigger: ".modal .close-pos-popup .nm-multicurrency-count button[data-icon='payments']",
+                run: "click",
+            },
+            {
+                content: "1 x 50 expected",
+                trigger:
+                    ".modal .nm-currency-money-details div.d-flex:has(> label:contains(/^\\D*50[.,]00\\D*$/)) .nm-expected-notes:contains(/expected 1$/)",
+            },
+            {
+                content: "no 5 expected",
+                trigger:
+                    ".modal .nm-currency-money-details div.d-flex:has(> label:contains(/^\\D*5[.,]00\\D*$/)) .nm-expected-notes:contains(/expected 0$/)",
+            },
+            countNote(50, 1),
+            countNote(20, 1),
+            countNote(10, 1),
+            {
+                content: "confirm the count of the EUR notes",
+                trigger: ".modal .nm-currency-money-details .modal-footer .btn-primary:contains('Confirm')",
+                run: "click",
+            },
+            {
+                content: "80 EUR counted",
+                trigger: ".modal .close-pos-popup .nm-multicurrency-count input.nm-currency-count:value(80)",
+            },
+            {
+                content: "close the register; the register redirects to the login page",
+                trigger: ".modal:not(.o_inactive_modal) .modal-footer .btn-primary:contains('Close Register')",
+                run: "click",
+                expectUnloadPage: true,
+            },
+        ].flat(),
+});

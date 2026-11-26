@@ -91,6 +91,14 @@ class PosConfig(models.Model):
         help='Page of the rate board of this counter, for a screen facing the customers. It holds the '
              'access token of the point of sale, the one of the customer display.',
     )
+    nm_exchange_track_notes = fields.Boolean(
+        string='Track the Notes by Denomination',
+        default=False,
+        help='The exchange popup asks the foreign notes received and handed back by denomination, proposes '
+             'the notes handed back from the stock of the drawer (opening count and operations of the '
+             'session), and the closing popup shows the expected quantity of each coin and note. Foreign '
+             'currencies with coins and notes only.',
+    )
     nm_exchange_count = fields.Integer(string='Exchanges', compute='_compute_nm_exchange_count')
 
     @api.depends('access_token')
@@ -178,7 +186,30 @@ class PosConfig(models.Model):
             exchange_fields = self.env['pos.nm.exchange']._fields
             read_records[0]['_nm_funds_origins'] = exchange_fields['funds_origin']._description_selection(self.env)
             read_records[0]['_nm_purposes'] = exchange_fields['purpose']._description_selection(self.env)
+            read_records[0]['_nm_note_currency_ids'] = config._nm_note_currencies().ids
         return read_records
+
+    def _nm_note_bills(self, currency):
+        """Coins and notes of ``currency`` available at the point of sale
+        (those the register loads), the largest first."""
+        self.ensure_one()
+        return self.env['pos.bill'].search([
+            ('currency_id', '=', currency.id),
+            '|', ('id', 'in', self.default_bill_ids.ids), ('pos_config_ids', '=', False),
+        ]).sorted('value', reverse=True)
+
+    def _nm_note_currencies(self):
+        """Foreign cash currencies whose notes are tracked by denomination:
+        the option is ticked and the currency has coins and notes at this
+        point of sale."""
+        self.ensure_one()
+        if not self.nm_exchange_track_notes:
+            return self.env['res.currency']
+        bills = self.env['pos.bill'].search([
+            ('currency_id', 'in', self._nm_get_foreign_cash_currencies().ids),
+            '|', ('id', 'in', self.default_bill_ids.ids), ('pos_config_ids', '=', False),
+        ])
+        return self._nm_get_foreign_cash_currencies() & bills.currency_id
 
     def _nm_exchange_currencies(self):
         """Currencies of the exchange counter: the currency of the point of

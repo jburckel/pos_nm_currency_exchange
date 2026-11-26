@@ -116,7 +116,11 @@ edited or deleted, the server recomputes every check.
   a tour of the declarations is still to write.
 - Lot 3: done (pages, JSON refresh, customer display idle screen, tests of
   the routes).
-- Lots 4 and 5: not started.
+- Lot 4: done (option, note moves, proposal from the stock, checks of the
+  grids, cancellation, closing data, Note Stock report, receipt; tests
+  `tests/test_note_stock.py`). Foreign currencies only: the currency of the
+  point of sale has no count by denomination in POS Multi-Currency Cash.
+- Lot 5: not started.
 
 ## Order of work and checks
 

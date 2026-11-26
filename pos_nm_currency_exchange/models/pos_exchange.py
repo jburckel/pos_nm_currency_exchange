@@ -9,6 +9,7 @@ from odoo.fields import Domain
 from odoo.tools import float_repr, float_round
 from odoo.tools.misc import formatLang
 
+from .pos_nm_note_move import _nm_note_key
 from .res_partner import ID_DOCUMENT_TYPES
 
 # Identity document sent by the register: field of the operation, field of
@@ -68,6 +69,45 @@ COMPLIANCE_STATES = [
 MANAGER_FIELDS = {'note', 'compliance_state', 'compliance_note'}
 # Advisory lock of the hash chain of the register (with the company id).
 HASH_LOCK = 0x4E4D4558  # 'NMEX'
+# Coins and notes are compared in units of 1/10000 (digits of pos.bill), and
+# their proposal tries at most this many combinations.
+NOTE_UNITS = 10000
+NOTE_SEARCH_BUDGET = 20000
+
+
+def _nm_decompose(units, target, limits=None):
+    """Quantities of the coins and notes ``units`` (integers, the largest
+    first) adding up exactly to ``target``, the largest first, at most
+    ``limits`` of each when given; None when there is none (or when the
+    search budget is spent)."""
+    count = len(units)
+    result = [0] * count
+    budget = [NOTE_SEARCH_BUDGET]
+    # Most that the coins and notes from an index on can add up to.
+    reach = [0] * (count + 1)
+    if limits is not None:
+        for index in range(count - 1, -1, -1):
+            reach[index] = reach[index + 1] + units[index] * limits[index]
+
+    def search(index, remaining):
+        if remaining == 0:
+            return True
+        if index == count or (limits is not None and remaining > reach[index]):
+            return False
+        budget[0] -= 1
+        if budget[0] < 0:
+            return False
+        top = remaining // units[index]
+        if limits is not None:
+            top = min(top, limits[index])
+        for quantity in range(top, -1, -1):
+            result[index] = quantity
+            if search(index + 1, remaining - quantity * units[index]):
+                return True
+        result[index] = 0
+        return False
+
+    return result if target >= 0 and search(0, target) else None
 
 
 # The operation from the point of view of the shop.
@@ -225,6 +265,9 @@ class PosNmExchange(models.Model):
         'account.bank.statement.line', string='Handed Reversal Line', readonly=True, copy=False,
         ondelete='restrict', check_company=True,
         help='Statement line taking back the notes handed to the customer.')
+    note_move_ids = fields.One2many(
+        'pos.nm.note.move', 'exchange_id', string='Note Moves', readonly=True,
+        help='Coins and notes received and handed back by denomination, when the point of sale tracks them.')
     uuid = fields.Char(
         string='Register Identifier', readonly=True, copy=False,
         help='Identifier of the operation sent by the register: an operation confirmed again after '
@@ -713,6 +756,7 @@ class PosNmExchange(models.Model):
                 'drawer_balance_formatted': currency_out.format(available),
                 'drawer_error': self._nm_drawer_error(currency_out, quote['amount_out'], available),
             })
+        quote.update(self._nm_quote_notes(config, session, currency_in, currency_out, quote['amount_out']))
         return quote
 
     @api.model
@@ -777,7 +821,8 @@ class PosNmExchange(models.Model):
 
     @api.model
     def create_from_ui(self, session_id, currency_in_id, amount_in, currency_out_id, partner_id=None, *,
-                       note=None, employee_id=None, amount_out=None, uuid=None, document=None, declaration=None):
+                       note=None, employee_id=None, amount_out=None, uuid=None, document=None, declaration=None,
+                       notes_in=None, notes_out=None):
         """Register: record the operation and post its two statement lines.
 
         The POS users can only read the operations: the operation is created
@@ -798,6 +843,13 @@ class PosNmExchange(models.Model):
             ``funds_origin``, ``funds_origin_note``, ``purpose``, ``pep``),
             required above the origin of funds threshold, frozen on the
             operation
+        :param notes_in: notes received by denomination ({value key:
+            quantity}), required when the point of sale tracks the notes of
+            the currency received: they must add up to the amount received
+        :param notes_out: notes handed back by denomination, required when
+            the point of sale tracks the notes of the currency handed back:
+            they must add up to the amount handed back (a shortfall of the
+            stock is not refused)
         :return: the data of the exchange receipt
         """
         self._nm_check_pos_user()
@@ -844,6 +896,11 @@ class PosNmExchange(models.Model):
         document_changed = document is not None and document_values \
             and document_values != self._nm_document_values(partner)
         self._nm_check_drawer(session, currency_out, quote['amount_out'])
+        tracked = config._nm_note_currencies()
+        notes_in = self._nm_note_grid(config, currency_in, quote['amount_in'], notes_in, received=True) \
+            if currency_in in tracked else {}
+        notes_out = self._nm_note_grid(config, currency_out, quote['amount_out'], notes_out, received=False) \
+            if currency_out in tracked else {}
         employee, cashier_name, operator = self._nm_operator(config, employee_id)
 
         # The cashier does not follow the operations: the receipt e-mailed
@@ -877,6 +934,8 @@ class PosNmExchange(models.Model):
             cash_pm, session, -quote['value_out'], account, label_out, operator, currency_out, quote['amount_out'],
             employee)
         exchange.write({'statement_line_in_id': line_in.id, 'statement_line_out_id': line_out.id})
+        exchange._nm_post_note_moves([(currency_in, value, quantity) for value, quantity in notes_in.values()]
+                                     + [(currency_out, value, -quantity) for value, quantity in notes_out.values()])
         exchange._nm_hash_register()
         if review_reasons:
             exchange._nm_schedule_review()
@@ -1103,6 +1162,165 @@ class PosNmExchange(models.Model):
         return line
 
     # ------------------------------------------------------------------
+    # Notes by denomination
+    # ------------------------------------------------------------------
+
+    @api.model
+    def _nm_note_rows(self, session, currency):
+        """Coins and notes of ``currency`` at the point of sale of the
+        session, the largest first, with their stock in the drawer."""
+        stock = {row['key']: row['stock'] for row in session._nm_note_stock(currency)['rows']}
+        rows = {}
+        for bill in session.config_id._nm_note_bills(currency):
+            key = _nm_note_key(bill.value)
+            rows.setdefault(key, {
+                'key': key, 'value': bill.value, 'label': currency.format(bill.value), 'stock': stock.get(key, 0)})
+        return list(rows.values())
+
+    @api.model
+    def _nm_propose_notes(self, currency, amount, rows):
+        """Notes handed back for ``amount``, proposed to the cashier: from
+        the stock of the drawer, the largest first; else whatever the stock
+        (a shortfall warning names the notes the drawer lacks: the cash sales
+        move the drawer without denominations); else the closest amount
+        below, with an error when ``amount`` cannot be made up with these
+        coins and notes.
+
+        :param rows: coins and notes of the currency (``_nm_note_rows``)
+        :return: {'rows': rows with their ``proposed`` quantity, 'exact',
+            'shortfall', 'error'}
+        """
+        units = [round(row['value'] * NOTE_UNITS) for row in rows]
+        target = round(amount * NOTE_UNITS)
+        stocks = [max(row['stock'], 0) for row in rows]
+        shortfall = error = ''
+        proposed = _nm_decompose(units, target, stocks) if units else None
+        if proposed is None and units:
+            proposed = _nm_decompose(units, target)
+            if proposed is not None:
+                shortfall = _(
+                    "The drawer is short of %(notes)s: check the notes before handing them back.",
+                    notes=', '.join(f"{quantity - stock} x {row['label']}" for row, quantity, stock in zip(
+                        rows, proposed, stocks) if quantity > stock))
+        exact = proposed is not None
+        if not exact:
+            proposed, remaining = [], target
+            for unit in units:
+                proposed.append(remaining // unit)
+                remaining -= proposed[-1] * unit
+            error = _("%(amount)s cannot be made up with the coins and notes of %(currency)s.",
+                      amount=currency.format(amount), currency=currency.name)
+        return {
+            'rows': [{**row, 'proposed': quantity} for row, quantity in zip(rows, proposed)],
+            'exact': exact,
+            'shortfall': shortfall,
+            'error': error,
+        }
+
+    @api.model
+    def _nm_quote_notes(self, config, session, currency_in, currency_out, amount_out):
+        """Notes of a quote by denomination, for the currencies whose notes
+        are tracked (else None), while a session is open: the stock of the
+        notes received, and the notes handed back proposed from the stock."""
+        notes = {'notes_in': None, 'notes_out': None}
+        if not session:
+            return notes
+        tracked = config._nm_note_currencies()
+        if currency_in in tracked:
+            notes['notes_in'] = {'currency_id': currency_in.id, 'rows': self._nm_note_rows(session, currency_in)}
+        if currency_out in tracked:
+            notes['notes_out'] = {
+                'currency_id': currency_out.id,
+                **self._nm_propose_notes(currency_out, amount_out, self._nm_note_rows(session, currency_out)),
+            }
+        return notes
+
+    @api.model
+    def _nm_note_grid(self, config, currency, amount, grid, received):
+        """Notes of an operation by denomination sent by the register
+        ({value key: quantity}), checked: coins and notes of the currency at
+        the point of sale, whole quantities, adding up to ``amount``.
+
+        :param received: the notes received (else handed back)
+        :return: {key: (value, quantity)}, the quantities that are not 0
+        """
+        if not isinstance(grid, dict):
+            if received:
+                raise UserError(_("Enter the notes received by denomination (%s).", currency.name))
+            raise UserError(_("Enter the notes handed back by denomination (%s).", currency.name))
+        bills = {}
+        for bill in config._nm_note_bills(currency):
+            bills.setdefault(_nm_note_key(bill.value), bill.value)
+        notes = {}
+        for raw_key, quantity in grid.items():
+            try:
+                key = _nm_note_key(float(raw_key))
+            except (TypeError, ValueError):
+                key = None
+            if key not in bills:
+                raise UserError(_("%(value)s is not a coin or note of %(currency)s at this Point of Sale.",
+                                  value=raw_key, currency=currency.name))
+            if isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or quantity < 0 \
+                    or quantity != int(quantity):
+                raise UserError(_("The quantity of %(note)s must be a whole number, 0 or more.",
+                                  note=currency.format(bills[key])))
+            if quantity:
+                notes[key] = (bills[key], notes.get(key, (0.0, 0))[1] + int(quantity))
+        total = sum(value * quantity for value, quantity in notes.values())
+        if currency.compare_amounts(total, amount):
+            if received:
+                raise UserError(_("The notes received add up to %(total)s instead of %(amount)s.",
+                                  total=currency.format(total), amount=currency.format(amount)))
+            raise UserError(_("The notes handed back add up to %(total)s instead of %(amount)s.",
+                              total=currency.format(total), amount=currency.format(amount)))
+        return notes
+
+    def _nm_post_note_moves(self, notes, origin='exchange'):
+        """Note moves of the operation in its session: ``notes`` is a list
+        of (currency, value, signed quantity)."""
+        self.ensure_one()
+        self.env['pos.nm.note.move'].sudo().create([{
+            'session_id': self.session_id.id,
+            'currency_id': currency.id,
+            'value': value,
+            'quantity': quantity,
+            'origin': origin,
+            'exchange_id': self.id,
+        } for currency, value, quantity in notes if quantity])
+
+    def _nm_notes_label(self, currency):
+        """Notes of ``currency`` received or handed back by the operation,
+        for the receipt: "2 x €50, 1 x €20" (empty when not tracked)."""
+        self.ensure_one()
+        moves = self.sudo().note_move_ids.filtered(lambda m: m.origin == 'exchange' and m.currency_id == currency)
+        return ', '.join(f"{abs(move.quantity)} x {currency.format(move.value)}"
+                         for move in moves.sorted('value', reverse=True))
+
+    @api.model
+    def get_note_stock(self, config_id):
+        """Register: stock of the coins and notes of the drawers whose notes
+        are tracked, in the open session (see pos.session._nm_note_stock)."""
+        config = self._nm_counter_config(config_id)
+        session = config.current_session_id
+        if not session:
+            return []
+        return [{
+            'currency_id': currency.id,
+            'name': currency.name,
+            **session._nm_note_stock(currency),
+        } for currency in config._nm_note_currencies()]
+
+    def action_view_note_moves(self):
+        self.ensure_one()
+        return {
+            'name': _('Note Moves'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'pos.nm.note.move',
+            'view_mode': 'list',
+            'domain': [('exchange_id', '=', self.id)],
+        }
+
+    # ------------------------------------------------------------------
     # Cancellation
     # ------------------------------------------------------------------
 
@@ -1154,6 +1372,9 @@ class PosNmExchange(models.Model):
             account = (line.move_id.line_ids.account_id - line.journal_id.default_account_id)[:1]
             reversals.append(self._nm_post_line(
                 cash_pm, session, -line.amount, account, label, operator, currency, abs(line.amount_currency)))
+        self._nm_post_note_moves([
+            (move.currency_id, move.value, -move.quantity)
+            for move in self.note_move_ids.filtered(lambda m: m.origin == 'exchange')], origin='cancel')
         self.write({
             'state': 'cancelled',
             'cancel_date': fields.Datetime.now(),
@@ -1199,6 +1420,8 @@ class PosNmExchange(models.Model):
             'label_out': _('Handed back (%s)', self.currency_out_id.name),
             'amount_in': self.currency_in_id.format(self.amount_in),
             'amount_out': self.currency_out_id.format(self.amount_out),
+            'notes_in': self._nm_notes_label(self.currency_in_id),
+            'notes_out': self._nm_notes_label(self.currency_out_id),
             'value_in': company_currency.format(self.value_in),
             'commission': company_currency.format(self.commission),
             'rate_label': self.rate_label,

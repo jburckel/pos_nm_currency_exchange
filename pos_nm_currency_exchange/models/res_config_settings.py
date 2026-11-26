@@ -57,6 +57,10 @@ class ResConfigSettings(models.TransientModel):
         related='pos_config_id.nm_exchange_board_on_display',
         readonly=False,
     )
+    pos_nm_exchange_track_notes = fields.Boolean(
+        related='pos_config_id.nm_exchange_track_notes',
+        readonly=False,
+    )
     pos_nm_exchange_board_url = fields.Char(
         related='pos_config_id.nm_exchange_board_url',
     )

@@ -224,3 +224,47 @@ drawer revaluation, counts per cashier).
   when the option is ticked; `static/src/customer_display_board/` (removed
   from `_assets_pos`, added to `point_of_sale.customer_display_assets`)
   replaces the idle logo and *Welcome* with an iframe of the board.
+
+## Note stock
+
+- Foreign cash currencies only: POS Multi-Currency Cash counts them by
+  denomination at opening and closing (`opening_details` / `closing_details`
+  of `pos.session.currency.detail`, `{key: quantity}`); the currency of the
+  point of sale has no such count. A currency is tracked at a point of sale
+  when `nm_exchange_track_notes` is ticked and it has coins and notes there
+  (`pos.bill` of that currency, with the load domain of the register:
+  `default_bill_ids` or no point of sale): `pos.config._nm_note_currencies`,
+  sent to the register as `_nm_note_currency_ids`.
+- Key of a denomination: `_nm_note_key(value)` (`"50"`, `"0.5"`), the
+  `String(bill.value)` of the register. Keys received are parsed with
+  `float()` and normalized, never compared as raw strings.
+- `pos.nm.note.move`: session, currency, value, signed quantity, origin
+  (exchange, cancellation), operation. Created with sudo by
+  `create_from_ui` (after the statement lines, not on a replay) and
+  `_nm_cancel` (the opposite of the exchange moves); `write` and `unlink`
+  refused outside sudo; POS users and managers read only.
+- `pos.session._nm_note_stock(currency)`: opening count + one read_group of
+  the moves, per denomination (and any value counted or moved that is no
+  longer a coin or note), without the closing control computation. The
+  stock follows the exchange operations only: cash sales and cash moves in
+  a foreign currency change the drawer without denominations, so a
+  shortfall is a warning and the next count corrects the stock.
+- Quote: `notes_in` (rows with their stock) and `notes_out` (rows with the
+  `proposed` quantity, `exact`, `shortfall`, `error`) while a session is
+  open and the side is tracked, else None. Proposal: the largest first
+  within the stock, then a bounded search within the stock, then whatever
+  the stock (shortfall naming the missing notes), else the greedy
+  breakdown below the amount with an error.
+- `create_from_ui(notes_in=, notes_out=)`: for a tracked side the grid is
+  required and checked after the drawer, before the number is drawn
+  (known denominations, whole quantities from 0, total equal to the amount
+  with `compare_amounts`).
+- Register RPC `get_note_stock(config_id)`; closing control data: the
+  `multicurrency_details` entries of the tracked currencies get
+  `nm_expected_notes` (`{key: stock}`).
+- Report `pos.nm.note.stock`: SQL view, one row per session, currency and
+  value from the opening and closing counts (`jsonb_each_text`) and the
+  moves; In and Out are the positive and negative moves (a cancellation
+  counts in the opposite column); Difference = closing - stock, only when
+  the closing was counted by denomination. Multi-company rule, POS
+  managers.

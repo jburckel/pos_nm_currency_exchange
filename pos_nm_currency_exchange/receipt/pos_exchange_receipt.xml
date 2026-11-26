@@ -55,9 +55,15 @@
                         <td class="text-start" t-out="extra_data['label_in']"/>
                         <td class="text-end font-monospace" t-out="extra_data['amount_in']" />
                     </tr>
+                    <tr t-if="extra_data.get('notes_in')" class="nm-exchange-notes-in">
+                        <td colspan="2" class="text-end text-small" t-out="extra_data['notes_in']"/>
+                    </tr>
                     <tr class="text-bold fw-bold">
                         <td class="text-start" t-out="extra_data['label_out']"/>
                         <td class="text-end font-monospace" t-out="extra_data['amount_out']" />
+                    </tr>
+                    <tr t-if="extra_data.get('notes_out')" class="nm-exchange-notes-out">
+                        <td colspan="2" class="text-end text-small" t-out="extra_data['notes_out']"/>
                     </tr>
                     <tr>
                         <td class="text-start">Rate applied</td>

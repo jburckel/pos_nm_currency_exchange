@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Version 20.0.3.0.0 in progress: the exchange office vertical (see
 [`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)). Lots 1
-to 3 are done; the note stock by denomination (lot 4) and the transfers
-between counters (lot 5) are not started. Upgrade with
+to 4 are done; the transfers between counters (lot 5) are not started. Upgrade with
 `-u pos_nm_currency_exchange`: the migration freezes the licence on the
 existing operations and chains them into the register hash, in order.
 
@@ -53,6 +52,22 @@ existing operations and chains them into the register hash, in order.
   the last rates on screen when the connection is lost. *Rate Board on the
   Customer Display*: the customer display of Odoo shows it while no order
   is in progress.
+- **Track the Notes by Denomination** (setting of the point of sale): for
+  the foreign cash currencies with coins and notes, the exchange popup asks
+  the notes received and handed back by denomination, which must add up to
+  the amounts of the operation, and proposes the notes handed back from the
+  stock of the drawer, the largest first. A shortfall of the stock is only
+  a warning (the cash sales move the drawer without denominations); an
+  amount the coins and notes cannot make up is shown as an error.
+- **Note moves**: every operation records the coins and notes received and
+  handed back by denomination, its cancellation the opposite ones; never
+  edited nor deleted (*Point of Sale -> Reporting -> Note Moves*, and a
+  button on the operation). The exchange receipt lists the notes under the
+  amounts.
+- **Note Stock** report (*Point of Sale -> Reporting*): per session,
+  currency and denomination, the opening count, the notes received and
+  handed back, the stock, the closing count and the difference. The
+  closing popup gets the expected quantity of each coin and note.
 
 ## [20.0.2.0.0] - 2026-11-25
 

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Note moves: coins and notes received and handed back by
+        denomination by the operations, never edited. -->
+    <record id="view_pos_nm_note_move_list" model="ir.ui.view">
+        <field name="name">pos.nm.note.move.list</field>
+        <field name="model">pos.nm.note.move</field>
+        <field name="arch" type="xml">
+            <list string="Note Moves" create="false" edit="false" delete="false">
+                <field name="date"/>
+                <field name="config_id" optional="show"/>
+                <field name="session_id" optional="show"/>
+                <field name="exchange_id"/>
+                <field name="origin"/>
+                <field name="currency_id"/>
+                <field name="value"/>
+                <field name="quantity" sum="Quantity"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_note_move_search" model="ir.ui.view">
+        <field name="name">pos.nm.note.move.search</field>
+        <field name="model">pos.nm.note.move</field>
+        <field name="arch" type="xml">
+            <search string="Note Moves">
+                <field name="exchange_id"/>
+                <field name="session_id"/>
+                <field name="config_id"/>
+                <field name="currency_id"/>
+                <filter string="Exchange" name="exchange" domain="[('origin', '=', 'exchange')]"/>
+                <filter string="Cancellation" name="cancel" domain="[('origin', '=', 'cancel')]"/>
+                <group>
+                    <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
+                    <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
+                    <filter string="Currency" name="group_by_currency" domain="[]" context="{'group_by': 'currency_id'}"/>
+                    <filter string="Denomination" name="group_by_value" domain="[]" context="{'group_by': 'value'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_note_move" model="ir.actions.act_window">
+        <field name="name">Note Moves</field>
+        <field name="res_model">pos.nm.note.move</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No note move yet
+            </p>
+            <p>
+                At a Point of Sale tracking the notes by denomination, every exchange operation records the coins and
+                notes received and handed back in a foreign currency, and its cancellation the opposite.
+            </p>
+        </field>
+    </record>
+
+    <!-- Note stock: opening count, moves, stock and closing count of every
+        coin and note of the foreign drawers, per session. -->
+    <record id="view_pos_nm_note_stock_list" model="ir.ui.view">
+        <field name="name">pos.nm.note.stock.list</field>
+        <field name="model">pos.nm.note.stock</field>
+        <field name="arch" type="xml">
+            <list string="Note Stock" create="false" edit="false" delete="false"
+                  decoration-danger="difference_qty &lt; 0" decoration-warning="difference_qty &gt; 0">
+                <field name="session_id"/>
+                <field name="config_id" optional="show"/>
+                <field name="currency_id"/>
+                <field name="value"/>
+                <field name="opening_qty"/>
+                <field name="in_qty"/>
+                <field name="out_qty"/>
+                <field name="stock_qty"/>
+                <field name="closing_qty"/>
+                <field name="difference_qty"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_note_stock_pivot" model="ir.ui.view">
+        <field name="name">pos.nm.note.stock.pivot</field>
+        <field name="model">pos.nm.note.stock</field>
+        <field name="arch" type="xml">
+            <pivot string="Note Stock">
+                <field name="currency_id" type="row"/>
+                <field name="value" type="row"/>
+                <field name="session_id" type="col"/>
+                <field name="stock_qty" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_pos_nm_note_stock_search" model="ir.ui.view">
+        <field name="name">pos.nm.note.stock.search</field>
+        <field name="model">pos.nm.note.stock</field>
+        <field name="arch" type="xml">
+            <search string="Note Stock">
+                <field name="session_id"/>
+                <field name="config_id"/>
+                <field name="currency_id"/>
+                <filter string="Differences" name="differences" domain="[('difference_qty', '!=', 0)]"/>
+                <group>
+                    <filter string="Point of Sale" name="group_by_config" domain="[]" context="{'group_by': 'config_id'}"/>
+                    <filter string="Session" name="group_by_session" domain="[]" context="{'group_by': 'session_id'}"/>
+                    <filter string="Currency" name="group_by_currency" domain="[]" context="{'group_by': 'currency_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_nm_note_stock" model="ir.actions.act_window">
+        <field name="name">Note Stock</field>
+        <field name="res_model">pos.nm.note.stock</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No note counted yet
+            </p>
+            <p>
+                Coins and notes of the foreign drawers per session: counted at opening, received and handed back by
+                the exchange operations, expected in the drawer, counted at closing, and the difference. Tick Track
+                the Notes by Denomination in the settings of the Point of Sale.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_pos_nm_note_stock"
+        name="Note Stock"
+        parent="point_of_sale.menu_point_rep"
+        sequence="7"
+        action="action_pos_nm_note_stock"
+        groups="point_of_sale.group_pos_manager"/>
+
+    <menuitem
+        id="menu_pos_nm_note_move"
+        name="Note Moves"
+        parent="point_of_sale.menu_point_rep"
+        sequence="8"
+        action="action_pos_nm_note_move"
+        groups="point_of_sale.group_pos_manager"/>
+</odoo>

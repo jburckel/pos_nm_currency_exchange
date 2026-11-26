@@ -8,3 +8,8 @@ access_pos_nm_exchange_office_manager,pos.nm.exchange.office.manager,pos.nm.exch
 rule_pos_nm_exchange_office_multi_company,Exchange Office multi-company,pos.nm.exchange.office,,crud,"[('company_id', 'in', company_ids)]"
 access_pos_nm_exchange_register_closing_manager,pos.nm.exchange.register.closing.manager,pos.nm.exchange.register.closing,point_of_sale.group_pos_manager,r,
 rule_pos_nm_exchange_register_closing_multi_company,Exchange Register Closing multi-company,pos.nm.exchange.register.closing,,crud,"[('company_id', 'in', company_ids)]"
+access_pos_nm_note_move_user,pos.nm.note.move.user,pos.nm.note.move,point_of_sale.group_pos_user,r,
+access_pos_nm_note_move_manager,pos.nm.note.move.manager,pos.nm.note.move,point_of_sale.group_pos_manager,r,
+rule_pos_nm_note_move_multi_company,Note Move multi-company,pos.nm.note.move,,crud,"[('company_id', 'in', company_ids)]"
+access_pos_nm_note_stock_manager,pos.nm.note.stock.manager,pos.nm.note.stock,point_of_sale.group_pos_manager,r,
+rule_pos_nm_note_stock_multi_company,Note Stock multi-company,pos.nm.note.stock,,crud,"[('company_id', 'in', company_ids)]"
