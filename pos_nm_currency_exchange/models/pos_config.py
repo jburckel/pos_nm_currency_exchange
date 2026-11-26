@@ -194,11 +194,7 @@ class PosConfig(models.Model):
                 'sell_rate_label': Exchange._nm_rate_label(currency, main, sell_unit),
                 'sell_amount': sell_amount,
                 'sell_amount_formatted': main.format(sell_amount),
-                'commission_label': _(
-                    "%(percent)s %% + %(fixed)s, min. %(min)s",
-                    percent=self._nm_format_percent(setting.exchange_commission_percent),
-                    fixed=main.format(setting.exchange_commission_fixed),
-                    min=main.format(setting.exchange_commission_min)),
+                'commission_label': self._nm_commission_label(setting),
             })
         return {
             'config_name': self.name,
@@ -207,6 +203,32 @@ class PosConfig(models.Model):
             'currency': main.name,
             'rows': rows,
         }
+
+    def _nm_commission_label(self, setting):
+        """Commission rule of a currency in one translatable sentence,
+        without the parts that are zero: '2.00 % + $ 1.00, min. $ 3.00',
+        '1.50 %, min. $ 2.00', 'No commission'."""
+        main = self.currency_id
+        values = {
+            'percent': self._nm_format_percent(setting.exchange_commission_percent),
+            'fixed': main.format(setting.exchange_commission_fixed),
+            'min': main.format(setting.exchange_commission_min),
+        }
+        labels = {
+            (True, True, True): _("%(percent)s %% + %(fixed)s, min. %(min)s", **values),
+            (True, True, False): _("%(percent)s %% + %(fixed)s", **values),
+            (True, False, True): _("%(percent)s %%, min. %(min)s", **values),
+            (True, False, False): _("%(percent)s %%", **values),
+            (False, True, True): _("%(fixed)s, min. %(min)s", **values),
+            (False, True, False): values['fixed'],
+            (False, False, True): _("Min. %(min)s", **values),
+            (False, False, False): _("No commission"),
+        }
+        return labels[(
+            bool(setting.exchange_commission_percent),
+            not main.is_zero(setting.exchange_commission_fixed),
+            not main.is_zero(setting.exchange_commission_min),
+        )]
 
     def action_nm_print_rate_board(self):
         return self.env.ref('pos_nm_currency_exchange.action_report_exchange_rates').report_action(self)

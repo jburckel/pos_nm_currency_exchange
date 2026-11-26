@@ -1592,6 +1592,17 @@ class TestPosCurrencyExchange(TestPosAccounting):
         # The 4 decimals of the percentage are kept: 0.125 does not read 0.13.
         self.setting.exchange_commission_percent = 0.125
         self.assertTrue(self.pos_config._nm_rate_board()['rows'][0]['commission_label'].startswith('0.125 % +'))
+        # The parts that are zero are left out.
+        label = lambda: self.pos_config._nm_commission_label(self.setting)
+        self.setting.exchange_commission_fixed = 0.0
+        self.assertEqual(label(), '0.125 %%, min. %s' % self.main.format(3.0))
+        self.setting.exchange_commission_min = 0.0
+        self.assertEqual(label(), '0.125 %')
+        self.setting.exchange_commission_percent = 0.0
+        self.assertEqual(label(), 'No commission')
+        self.setting.exchange_commission_fixed = 1.0
+        self.assertEqual(label(), self.main.format(1.0))
+        self.setting.write({'exchange_commission_percent': 2.0, 'exchange_commission_min': 3.0})
 
         html = self._render('pos_nm_currency_exchange.action_report_exchange_rates', self.pos_config.ids)
         for text in ('Exchange Rates', 'LIC-2026-42', 'We buy', 'We sell', row['buy_rate_label'],

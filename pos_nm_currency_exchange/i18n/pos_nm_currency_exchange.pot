@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 01:57+0000\n"
-"PO-Revision-Date: 2026-11-26 01:57+0000\n"
+"POT-Creation-Date: 2026-11-26 02:40+0000\n"
+"PO-Revision-Date: 2026-11-26 02:40+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -79,6 +79,12 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(fixed)s, min. %(min)s"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "%(name)s cancelled: %(amount)s handed back"
 msgstr ""
@@ -110,7 +116,25 @@ msgstr ""
 #. module: pos_nm_currency_exchange
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %%"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %% + %(fixed)s"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
 msgid "%(percent)s %% + %(fixed)s, min. %(min)s"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %%, min. %(min)s"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1070,6 +1094,12 @@ msgid "Messages"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "Min. %(min)s"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_currency_setting__exchange_commission_min
 msgid "Minimum Exchange Commission"
 msgstr ""
@@ -1108,6 +1138,12 @@ msgstr ""
 #. odoo-python
 #: code:addons/pos_nm_currency_exchange/models/pos_exchange.py:0
 msgid "No amount received in %(currency)s hands back %(amount)s."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "No commission"
 msgstr ""
 
 #. module: pos_nm_currency_exchange

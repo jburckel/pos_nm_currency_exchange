@@ -2344,3 +2344,39 @@ msgstr "session_id"
 #: model:mail.template,subject:pos_nm_currency_exchange.mail_template_pos_nm_exchange
 msgid "{{ object.company_id.name }} Currency Exchange {{ object.name }}"
 msgstr "{{ object.company_id.name }} Opération de change {{ object.name }}"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(fixed)s, min. %(min)s"
+msgstr "%(fixed)s, min. %(min)s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %%"
+msgstr "%(percent)s %%"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %% + %(fixed)s"
+msgstr "%(percent)s %% + %(fixed)s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "%(percent)s %%, min. %(min)s"
+msgstr "%(percent)s %%, min. %(min)s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "Min. %(min)s"
+msgstr "Min. %(min)s"
+
+#. module: pos_nm_currency_exchange
+#. odoo-python
+#: code:addons/pos_nm_currency_exchange/models/pos_config.py:0
+msgid "No commission"
+msgstr "Pas de commission"
