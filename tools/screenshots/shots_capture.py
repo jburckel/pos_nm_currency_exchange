@@ -1,6 +1,12 @@
 """Screenshots of pos_nm_currency_exchange on the ``shots`` database.
 
 Usage: venv/bin/python shots_capture.py <config_id> <session_id> <eur_setting_id> <cancelled_id>
+    [<office_id> <config2_id> <review_id> <transfer_id>]
+
+The last four ids (line IDS2 of shots_data.py) add the captures of the
+exchange office: office form, drawers, rate board of the office, exchange
+popup with the notes by denomination, note stock, Send Notes and the
+operation flagged To Review.
 """
 import json
 import os
@@ -20,6 +26,7 @@ config_id = int(sys.argv[1])
 session_id = int(sys.argv[2])
 eur_setting_id = int(sys.argv[3])
 cancelled_id = int(sys.argv[4])
+office_args = [int(arg) for arg in sys.argv[5:9]]
 
 
 def shot(page, name, locator=None, full_page=False, clip=None):
@@ -35,6 +42,20 @@ def open_menu_option(page, label):
     page.locator(".pos-rightheader button:has([data-icon='menu'])").click()
     page.wait_for_selector(".o_pos_burger_menu_buttons > button.btn", timeout=10000)
     page.locator(".o_pos_burger_menu_buttons > button.btn", has_text=label).first.click()
+
+
+def note_qty(page, scope, key, quantity):
+    """Type ``quantity`` in the row ``key`` of a grid of notes by denomination."""
+    field = page.locator(f".modal {scope} tr.nm-exchange-note[data-key='{key}'] .nm-exchange-note-qty input")
+    field.click()
+    field.fill(str(quantity))
+    time.sleep(0.3)
+
+
+def open_register(page, config):
+    page.goto(BASE + f"/pos/ui/{config}?from_backend=True")
+    page.wait_for_selector("input[placeholder*='Search']", timeout=60000)
+    time.sleep(2.5)
 
 
 def block_rect(page, heading):
@@ -206,4 +227,85 @@ with sync_playwright() as p:
     shot(page, "exchange_closing", clip=rect)
     page.locator(".modal-footer button", has_text="Discard").first.click()
     time.sleep(1)
+    page.set_viewport_size({"width": 1440, "height": 900})
+
+    if office_args:
+        office_id, config2_id, review_id, transfer_id = office_args
+        # ---------------- Exchange office (back office)
+        # Tall viewport: the whole sheet without scrolling (form and chatter).
+        page.set_viewport_size({"width": 1440, "height": 1500})
+        page.goto(BASE + f"/odoo/action-pos_nm_currency_exchange.action_pos_nm_exchange_office/{office_id}")
+        page.wait_for_selector(".o_form_view .o_notebook", timeout=30000)
+        time.sleep(2.5)
+        shot(page, "exchange_office", locator=page.locator(".o_form_view .o_form_renderer").first)
+        # Drawers of the counters with an open session and notes in transit
+        page.locator(".o_notebook .nav-link", has_text="Drawers").first.click()
+        page.wait_for_selector(".o_notebook .tab-pane.active .o_field_html table, .o_notebook .tab-pane.active .o_field_html div",
+                               timeout=15000)
+        time.sleep(1.5)
+        shot(page, "exchange_drawers", locator=page.locator(".o_form_view .o_notebook").first)
+        # Address of the rate board of the office
+        page.locator(".o_notebook .nav-link", has_text="Rate Board").first.click()
+        time.sleep(1)
+        board_url = page.locator(".o_notebook .tab-pane.active .o_field_url a").first.get_attribute("href")
+        # Operation flagged To Review: declarations, review reason, register hash
+        page.goto(BASE + f"/odoo/action-pos_nm_currency_exchange.action_pos_nm_exchange_register/{review_id}")
+        page.wait_for_selector(".o_form_view .o_form_sheet", timeout=30000)
+        time.sleep(2.5)
+        shot(page, "exchange_compliance", locator=page.locator(".o_form_view .o_form_sheet").first)
+        page.set_viewport_size({"width": 1440, "height": 900})
+        # Full-screen rate board of the office, as a screen facing the customers shows it
+        board = context.browser.new_page(viewport={"width": 1280, "height": 720}, device_scale_factor=1)
+        board.goto(board_url.replace(board_url.split("/pos_nm_exchange/")[0], BASE))
+        board.wait_for_load_state("networkidle")
+        time.sleep(3)
+        shot(board, "rate_board_display")
+        board.close()
+
+        # ---------------- Second counter: notes tracked by denomination
+        # Tall viewport: the popups with their grids of notes without scrolling.
+        page.set_viewport_size({"width": 1440, "height": 1600})
+        open_register(page, config2_id)
+        # Exchange popup: 100 GBP received counted by denomination, EUR handed
+        # back proposed from the stock of the drawer.
+        open_menu_option(page, "Currency Exchange")
+        page.wait_for_selector(".modal .nm-currency-exchange", timeout=15000)
+        time.sleep(1)
+        page.locator(".modal .nm-exchange-currency-in").select_option(label="GBP")
+        time.sleep(0.5)
+        page.locator(".modal .nm-exchange-currency-out").select_option(label="EUR")
+        time.sleep(0.5)
+        page.locator(".modal .nm-exchange-amount-in").fill("100")
+        page.wait_for_selector(".modal .nm-exchange-notes-in tr.nm-exchange-note", timeout=15000)
+        time.sleep(1.5)
+        note_qty(page, ".nm-exchange-notes-in", "50", 1)
+        note_qty(page, ".nm-exchange-notes-in", "20", 2)
+        note_qty(page, ".nm-exchange-notes-in", "10", 1)
+        page.locator(".modal input.nm-exchange-note").fill("Weekend in Paris")
+        time.sleep(1.5)
+        shot(page, "exchange_notes", locator=page.locator(".modal-content.nm-currency-exchange").first)
+        page.locator(".modal .nm-exchange-discard").click()
+        time.sleep(1)
+        # Note stock of the drawers
+        open_menu_option(page, "Note Stock")
+        page.wait_for_selector(".modal .nm-note-stock-row", timeout=15000)
+        time.sleep(1.5)
+        shot(page, "note_stock", locator=page.locator(".modal-content.nm-note-stock").first)
+        page.keyboard.press("Escape")
+        time.sleep(1)
+        # Send Notes: 200 EUR to the first counter, notes proposed from the stock
+        open_menu_option(page, "Send Notes")
+        page.wait_for_selector(".modal .nm-send-notes input.nm-transfer-amount", timeout=15000)
+        time.sleep(1)
+        page.locator(".modal .nm-transfer-currency").select_option(label="EUR")
+        time.sleep(0.5)
+        amount = page.locator(".modal .nm-send-notes input.nm-transfer-amount")
+        amount.fill("200")
+        amount.blur()
+        page.wait_for_selector(".modal .nm-transfer-notes tr.nm-exchange-note", timeout=15000)
+        page.locator(".modal .nm-transfer-note").fill("Change fund for tomorrow")
+        time.sleep(1.5)
+        shot(page, "note_transfer", locator=page.locator(".modal-content.nm-send-notes").first)
+        page.locator(".modal .nm-transfer-discard").click()
+        time.sleep(1)
     browser.close()

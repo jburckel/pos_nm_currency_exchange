@@ -29,22 +29,42 @@ l'opération sans vente :
   leur devise et les billets rendus sortent de l'autre, sur le journal
   d'espèces de la session, avec la commission comptabilisée sur un compte
   de produits dédié ;
-* un responsable peut annuler une opération erronée tant que la session est
-  ouverte ;
+* un administrateur du Point de Vente peut annuler une opération erronée
+  tant que la session est ouverte et que le tiroir contient encore les
+  billets reçus ;
 * les opérations apparaissent dans le contrôle de clôture, dans le rapport
   *Position de change* et dans le rapport *Détails des ventes*, dans une
   liste avec un tableau croisé des commissions et des marges de taux, et
   dans un registre de change exportable ou imprimable pour une période ;
 * le tableau des taux du guichet peut être affiché et imprimé à la caisse,
-  ou imprimé en PDF.
+  ou imprimé en PDF ;
+* plusieurs guichets d'un même établissement agréé peuvent former un
+  **bureau de change** : ils partagent sa licence, ses règles
+  d'identification et les mêmes taux, et le bureau affiche les tiroirs de
+  chaque guichet ;
+* au-delà de seuils que vous fixez, le client déclare l'origine des fonds,
+  et l'opération est signalée *À examiner* pour le responsable
+  conformité ;
+* chaque opération est chaînée dans un registre inaltérable (chaîne de
+  hachage), qui peut être vérifié et clôturé par période ;
+* le tableau des taux peut être affiché en plein écran sur un écran tourné
+  vers les clients, ou sur l'écran client d'Odoo, et recharge les taux de
+  lui-même ;
+* les pièces et billets étrangers reçus et rendus peuvent être comptés par
+  coupure, avec le stock de chaque tiroir, et des billets peuvent être
+  envoyés d'un guichet d'un bureau à un autre.
+
+Tout ceci est facultatif : un guichet seul, sans bureau de change,
+fonctionne comme avant.
 
 Prérequis
 =========
 
 * L'application **Point de Vente** (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 ou
-  plus récent**, inclus dans le prix affiché sur l'Odoo Apps Store (vous
-  l'avez déjà acheté ? Contactez-nous à odoo@natimai.solutions avant
+  plus récent**, inclus dans le prix affiché sur l'Odoo Apps Store : 178 EUR
+  au total, 59 EUR pour ce module plus 119 EUR pour POS Multi-Currency Cash
+  (vous l'avez déjà acheté ? Contactez-nous à odoo@natimai.solutions avant
   d'acheter ce module), avec au moins une
   devise étrangère sur le mode de paiement espèces du point de vente (voir
   son guide : *Accepter une devise en espèces*). Une version plus
@@ -56,6 +76,8 @@ Prérequis
   d'affichage : les montants comptés et comptabilisés étaient justes).
 * Un **compte de produits pour les commissions** (type *Revenus* ou
   *Autres produits*).
+* Pour transférer des billets entre les guichets d'un bureau de change :
+  un **compte de fonds en transit** (type *Actifs circulants*).
 
 Configuration
 =============
@@ -63,7 +85,7 @@ Configuration
 Activer le guichet
 ------------------
 
-Allez dans *Point de Vente -> Configuration -> Paramètres*, sélectionnez
+Allez dans *Point de Vente → Configuration → Paramètres*, sélectionnez
 votre point de vente et repérez la section **Opération de change** :
 
 * **Opération de change** (activée par défaut) : affiche les entrées du
@@ -74,6 +96,9 @@ votre point de vente et repérez la section **Opération de change** :
 * **Numéro de licence de change** : numéro de licence ou d'enregistrement
   de votre activité de change, imprimé sur les tickets et le tableau des
   taux lorsqu'il est renseigné.
+* **Bureau de change** : le bureau de change de ce guichet (voir *Bureau
+  de change et guichets*). Avec un bureau, la licence et les seuils
+  d'identification ci-dessous sont masqués : ceux du bureau s'appliquent.
 * **Client obligatoire au-delà de** : valeur d'une opération, dans la
   devise du point de vente, au-delà de laquelle le client doit être
   identifié.
@@ -82,8 +107,21 @@ votre point de vente et repérez la section **Opération de change** :
 * **Pièce d'identité obligatoire au-delà de** : valeur au-delà de laquelle
   la pièce d'identité du client est enregistrée sur l'opération.
 * **Période des opérations liées (jours)** : lorsqu'elle est supérieure à
-  0, la valeur comparée aux deux seuils est l'opération plus les opérations
+  0, la valeur comparée aux seuils est l'opération plus les opérations
   du même client sur ce nombre de jours (voir *Identification du client*).
+* **Origine des fonds obligatoire au-delà de** : valeur au-delà de
+  laquelle le client déclare l'origine des fonds (voir *Seuils de
+  conformité*).
+* **Examen au-delà de** : valeur au-delà de laquelle l'opération est
+  signalée *À examiner* pour le responsable conformité. Elle n'est jamais
+  refusée.
+* **Suivre les billets par coupure** : les billets étrangers reçus et
+  rendus sont comptés par pièce et billet (voir *Billets par coupure*).
+* **Tableau des taux sur l'écran client** : l'écran client d'Odoo affiche
+  le tableau des taux tant qu'aucune commande n'est en cours.
+* **Adresse du tableau des taux** : adresse du tableau des taux en plein
+  écran de ce guichet, pour un écran tourné vers les clients (voir
+  *Tableau des taux sur un écran*).
 * **Imprimer les taux de change** : imprime le tableau des taux du point de
   vente en PDF.
 
@@ -92,7 +130,7 @@ Les seuils à 0 ne sont jamais appliqués.
 Commissions et marge de vente par devise
 ----------------------------------------
 
-Allez dans *Point de Vente -> Configuration -> Devises en espèces* et
+Allez dans *Point de Vente → Configuration → Devises en espèces* et
 ouvrez la ligne de la devise. Le groupe *Opération de change* contient
 quatre valeurs, les montants étant dans la devise du point de vente :
 
@@ -129,12 +167,12 @@ unité de la devise du point de vente, comme dans POS Multi-Currency Cash :
 
 Exemple, point de vente en USD, taux d'Odoo de 2 EUR pour 1 USD, Marge du
 taux de caisse et Marge de vente de change de 10 % : le guichet achète les
-euros à 2,20 EUR pour 1 USD (100 EUR reçus valent 45,45 $) et les vend à
-1,82 EUR pour 1 USD (100 EUR rendus valent 55,00 $), avant la commission.
+euros à 2 × 1,10 = 2,20 EUR pour 1 USD (100 EUR reçus valent 45,45 $) et
+les vend à 2 / 1,10 = 1,8182 EUR pour 1 USD (100 EUR rendus valent
+55,00 $), avant la commission.
 
 L'écart avec les taux d'Odoo est la **Marge de taux** de l'opération (voir
-*Notes comptables*). Lors d'une mise à jour depuis une version antérieure
-à 20.0.2.0.0, la Marge de vente de change de chaque devise prend la valeur
+*Notes comptables*). Lors d'une mise à jour depuis 20.0.1.x, la Marge de vente de change de chaque devise prend la valeur
 de sa Marge du taux de caisse : vérifiez-la.
 
 Pièces et billets
@@ -159,7 +197,133 @@ Le ticket de change imprime le logo, l'**en-tête** et le **pied de page**
 du point de vente (*Paramètres*, section *Factures & Reçus*, *En-tête &
 pied de page personnalisés*), le numéro de licence de change et les
 coordonnées de la société. Indiquez-y les mentions légales que votre
-activité doit présenter au client.
+activité doit présenter au client. Avec les billets comptés par coupure,
+le ticket liste les billets sous les montants.
+
+Bureau de change et guichets
+----------------------------
+
+Un bureau de change est un établissement agréé avec un ou plusieurs
+guichets (points de vente). Il est facultatif : un guichet hors de tout
+bureau garde ses propres paramètres.
+
+Allez dans *Point de Vente → Configuration → Bureaux de change* et
+appuyez sur **Nouveau**. Donnez un nom au bureau, puis renseignez :
+
+* groupe *Bureau* : l'**Adresse** (imprimée sur le registre de change et
+  le tableau des taux), le **Numéro de licence de change**, le
+  **Responsable conformité** (il reçoit une activité pour chaque opération
+  signalée *À examiner*) et le **Compte de fonds en transit** (voir
+  *Compte de fonds en transit*) ;
+* groupe *Identification* : **Client obligatoire pour chaque opération**,
+  **Client obligatoire au-delà de**, **Pièce d'identité obligatoire
+  au-delà de**, **Origine des fonds obligatoire au-delà de**, **Examen
+  au-delà de** et **Période des opérations liées** (jours). Ils
+  fonctionnent comme les paramètres du même nom d'un point de vente, dans
+  la devise de la société.
+
+La licence et les règles du bureau remplacent celles de ses guichets. Pour
+ajouter un guichet, renseignez son **Bureau de change** dans la section
+*Opération de change* des paramètres du point de vente, ou ajoutez-le dans
+l'onglet **Guichets** du bureau. Les guichets d'un bureau doivent utiliser
+la devise de sa société.
+
+Les boutons intelligents du bureau ouvrent ses **Guichets**, ses
+**Opérations** et ses **Transferts** de billets.
+
+Les mêmes taux à chaque guichet
+-------------------------------
+
+Dans l'onglet **Guichets** du bureau, choisissez le **Guichet de
+référence** : le guichet dont les autres copient les taux, et dont le
+tableau des taux du bureau affiche les taux. Puis, avec deux guichets ou
+plus :
+
+* **Appliquer les taux aux guichets** copie aux autres guichets, pour
+  chaque devise du guichet de référence, le taux de caisse (mode de taux,
+  marge, taux fixes), les arrondis des pièces et billets, la **Marge de
+  vente de change (%)** et les commissions. Les modifications du taux de
+  caisse, de la marge de vente et des commissions sont consignées dans le
+  chatter de la devise (pas celles des arrondis). Un guichet qui ne prend pas la
+  devise en espèces est ignoré et nommé dans un avertissement ;
+* **Écarts de taux** liste ce qui diffère encore du guichet de référence.
+
+Appliquez à nouveau les taux après chaque modification du guichet de
+référence.
+
+Seuils de conformité
+--------------------
+
+Deux seuils vous aident à appliquer les règles de lutte contre le
+blanchiment de votre pays. Ils se règlent sur le bureau de change, ou dans
+les paramètres d'un point de vente hors de tout bureau, dans la devise du
+point de vente ; à 0, ils ne sont jamais appliqués. Les opérations liées du
+client comptent, comme pour les autres seuils.
+
+* **Origine des fonds obligatoire au-delà de** : l'opération exige un
+  client, et le client déclare l'origine des fonds. *Autre* exige des
+  précisions.
+* **Examen au-delà de** : l'opération est signalée *À examiner*. Elle
+  n'est jamais refusée au guichet. Une activité est envoyée au
+  **Responsable conformité** du bureau.
+
+Une opération dont le client déclare être une personne politiquement
+exposée est aussi signalée *À examiner*. Choisissez un administrateur du
+Point de Vente comme responsable conformité : seuls les administrateurs du
+Point de Vente peuvent examiner les opérations.
+
+Tableau des taux sur un écran
+-----------------------------
+
+Chaque guichet a une page publique du tableau des taux pour une
+télévision, une tablette ou tout écran tourné vers les clients. Son
+adresse est l'**Adresse du tableau des taux** dans la section *Opération
+de change* des paramètres du point de vente. Elle contient le jeton
+d'accès du point de vente, celui de son écran client : ne la partagez
+qu'avec les écrans du guichet.
+
+Un bureau de change a sa propre page, dans l'onglet **Tableau des taux**
+du bureau (administrateurs du Point de Vente) : l'**Adresse du tableau des
+taux** affiche les taux du guichet de référence sous le nom, l'adresse et
+la licence du bureau. **Rafraîchissement du tableau (secondes)** règle la
+fréquence à laquelle la page recharge les taux (60 par défaut, 10 au
+moins), aussi pour les pages de ses guichets. **Nouvelle adresse** donne
+une nouvelle adresse à la page du bureau : les écrans qui affichent
+l'ancienne ne reçoivent plus les taux (ils gardent les derniers taux avec
+« Connexion perdue : derniers taux affichés », puis n'affichent plus rien une fois
+la page rechargée).
+
+Pour afficher le tableau sur l'écran client d'Odoo, cochez **Tableau des
+taux sur l'écran client** dans les paramètres du point de vente.
+
+Billets par coupure
+-------------------
+
+POS Multi-Currency Cash compte déjà les pièces et billets de chaque devise
+étrangère à l'ouverture et à la clôture. Ce module peut aussi les suivre
+pendant la session :
+
+1. Allez dans *Point de Vente → Configuration → Pièces/billets* et
+   vérifiez que les pièces et billets de chaque devise étrangère existent,
+   avec leur **Devise** renseignée (voir le guide de POS Multi-Currency
+   Cash).
+2. Dans les paramètres du point de vente, cochez **Suivre les billets par
+   coupure**.
+
+L'option s'applique aux devises étrangères en espèces qui ont des pièces et
+billets sur ce point de vente. La devise du point de vente n'est pas
+suivie : elle n'a pas de comptage par coupure. Comptez l'ouverture par
+pièces et billets, pour que le stock du tiroir parte juste.
+
+Compte de fonds en transit
+--------------------------
+
+Les billets envoyés d'un guichet d'un bureau à un autre passent par le
+**Compte de fonds en transit** du bureau : un compte d'actifs circulants
+(type *Actifs circulants*). Créez-en un dans votre plan comptable si
+besoin, par exemple « Billets en transit », et renseignez-le sur le
+bureau. Son solde est la valeur des billets envoyés et pas encore reçus.
+Sans lui, les billets ne peuvent pas être transférés.
 
 Qui peut faire quoi
 -------------------
@@ -168,12 +332,26 @@ Qui peut faire quoi
   opérations à la caisse, réimpriment leurs tickets et affichent le tableau
   des taux. Ils peuvent lire les opérations mais pas les modifier.
 * Les **administrateurs du Point de Vente** (accès *Point de Vente* :
-  *Administrateur*) voient en plus les menus *Point de Vente -> Commandes
-  -> Opérations de change* et *Point de Vente -> Analyse -> Registre de
+  *Administrateur*) voient en plus les menus *Point de Vente → Commandes
+  → Opérations de change* et *Point de Vente → Analyse → Registre de
   change* et les pièces d'identité des clients, peuvent modifier la note
   d'une opération et annuler une opération.
+* Dans un bureau avec un autre guichet activé, les utilisateurs du Point
+  de Vente envoient et reçoivent aussi des billets à la caisse (*Envoyer
+  des billets*, *Recevoir des billets*), et voient le *Stock de billets*
+  de leur tiroir lorsque les billets sont suivis.
+* Les administrateurs du Point de Vente gèrent aussi les bureaux de change
+  (*Point de Vente → Configuration → Bureaux de change*, avec les onglets
+  **Tiroirs** et **Tableau des taux**), les transferts de billets (*Point
+  de Vente → Commandes → Transferts de billets*), et voient *Point de
+  Vente → Analyse → Stock de billets*, *Mouvements de billets* et
+  *Clôtures du registre de change*.
+* Seuls les administrateurs du Point de Vente voient les déclarations du
+  client et examinent les opérations (**Conformité**, **Note de
+  conformité**), vérifient l'intégrité du registre et le clôturent.
 * Personne ne peut supprimer une opération ni l'une de ses lignes de
-  relevé.
+  relevé, un mouvement de billets, une clôture du registre ni un transfert
+  de billets une fois envoyé.
 * Avec plusieurs sociétés, chaque utilisateur voit les opérations des
   sociétés auxquelles il a accès.
 * Avec le module Employés (``pos_hr``), le caissier d'une opération est
@@ -236,6 +414,121 @@ Lorsque le guichet ne peut pas fonctionner sur ce point de vente, l'entrée
 devise étrangère sur le mode de paiement espèces, ou aucun compte de
 commission.
 
+Déclarations du client
+----------------------
+
+Au-delà du seuil **Origine des fonds obligatoire au-delà de** ou du seuil
+**Examen au-delà de**, une fois le client choisi, la fenêtre affiche
+**Déclarations du client** :
+
+* **Origine des fonds** : Salaire ou pension, Épargne, Revenus
+  professionnels, Vente d'un bien, Héritage ou donation, Autre.
+  Obligatoire au-delà du seuil d'origine des fonds ; pour *Autre*,
+  saisissez les **Précisions sur l'origine des fonds** ;
+* **Objet de l'opération** : Voyage, Activité professionnelle, Études,
+  Soutien familial, Autre ;
+* **Personne politiquement exposée (PPE), ou membre de sa famille ou
+  personne étroitement associée** : cochez cette case lorsque le client
+  le déclare. L'opération est alors signalée *À examiner*.
+
+Au-delà du seul seuil d'examen, les déclarations sont demandées mais pas
+obligatoires. Elles sont figées sur l'opération avec l'adresse du client.
+Le caissier n'est jamais bloqué par un examen : le responsable conformité
+vérifie l'opération plus tard (voir *À examiner*).
+
+Compter les billets
+-------------------
+
+Avec **Suivre les billets par coupure**, la fenêtre s'élargit et affiche
+une grille pour chaque devise étrangère suivie de l'opération :
+
+* **Billets reçus** : saisissez la **Quantité** de chaque pièce et billet
+  que donne le client. Le **Total** doit être égal au montant reçu ;
+* **Billets rendus** : les quantités sont proposées depuis le stock du
+  tiroir, les plus gros billets d'abord. **Dans le tiroir** donne le stock
+  de chaque pièce et billet. Modifiez les quantités si vous rendez
+  d'autres billets : le **Total** doit être égal au montant rendu.
+
+Un message rouge s'affiche lorsqu'un total ne correspond pas, et
+**Confirmer** reste désactivé. Lorsque le tiroir manque de certains
+billets, un message orange les nomme : « Il manque ... dans le tiroir :
+vérifiez les billets avant de les rendre. » Ce n'est qu'un avertissement,
+car les ventes en espèces dans une devise étrangère font bouger le tiroir
+sans coupures : le stock peut être en retard sur le tiroir réel. Lorsque
+le montant rendu ne peut pas être composé avec les pièces et billets de la
+devise, la fenêtre l'affiche comme une erreur.
+
+Stock de billets
+----------------
+
+L'entrée **Stock de billets** du menu de la caisse (affichée lorsque les
+billets sont suivis) donne, pour chaque devise suivie et chaque pièce et
+billet, le comptage d'**Ouverture**, les billets déplacés par les
+**Opérations de change** et les transferts, et le stock **Dans le
+tiroir**. Lorsque l'ouverture n'a pas été comptée par pièces et billets,
+la fenêtre l'indique : le stock ne compte alors que les opérations de
+change.
+
+À la clôture, la fenêtre de comptage de chaque devise suivie affiche, à
+côté du comptage, la quantité attendue de chaque pièce et billet
+(*attendu*), lorsque l'ouverture a été comptée par pièces et billets ou
+que le tiroir était vide à l'ouverture.
+
+Envoyer et recevoir des billets
+-------------------------------
+
+Un guichet d'un bureau de change avec un autre guichet activé a deux
+entrées de plus dans le menu de la caisse.
+
+**Envoyer des billets** :
+
+1. choisissez le guichet dans **Envoyer à**. Lorsqu'aucune caisse n'y est
+   ouverte, la fenêtre avertit que les billets restent en transit jusqu'à
+   leur réception ;
+2. choisissez la devise et saisissez le **Montant envoyé**. Avec les
+   billets suivis, la grille **Billets envoyés** propose les billets du
+   stock du tiroir ; leur **Total** doit être égal au montant ;
+3. ajoutez une note si utile, puis **Confirmer**. Le tiroir-caisse
+   s'ouvre et un bordereau de transfert s'imprime : joignez-le aux
+   billets.
+
+Le tiroir doit contenir le montant. Le transfert reçoit sa référence
+(``TRF/AAAA/NNNNN``) et les billets quittent le tiroir : une sortie
+d'espèces sur la session, sur le compte de fonds en transit du bureau.
+
+**Recevoir des billets** liste les billets en transit vers ce guichet :
+référence, date d'envoi, guichet expéditeur, montant et billets. Comptez
+les billets, puis appuyez sur **Recevoir** : les billets entrent dans le
+tiroir (une entrée d'espèces de même valeur) et un bordereau s'imprime.
+Lorsque le guichet expéditeur n'a pas compté les billets par coupure et
+que ce guichet les suit, **Recevoir** ouvre la grille **Billets reçus**,
+préremplie avec les plus gros billets d'abord : corrigez-la selon les
+billets réellement reçus, puis appuyez sur **Confirmer la réception**.
+**Actualiser** recharge la liste.
+
+Le montant reçu est le montant envoyé. Un écart apparaît dans le comptage
+de clôture du tiroir qui reçoit.
+
+Le tableau des taux sur un écran
+--------------------------------
+
+Ouvrez l'**Adresse du tableau des taux** du guichet, ou celle du bureau
+(bouton **Ouvrir le tableau des taux** du bureau), dans le navigateur de
+l'écran et passez-le en plein écran. La page affiche les devises avec
+**Nous achetons**, **Nous vendons**, **Vous recevez pour** et **Vous payez
+pour** le montant
+type, la commission de chaque devise, la licence, la date et l'heure. Elle
+recharge les taux d'elle-même. Lorsque la connexion est perdue, elle garde
+les derniers taux à l'écran avec le message « Connexion perdue : derniers
+taux affichés ».
+
+Le tableau s'affiche dans la langue de la société (celle de son contact).
+Pour une autre langue installée dans la base, ajoutez-la à l'adresse :
+``&lang=fr_FR`` pour le français, ``&lang=en_US`` pour l'anglais, etc.
+
+Avec **Tableau des taux sur l'écran client**, l'écran client d'Odoo
+affiche le tableau du guichet tant qu'aucune commande n'est en cours.
+
 L'avertissement sur les pièces
 ------------------------------
 
@@ -261,6 +554,9 @@ La caisse refuse une opération, avec un message, lorsque :
 * la même devise est choisie des deux côtés ;
 * le client, ou une pièce d'identité valide, est requis et manquant, ou la
   pièce a expiré ;
+* l'origine des fonds est requise et n'est pas déclarée ;
+* avec les billets suivis, les billets reçus ou rendus ne correspondent
+  pas aux montants ;
 * la cotation a changé entre la fenêtre et le serveur (taux, marge ou
   commission modifiés entre-temps) : rien n'est enregistré, la fenêtre
   affiche aussitôt la nouvelle cotation avec un avertissement ; vérifiez-la
@@ -304,8 +600,8 @@ opération : une opération inverse prélèverait à nouveau la commission et
 arrondirait à nouveau les billets, et un mouvement d'espèces laisserait la
 commission sur le compte de commission.
 
-Un administrateur du Point de Vente ouvre l'opération (*Point de Vente ->
-Commandes -> Opérations de change*), appuie sur **Annuler l'opération**,
+Un administrateur du Point de Vente ouvre l'opération (*Point de Vente →
+Commandes → Opérations de change*), appuie sur **Annuler l'opération**,
 puis confirme. C'est possible tant que la session de l'opération est
 ouverte et que le tiroir contient encore les billets reçus (le client les
 récupère). Deux lignes de relevé exactement opposées aux lignes d'origine
@@ -316,7 +612,11 @@ reviennent à leur état d'avant l'opération.
 L'opération passe à **Annulée**, avec la date et l'utilisateur, un message
 est publié sur la session et sur l'opération, et elle ne compte plus dans
 les commissions, le résumé de clôture et les rapports. Son ticket,
-réimprimé, est marqué *ANNULÉ*.
+réimprimé, est marqué *ANNULÉ*. Avec les billets suivis, le stock du
+tiroir est rétabli : les billets reçus en sortent et les billets rendus y
+reviennent (mouvements de billets *Annulation*). L'annulation reçoit son propre
+hachage dans le registre (**Hachage de l'annulation**), et une opération
+d'une période du registre clôturée ne peut pas être annulée.
 
 Une fois la session clôturée, une opération ne peut plus être annulée.
 Corrigez-la alors par une opération inverse (la commission et l'arrondi
@@ -385,7 +685,7 @@ Consulter les opérations
 Opérations de change
 --------------------
 
-*Point de Vente -> Commandes -> Opérations de change* (administrateurs du
+*Point de Vente → Commandes → Opérations de change* (administrateurs du
 Point de Vente) liste les opérations avec leur référence, leur date, le
 point de vente, le caissier, le client, les billets reçus et rendus, la
 commission, la marge de taux et le statut. La liste s'ouvre avec le filtre
@@ -394,7 +694,8 @@ Autres filtres : *Aujourd'hui*, *Avec client*, *Achat de devises*, *Vente
 de devises*, *Change croisé* ; regroupement par point de vente, session,
 caissier, type d'opération, statut, devise ou date. Le tableau croisé
 donne les commissions, marges de taux et valeurs reçues par jour, statut
-et devise.
+et devise reçue ; regroupez-le par point de vente, session ou caissier au
+besoin.
 
 Le type d'opération est vu du commerce : *Achat de devises* lorsqu'il
 reçoit des billets étrangers, *Vente de devises* lorsqu'il rend des
@@ -411,11 +712,42 @@ d'identité et le chatter. Ses boutons :
 * **Lignes de relevé** : les deux lignes de l'opération, et les deux
   lignes de son annulation.
 
-Seule la **Note** peut être modifiée, par un administrateur du Point de
-Vente ; ses modifications sont consignées dans le chatter.
+Seules la **Note**, la **Conformité** et la **Note de conformité**
+peuvent être modifiées, par un administrateur du Point de Vente (voir
+*À examiner*) ; les modifications de la **Note** et de la **Conformité**
+sont consignées dans le chatter.
 
 La fiche de session dispose d'un bouton avec le total des commissions et
 « Opérations : N », le nombre d'opérations effectuées ; il les ouvre.
+
+Dans un bureau de change, l'opération affiche aussi son **Bureau de
+change** et sa **Licence**, et la liste peut être regroupée par **Bureau
+de change**. Avec les billets suivis, le bouton **Mouvements de billets**
+ouvre les pièces et billets de l'opération.
+
+À examiner
+----------
+
+Le filtre **À examiner** des *Opérations de change* donne les opérations
+signalées au responsable conformité : au-delà du seuil d'examen, ou avec
+une personne politiquement exposée déclarée. Le responsable conformité du
+bureau reçoit aussi une activité « Examiner l'opération de change ... ».
+
+Le groupe **Déclarations et conformité** de l'opération (administrateurs
+du Point de Vente) affiche l'**Origine des fonds**, les **Précisions sur
+l'origine des fonds**, l'**Objet**, **Personne politiquement exposée
+(PPE)**, le **Motif de l'examen**, et les deux champs de l'examen :
+
+* **Conformité** : Aucune, À examiner, Examinée ou Déclarée. Choisissez
+  *Examinée* une fois l'opération vérifiée, ou *Déclarée* lorsque vous
+  avez déclaré l'opération aux autorités ;
+* **Note de conformité** : ce que vous avez vérifié ou décidé.
+
+Ces deux champs et la **Note** sont les seuls qu'un administrateur du
+Point de Vente peut modifier ; les modifications de **Conformité** et de
+la **Note** sont consignées dans le chatter. Le groupe **Pièce
+d'identité** affiche désormais aussi l'**Adresse du client** de
+l'opération.
 
 Détails des ventes
 ------------------
@@ -425,7 +757,7 @@ change* : chaque opération avec sa session, ses montants, sa commission et
 sa marge de taux, puis les totaux, une ligne par devise des points de
 vente, et la liste des opérations annulées, qui ne sont pas comptées.
 Imprimé depuis une session, il couvre les opérations de la session ; lancé
-depuis *Point de Vente -> Analyse -> Détails des ventes* pour une période,
+depuis *Point de Vente → Analyse → Détails des ventes* pour une période,
 il couvre les opérations datées de cette période sur les points de vente
 sélectionnés (tous lorsqu'aucun n'est sélectionné), sessions ouvertes
 comprises. Le rapport *Position de change* de POS Multi-Currency Cash
@@ -434,7 +766,7 @@ reflète les billets déplacés.
 Registre de change
 ------------------
 
-*Point de Vente -> Analyse -> Registre de change* (administrateurs du
+*Point de Vente → Analyse → Registre de change* (administrateurs du
 Point de Vente) liste chaque opération dans l'ordre de sa référence, y
 compris les opérations annulées (grisées, avec leur statut), avec le
 caissier, le type d'opération, les montants, le taux, la commission, la
@@ -449,13 +781,141 @@ devise : nombre d'opérations, reçu, rendu, solde, commissions et marges de
 taux. Les opérations annulées sont listées mais non comptées dans les
 totaux.
 
+La liste affiche aussi l'**Origine des fonds** et la **Conformité** de
+chaque opération ; le **Bureau de change**, la **Licence**, l'**Adresse du
+client**, l'**Objet**, **Personne politiquement exposée (PPE)** et le
+**Hachage du registre** peuvent être ajoutés depuis les colonnes
+optionnelles. Dans l'assistant, choisissez un **Bureau de change** pour
+imprimer le registre de ses seuls guichets. Le PDF affiche alors le
+bureau, son adresse et sa licence ; il donne aussi, pour chaque
+opération, l'adresse, la nationalité et la date de naissance du client,
+les déclarations, le statut de conformité et le hachage.
+
+Intégrité du registre
+---------------------
+
+Chaque opération est hachée (SHA-256) lors de son enregistrement, avec le
+hachage de l'opération précédente de la société : les opérations forment
+une chaîne. Une annulation reçoit son propre hachage, chaîné au hachage de
+l'opération. La fiche de l'opération les affiche dans le groupe
+**Registre** : **Hachage du registre**, **Hachage précédent** et
+**Hachage de l'annulation**. Odoo refuse toute modification des champs
+couverts par le hachage d'une opération (montants, devises, client, pièce
+d'identité, origine des fonds, PPE, hachages), même par l'administrateur ;
+seules la **Note** et la revue de conformité restent modifiables.
+
+Pour vérifier la chaîne, appuyez sur **Imprimer le registre**, puis sur
+**Vérifier l'intégrité**. La vérification recalcule, dans l'ordre, les
+hachages de chaque opération de la société :
+
+* « N opérations vérifiées : le registre est intact (dernière : ...) »
+  lorsque chaque hachage correspond. Les opérations sans hachage,
+  enregistrées avant le début de la chaîne, sont comptées à part ;
+* sinon « Échec de la vérification d'intégrité sur ... », avec la
+  première opération qui ne correspond pas et la raison : hachage
+  manquant, chaîne rompue, l'opération a été altérée, ou l'annulation a
+  été altérée.
+
+La chaîne de hachage montre qu'une opération a été modifiée ou supprimée
+directement dans la base de données. Elle n'empêche pas une telle
+modification, et elle ne peut pas montrer que les dernières opérations
+ont été supprimées : comparez avec le **Hachage de la dernière opération**
+de la dernière clôture du registre, ou avec un registre imprimé.
+
+Clôtures du registre
+--------------------
+
+Clôturez le registre d'une période une fois celle-ci terminée, par exemple
+chaque mois :
+
+1. *Point de Vente → Analyse → Registre de change*, **Imprimer le
+   registre** ;
+2. renseignez **Du** et **Au**, et le **Bureau de change** pour clôturer
+   le registre d'un bureau (laissez-le vide, sans point de vente, pour
+   toute la société) ;
+3. appuyez sur **Clôturer la période** et confirmez. La clôture est
+   irréversible.
+
+Le registre n'est clôturé que lorsque la période est terminée, que les
+sessions de ses opérations sont clôturées, qu'il ne chevauche pas une
+autre clôture du même bureau ou de toute la société (pour une clôture de
+toute la société : aucune clôture d'un de ses bureaux non plus), et que la vérification
+d'intégrité réussit. La clôture reçoit une référence sans trou
+(``EXR/AAAA/NNNN``) et fige le nombre d'**Opérations** et d'opérations
+annulées (**Annulée**), la **Première référence** et la **Dernière
+référence**, les **Commissions**, les **Marges de taux**, le résultat de
+la vérification (**Intégrité**) et le **Hachage de la dernière
+opération**. Le registre PDF de la période est joint : **Télécharger le
+registre**.
+
+Les clôtures sont listées dans *Point de Vente → Analyse → Clôtures du
+registre de change*. Elles ne peuvent être ni modifiées ni supprimées, et
+une opération d'une période clôturée ne peut plus être annulée.
+
+Stock de billets et mouvements de billets
+-----------------------------------------
+
+*Point de Vente → Analyse → Stock de billets* (administrateurs du Point de
+Vente) donne, par session, devise et **Coupure**, le comptage
+d'**Ouverture**, les pièces et billets entrés (**Entrées**) et sortis
+(**Sorties**) par les opérations et les transferts, le **Stock**, le
+comptage de **Clôture** et l'**Écart** (clôture moins stock, lorsque les
+deux comptages ont été faits par pièces et billets). Un écart négatif est
+en rouge, un écart positif en orange. Le filtre **Écarts** garde les
+lignes qui ne correspondent pas ; un tableau croisé donne le stock par
+devise et coupure.
+
+*Point de Vente → Analyse → Mouvements de billets* liste chaque pièce et
+billet déplacé : par une opération de change, une annulation ou un
+transfert, avec sa session, son opération ou son transfert, la
+**Coupure** et la **Quantité**. Les mouvements ne sont jamais modifiés ni
+supprimés.
+
+Transferts de billets
+---------------------
+
+*Point de Vente → Commandes → Transferts de billets* (administrateurs du
+Point de Vente) liste les transferts avec leur référence, leur bureau, le
+**Guichet expéditeur**, le **Guichet destinataire**, le montant, la
+valeur, les dates et le statut : Brouillon, En transit, Reçu ou Transfert
+annulé. Le filtre **En transit** donne les billets envoyés et pas encore
+reçus.
+
+Un administrateur du Point de Vente peut aussi faire un transfert depuis
+le back-office : **Nouveau**, choisissez le bureau, les guichets, la
+devise et le montant, puis **Envoyer**. Le guichet expéditeur doit avoir
+une session ouverte. Lorsqu'il suit les billets, ce sont les billets
+proposés depuis son stock qui sont envoyés ; si son stock ne permet pas de
+composer exactement le montant, l'envoi est refusé (« Saisissez les
+billets envoyés par coupure ») : envoyez alors depuis la caisse pour
+choisir les billets. **Recevoir** met les billets dans le tiroir du guichet
+destinataire, dans sa session ouverte.
+
+**Annuler** un transfert en transit tant que la session qui l'a envoyé est
+ouverte : les billets reviennent dans le tiroir expéditeur (une entrée
+d'espèces sur cette session). Un transfert reçu ne peut pas être annulé :
+renvoyez les billets. Une fois envoyé, seule la **Note** d'un transfert
+peut être modifiée. Les boutons **Mouvements d'espèces** et **Mouvements
+de billets** ouvrent ses lignes de relevé et ses pièces et billets.
+
+Les tiroirs d'un bureau
+-----------------------
+
+L'onglet **Tiroirs** du bureau de change (administrateurs du Point de
+Vente) affiche, pour chaque guichet avec une session ouverte, les
+**Espèces attendues** de chaque devise (ouverture, ventes, mouvements
+d'espèces, opérations de change et transferts), les **Opérations du
+jour** et les **Commissions du jour**, avec les totaux. En dessous,
+**Fonds en transit** donne, par devise, les transferts envoyés et pas
+encore reçus, leur montant et leur valeur, et le **Total en transit**.
+
 Tableau des taux en PDF
 -----------------------
 
 Le tableau des taux décrit plus haut s'imprime aussi en PDF (*Taux de
 change*) avec **Imprimer les taux de change** dans les paramètres, ou
 depuis le menu *Imprimer* des points de vente (vue liste de *Point de
-Vente -> Tableau de bord*).
+Vente → Tableau de bord*).
 
 Notes comptables
 ================
@@ -483,6 +943,33 @@ Notes comptables
   sur le même compte de contrepartie : la commission est contrepassée.
 * Les opérations et leurs lignes de relevé ne peuvent pas être supprimées ;
   les références (``EXC/AAAA/NNNNN``) n'ont pas de trou.
+* Un transfert de billets correspond lui aussi à deux lignes de relevé :
+  une sortie d'espèces sur la session du guichet expéditeur à l'envoi des
+  billets, et une entrée d'espèces de même valeur sur la session du
+  guichet destinataire à leur réception, toutes deux avec le **Compte de
+  fonds en transit** du bureau comme contrepartie. La valeur est le
+  montant au taux d'Odoo du jour, dans la devise de la société. Le solde
+  du compte est la valeur des billets en transit ; il revient à zéro une
+  fois chaque transfert reçu ou annulé.
+
+Mise à jour vers 20.0.4.0.0
+===========================
+
+* POS Multi-Currency Cash 20.0.2.1.0 ou plus récent reste requis.
+* La mise à jour copie le numéro de licence de change de chaque point de
+  vente sur ses opérations existantes, puis chaîne les opérations
+  existantes dans le hachage du registre, dans l'ordre de leur création,
+  société par société. Lancez **Vérifier l'intégrité** une fois après la
+  mise à jour.
+* Rien ne change pour un guichet hors de tout bureau de change : ses
+  paramètres restent tels quels. Les nouveaux seuils (**Origine des fonds
+  obligatoire au-delà de**, **Examen au-delà de**) partent de 0, jamais
+  appliqués, et **Suivre les billets par coupure** n'est pas coché.
+* Pour utiliser les bureaux, créez-les, ajoutez leurs guichets, puis
+  renseignez le **Compte de fonds en transit** de chaque bureau avant
+  d'envoyer des billets entre ses guichets.
+* Fermez les sessions, ou rechargez chaque caisse, après la mise à jour,
+  pour que les caisses chargent les nouvelles entrées du menu.
 
 Mise à jour depuis 20.0.1.x
 ===========================
@@ -517,8 +1004,17 @@ Limites connues
   appels au serveur.
 * Une opération concerne deux devises ; un client qui change plusieurs
   devises à la fois génère plusieurs opérations.
-* Une opération ne peut être annulée que tant que sa session est ouverte.
-* Le tableau des taux n'est pas affiché sur l'écran client.
+* Une opération ne peut être annulée que tant que sa session est ouverte,
+  et pas dans une période du registre clôturée.
+* Les billets ne sont suivis par coupure que pour les devises étrangères :
+  la devise du point de vente n'a pas de comptage par pièces et billets.
+* Le stock de billets ne suit que les opérations de change et les
+  transferts : les ventes en espèces et les mouvements d'espèces dans une
+  devise étrangère modifient le tiroir sans coupures. Le comptage suivant
+  le corrige.
+* Un transfert de billets reçu ne peut pas être annulé : renvoyez les
+  billets.
+* La vérification d'intégrité couvre le registre de toute la société.
 
 Dépannage
 =========
@@ -601,6 +1097,41 @@ Supprimer est absent des opérations
 
 Les opérations ne peuvent pas être supprimées, afin que le registre reste
 complet : annulez plutôt l'opération.
+
+Envoyer des billets et Recevoir des billets sont absents
+--------------------------------------------------------
+
+Le guichet doit appartenir à un bureau de change avec au moins un autre
+guichet où **Opération de change** est activée. Rechargez ensuite la
+caisse.
+
+« Définissez le compte de fonds en transit »
+--------------------------------------------
+
+Renseignez le **Compte de fonds en transit** du bureau de change (un
+compte d'actifs circulants) avant de transférer des billets.
+
+Les billets ne correspondent pas au montant
+-------------------------------------------
+
+Avec les billets suivis, le **Total** de chaque grille doit être égal au
+montant de l'opération ou du transfert. Corrigez les quantités.
+
+« Il manque ... dans le tiroir »
+--------------------------------
+
+Le stock du tiroir, tel que compté à l'ouverture et déplacé par les
+opérations, contient moins de ces billets. Vérifiez les billets
+réellement rendus ou envoyés. Cela ne bloque pas l'opération.
+
+Le registre ne peut pas être clôturé
+------------------------------------
+
+La période doit être terminée, les sessions de ses opérations clôturées,
+et la vérification d'intégrité réussie. Elle ne doit pas chevaucher une
+clôture du même bureau ou de toute la société ; une clôture de toute la
+société ne doit chevaucher aucune clôture d'un bureau. Pour clôturer toute la société,
+laissez **Bureau de change** et **Points de vente** vides.
 
 Le caissier ne trouve pas Opérations de change ou Registre de change
 --------------------------------------------------------------------

@@ -2,9 +2,13 @@
 <odoo>
     <!-- Rate board on a screen facing the customers: a standalone page
         (no Odoo assets), refreshed by static/board/rate_board.js. -->
-    <template id="rate_board_page" name="Exchange Rate Board">
-        &lt;!DOCTYPE html&gt;
-        <html t-att-lang="request.env.lang and request.env.lang.replace('_', '-') or 'en'">
+    <template id="rate_board_page" name="Exchange Rate Board">&lt;!DOCTYPE html&gt;
+<t t-call="pos_nm_currency_exchange.rate_board_html"/></template>
+
+    <!-- The page itself, apart from the doctype: text before the root
+        element would keep its terms out of the translations. -->
+    <template id="rate_board_html" name="Exchange Rate Board Page">
+        <html t-att-lang="html_lang">
             <head>
                 <meta charset="utf-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -21,7 +25,7 @@
                     </div>
                     <div class="nm-board-clock">
                         <div class="nm-board-time" id="nm-board-time"/>
-                        <div class="nm-board-licence" t-if="board['licence']">Licence <span t-out="board['licence']"/></div>
+                        <div class="nm-board-licence" t-if="board['licence']">License <span t-out="board['licence']"/></div>
                     </div>
                 </header>
                 <table class="nm-board-table">

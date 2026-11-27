@@ -22,19 +22,32 @@ Odoo 20 module: a currency exchange counter inside the Point of Sale, built on
 
 ## Status
 
-Version 20.0.2.0.0: exchange operation from the register menu between any two
+Version 20.0.4.0.0: exchange operation from the register menu between any two
 cash currencies of the point of sale, with a reverse quote (amount handed back
 typed, amount to receive computed) and the balance of the drawer; buy rate (cash
 rate of the parent) and sell rate (Exchange Sell Margin) in favour of the shop,
 rate margin of every operation; commission per currency (percentage, fixed part,
 minimum) with the notes handed back rounded down to the coins (cash rounding of
 the point of sale for its own currency); drawer check in every currency;
-receipt with the header and footer of the point of sale and the licence number,
-reprint, PDF and e-mail; rate board (register, receipt printer, PDF); customer
+receipt with the header and footer of the point of sale and the license number,
+reprint, PDF and email; rate board (register, receipt printer, PDF); customer
 identification with thresholds, linked operations and identity document;
-cancellation by a manager while the session is open, read-only operations,
-gapless references; exchange register (list, Excel, PDF per period); closing
-control, Currency Position and Sales Details. See
+cancellation by a POS Administrator while the session is open and the drawer
+still holds the notes received, read-only operations (only the note editable by
+a POS Administrator), gapless references; exchange register (list, Excel, PDF per period); closing
+control, Currency Position and Sales Details.
+
+New in 20.0.4.0.0, the exchange office vertical (lots 1-5 of
+[`docs/PLAN_EXCHANGE_OFFICE.md`](docs/PLAN_EXCHANGE_OFFICE.md)): exchange
+offices with counters sharing a license, identification rules and the rates of
+a reference counter; compliance (origin of funds and review thresholds,
+politically exposed person, review by the compliance officer); inalterable
+register (hash chain, integrity check, register closings per period); rate board
+for the customers (public page per counter and per office, idle screen of the
+customer display); note stock by denomination (note moves, Note Stock report,
+expected quantities at closing); note transfers between the counters of an
+office through a notes in transit account, with the drawers of every counter on
+the office. See
 [`pos_nm_currency_exchange/CHANGELOG.md`](pos_nm_currency_exchange/CHANGELOG.md)
 and [`docs/DESIGN.md`](docs/DESIGN.md).
 

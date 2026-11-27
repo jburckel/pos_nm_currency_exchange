@@ -174,7 +174,7 @@ drawer revaluation, counts per cashier).
 
 ## Exchange office (20.0.3.0.0)
 
-- `pos.nm.exchange.office`: company, address, licence, compliance officer,
+- `pos.nm.exchange.office`: company, address, license, compliance officer,
   counters (`pos.config.nm_exchange_office_id`, same currency as the
   company), reference counter, rules (thresholds, customer always, linked
   period), board token and refresh. `pos.config._nm_rules()` returns the
@@ -196,7 +196,7 @@ drawer revaluation, counts per cashier).
 - Review (threshold or PEP declared): `compliance_state = 'to_review'`,
   `review_reason`, activity to the compliance officer of the office
   (`mail.activity.mixin`). Never refused at the counter.
-- `write`: POS managers change `note`, `compliance_state`,
+- `write`: POS Administrators change `note`, `compliance_state`,
   `compliance_note` only (`MANAGER_FIELDS`).
 
 ## Register hash
@@ -242,7 +242,7 @@ drawer revaluation, counts per cashier).
   (exchange, cancellation), operation. Created with sudo by
   `create_from_ui` (after the statement lines, not on a replay) and
   `_nm_cancel` (the opposite of the exchange moves); `write` and `unlink`
-  refused outside sudo; POS users and managers read only.
+  refused outside sudo; POS users and POS Administrators read only.
 - `pos.session._nm_note_stock(currency)`: opening count + one read_group of
   the moves, per denomination (and any value counted or moved that is no
   longer a coin or note), without the closing control computation. The
@@ -267,7 +267,7 @@ drawer revaluation, counts per cashier).
   moves; In and Out are the positive and negative moves (a cancellation
   counts in the opposite column); Difference = closing - stock, only when
   the closing was counted by denomination. Multi-company rule, POS
-  managers.
+  Administrators.
 
 ## Note transfers
 
@@ -294,7 +294,7 @@ drawer revaluation, counts per cashier).
   operations: foreign line and `cash_moves_amount` of the detail, signed
   with `math.copysign` like core, so a line worth 0 keeps its sign), label
   `TRF/...: notes sent to <counter>`; note moves `-qty`, origin
-  `transfer`. From the back office (*Send*, POS managers) without a grid,
+  `transfer`. From the back office (*Send*, POS Administrators) without a grid,
   the notes proposed from the stock are sent when they make up the amount
   within the stock, else the register is asked for.
 - `_nm_receive`: open session of the receiving counter, cash in of the same
@@ -309,7 +309,7 @@ drawer revaluation, counts per cashier).
 - `_nm_cancel`: a draft is cancelled as is; a transfer in transit only
   while its sending session is open (cash in of the value on that session,
   opposite note moves, origin `cancel`); a received transfer never. POS
-  managers, or the cashier who sent it while it is in transit.
+  Administrators, or the cashier who sent it while it is in transit.
 - `create` / `write` (`_nm_check_system_fields`): outside sudo, the fields
   written by the transfer itself (`TRANSFER_SYSTEM_FIELDS`: name, state,
   value, notes, uuid, sessions, lines, dates and users, note moves) are

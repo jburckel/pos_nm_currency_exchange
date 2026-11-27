@@ -56,8 +56,8 @@ class PosConfig(models.Model):
              'is set). 0: never required.',
     )
     nm_exchange_licence = fields.Char(
-        string='Exchange Licence Number',
-        help='Licence or registration number of the currency exchange activity, printed on the '
+        string='Exchange License Number',
+        help='License or registration number of the currency exchange activity, printed on the '
              'exchange receipts and the rate board when set.',
     )
     nm_exchange_origin_threshold = fields.Monetary(
@@ -78,7 +78,7 @@ class PosConfig(models.Model):
         string='Exchange Office',
         check_company=True,
         index='btree_not_null',
-        help='Office of this counter: its licence and its identification and review rules replace those '
+        help='Office of this counter: its license and its identification and review rules replace those '
              'of the point of sale, and it can apply the rates of its reference counter to this one.',
     )
     nm_exchange_board_on_display = fields.Boolean(
@@ -111,7 +111,7 @@ class PosConfig(models.Model):
 
     def _nm_rules(self):
         """Rules of the counter: those of its exchange office, else those
-        of the point of sale (licence, thresholds, linked operations
+        of the point of sale (license, thresholds, linked operations
         period). Keys of RULE_FIELDS."""
         self.ensure_one()
         office = self.nm_exchange_office_id
@@ -238,7 +238,7 @@ class PosConfig(models.Model):
         counter for one unit of the POS currency, always in favour of the
         counter.
 
-        Rate of Odoo: the rate of Odoo less the exchange sell margin, the
+        Rate of Odoo: the rate of Odoo divided by 1 + the exchange sell margin, the
         mirror of the cash rate of the notes received (the rate of Odoo plus
         the margin of POS Multi-Currency Cash).
         Fixed cash rate: the lower of the fixed rate and the fixed change

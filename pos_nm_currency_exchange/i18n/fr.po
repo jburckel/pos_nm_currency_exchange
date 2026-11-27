@@ -23,10 +23,10 @@ msgid ""
 "POS Currency Exchange\n"
 "=====================\n"
 "\n"
-"A currency exchange counter inside the Odoo Point of Sale: the customer\n"
-"brings notes in one currency and leaves with another, without buying a\n"
-"product. Built on POS Multi-Currency Cash, which already controls the\n"
-"drawer of every currency, its cash rates and coins and notes.\n"
+"A currency exchange counter inside the Odoo 20 Point of Sale: the\n"
+"customer brings notes in one currency and leaves with another, without\n"
+"buying a product. Built on POS Multi-Currency Cash, which already\n"
+"controls the drawer of every currency, its cash rates and coins and notes.\n"
 "\n"
 "Features\n"
 "--------\n"
@@ -42,26 +42,34 @@ msgid ""
 "  stays in the commission\n"
 "* Drawer of the currency handed back checked before every operation\n"
 "* Exchange receipt with the header and footer of the point of sale and the\n"
-"  exchange licence number; reprint from the register, PDF and e-mail from\n"
+"  exchange license number; reprint from the register, PDF and email from\n"
 "  the back office\n"
 "* Rate board of the counter: on the register, printed on the receipt\n"
 "  printer or in PDF\n"
 "* Customer identification: thresholds, linked operations over a period,\n"
 "  identity document recorded on the operation\n"
-"* Cancellation of an operation by a manager while its session is open: two\n"
-"  opposite lines, drawers and commission account back to their state;\n"
-"  operations cannot be edited or deleted, references are gapless\n"
+"* Cancellation of an operation by a POS Administrator while its session is\n"
+"  open and the drawer still holds the notes received: two opposite lines,\n"
+"  drawers and commission account back to their state; operations cannot be\n"
+"  deleted nor edited (only their note, by a POS Administrator), references\n"
+"  are gapless\n"
 "* Two lines on the cash journal of the session, in the currency of each\n"
 "  side, with the commission on a dedicated income account: the operations\n"
 "  appear in the closing control, the Currency Position report and the Sales\n"
 "  Details report\n"
-"* Exchange offices: several counters sharing a licence, identification\n"
+"* Exchange offices: several counters sharing a license, identification\n"
 "  rules and the same rates, applied from a reference counter\n"
 "* Compliance: origin of funds and review thresholds, politically exposed\n"
 "  person, review by the compliance officer; inalterable register (hash\n"
 "  chain, integrity check) and closings of the register per period\n"
 "* Rate board on a screen facing the customers (TV, tablet or the customer\n"
 "  display of Odoo), refreshed by itself\n"
+"* Notes tracked by denomination: notes received and handed back counted\n"
+"  per coin and note, note moves, Note Stock report and expected quantities\n"
+"  in the closing popup\n"
+"* Note transfers between the counters of an office, through a notes in\n"
+"  transit account, with gapless references and a transfer slip; drawers of\n"
+"  every counter on the office\n"
 "* Operations listed per point of sale, session and cashier, with a pivot of\n"
 "  the commissions and rate margins; exchange register exported to Excel or\n"
 "  printed in PDF for a period\n"
@@ -70,17 +78,19 @@ msgid ""
 "------------\n"
 "* Point of Sale (point_of_sale)\n"
 "* POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0.2.1.0 or later,\n"
-"  included in the price shown on the Odoo Apps Store (already bought it?\n"
-"  Contact us at odoo@natimai.solutions before buying this module)\n"
+"  included in the price shown on the Odoo Apps Store: 178 EUR in total,\n"
+"  59 EUR for this module plus 119 EUR for POS Multi-Currency Cash (already\n"
+"  bought it? Contact us at odoo@natimai.solutions before buying this\n"
+"  module)\n"
 msgstr ""
 "\n"
 "Change de devises PdV\n"
 "=====================\n"
 "\n"
-"Un guichet de change intégré au Point de Vente Odoo : le client apporte des\n"
-"billets dans une devise et repart avec une autre, sans acheter de produit.\n"
-"Construit sur POS Multi-Currency Cash, qui contrôle déjà le tiroir de chaque\n"
-"devise, ses taux de caisse et ses pièces et billets.\n"
+"Un guichet de change intégré au Point de Vente Odoo 20 : le client apporte\n"
+"des billets dans une devise et repart avec une autre, sans acheter de\n"
+"produit. Construit sur POS Multi-Currency Cash, qui contrôle déjà le tiroir\n"
+"de chaque devise, ses taux de caisse et ses pièces et billets.\n"
 "\n"
 "Fonctionnalités\n"
 "---------------\n"
@@ -103,10 +113,12 @@ msgstr ""
 "  tickets ou en PDF\n"
 "* Identification du client : seuils, opérations liées sur une période,\n"
 "  pièce d'identité enregistrée sur l'opération\n"
-"* Annulation d'une opération par un responsable tant que sa session est\n"
-"  ouverte : deux lignes opposées, tiroirs et compte de commission remis dans\n"
-"  leur état ; les opérations ne peuvent être ni modifiées ni supprimées, les\n"
-"  références se suivent sans interruption\n"
+"* Annulation d'une opération par un administrateur du Point de Vente tant\n"
+"  que sa session est ouverte et que le tiroir contient encore les billets\n"
+"  reçus : deux lignes opposées, tiroirs et compte de commission remis dans\n"
+"  leur état ; les opérations ne peuvent être ni supprimées ni modifiées\n"
+"  (seulement leur note, par un administrateur du Point de Vente), les\n"
+"  références sont sans trou\n"
 "* Deux lignes sur le journal d'espèces de la session, dans la devise de\n"
 "  chaque côté, avec la commission sur un compte de produits dédié : les\n"
 "  opérations apparaissent dans le contrôle de clôture, le rapport Position\n"
@@ -119,6 +131,12 @@ msgstr ""
 "  période\n"
 "* Tableau des taux sur un écran tourné vers les clients (télévision, tablette\n"
 "  ou écran client d'Odoo), rafraîchi de lui-même\n"
+"* Billets suivis par coupure : billets reçus et rendus comptés par pièce et\n"
+"  billet, mouvements de billets, rapport Stock de billets et quantités\n"
+"  attendues dans la fenêtre de clôture\n"
+"* Transferts de billets entre les guichets d'un bureau, via un compte de\n"
+"  fonds en transit, avec des références sans trou et un bordereau de\n"
+"  transfert ; tiroirs de chaque guichet sur le bureau\n"
 "* Opérations listées par point de vente, session et caissier, avec un\n"
 "  tableau croisé des commissions et des marges de taux ; registre de change\n"
 "  exporté vers Excel ou imprimé en PDF pour une période\n"
@@ -127,9 +145,10 @@ msgstr ""
 "---------\n"
 "* Point de Vente (point_of_sale)\n"
 "* POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0.2.1.0 ou plus\n"
-"  récent, inclus dans le prix affiché sur l'Odoo Apps Store (vous l'avez déjà\n"
-"  acheté ? Contactez-nous à odoo@natimai.solutions avant d'acheter ce\n"
-"  module)\n"
+"  récent, inclus dans le prix affiché sur l'Odoo Apps Store : 178 EUR au\n"
+"  total, 59 EUR pour ce module plus 119 EUR pour POS Multi-Currency Cash\n"
+"  (vous l'avez déjà acheté ? Contactez-nous à odoo@natimai.solutions avant\n"
+"  d'acheter ce module)\n"
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -304,9 +323,14 @@ msgid "'Exchange Rates %s' % object.name"
 msgstr "'Taux de change %s' % object.name"
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid ", commission included in the amounts."
+msgstr ", commission comprise dans les montants."
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
-msgid "- Licence No."
+msgid "- License No."
 msgstr "- Licence n°"
 
 #. module: pos_nm_currency_exchange
@@ -381,12 +405,12 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
-msgid "<br/>Licence"
+msgid "<br/>License"
 msgstr "<br/>Licence"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
-msgid "<br/>Licence No."
+msgid "<br/>License No."
 msgstr "<br/>Licence n°"
 
 #. module: pos_nm_currency_exchange
@@ -431,6 +455,15 @@ msgstr ""
 "    </p>\n"
 "</div>\n"
 "            "
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid ""
+"<span class=\"nm-board-offline\" id=\"nm-board-offline\" "
+"hidden=\"hidden\">Connection lost: last rates shown</span>"
+msgstr ""
+"<span class=\"nm-board-offline\" id=\"nm-board-offline\" "
+"hidden=\"hidden\">Connexion perdue : derniers taux affichés</span>"
 
 #. module: pos_nm_currency_exchange
 #. odoo-python
@@ -635,7 +668,7 @@ msgstr "Montants"
 #: model_terms:ir.actions.act_window,help:pos_nm_currency_exchange.action_pos_nm_exchange_office
 msgid ""
 "An exchange office groups the counters (points of sale) of one licensed place of business: they share\n"
-"                its licence, its identification thresholds, its rates and its rate board."
+"                its license, its identification thresholds, its rates and its rate board."
 msgstr ""
 "Un bureau de change regroupe les guichets (points de vente) d'un même établissement titulaire d'une licence : ils partagent\n"
 "                sa licence, ses seuils d'identification, ses taux et son tableau des taux."
@@ -1204,6 +1237,7 @@ msgstr "Change croisé"
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_note_move__currency_id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_note_stock__currency_id
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.exchange_office_drawers
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_transfer_search
@@ -1489,7 +1523,7 @@ msgstr ""
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__pos_nm_exchange__id_document_type__driving_licence
 #: model:ir.model.fields.selection,name:pos_nm_currency_exchange.selection__res_partner__nm_id_document_type__driving_licence
-msgid "Driving Licence"
+msgid "Driving License"
 msgstr "Permis de conduire"
 
 #. module: pos_nm_currency_exchange
@@ -1614,7 +1648,7 @@ msgstr "Pièce d'identité obligatoire au-delà de (change)"
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_config__nm_exchange_licence
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange_office__licence
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_licence
-msgid "Exchange Licence Number"
+msgid "Exchange License Number"
 msgstr "Numéro de licence de change"
 
 #. module: pos_nm_currency_exchange
@@ -1722,13 +1756,13 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
-msgid "Exchange licence number"
+msgid "Exchange license number"
 msgstr "Numéro de licence de change"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__licence
 msgid ""
-"Exchange licence number of the counter when the operation was recorded."
+"Exchange license number of the counter when the operation was recorded."
 msgstr ""
 "Numéro de licence de change du guichet lors de l'enregistrement de "
 "l'opération."
@@ -2130,20 +2164,21 @@ msgstr "Dernière mise à jour le"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__licence
-msgid "Licence"
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "License"
 msgstr "Licence"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_receipt_body
-msgid "Licence No."
+msgid "License No."
 msgstr "Licence n°"
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_licence
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_licence
 msgid ""
-"Licence or registration number of the currency exchange activity, printed on"
+"License or registration number of the currency exchange activity, printed on"
 " the exchange receipts and the rate board when set."
 msgstr ""
 "Numéro de licence ou d'enregistrement de l'activité de change, imprimé sur "
@@ -2152,7 +2187,7 @@ msgstr ""
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange_office__licence
 msgid ""
-"Licence or registration number of the office, printed on the receipts, the "
+"License or registration number of the office, printed on the receipts, the "
 "rate board and the exchange register of its counters."
 msgstr ""
 "Numéro de licence ou d'enregistrement du bureau, imprimé sur les tickets, le"
@@ -2654,7 +2689,7 @@ msgstr "Bureau du guichet lors de l'enregistrement de l'opération."
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_config__nm_exchange_office_id
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_res_config_settings__pos_nm_exchange_office_id
 msgid ""
-"Office of this counter: its licence and its identification and review rules "
+"Office of this counter: its license and its identification and review rules "
 "replace those of the point of sale, and it can apply the rates of its "
 "reference counter to this one."
 msgstr ""
@@ -3144,6 +3179,11 @@ msgstr ""
 " et pièces."
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "Rates of"
+msgstr "Taux du"
+
+#. module: pos_nm_currency_exchange
 #: model:mail.template,description:pos_nm_currency_exchange.mail_template_pos_nm_exchange
 msgid "Receipt of a currency exchange operation sent to its customer"
 msgstr "Ticket d'une opération de change envoyé à son client"
@@ -3422,7 +3462,7 @@ msgstr "Envoyer des billets"
 
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_form
-msgid "Send by E-mail"
+msgid "Send by Email"
 msgstr "Envoyer par e-mail"
 
 #. module: pos_nm_currency_exchange
@@ -4038,7 +4078,7 @@ msgstr "La pièce d'identité présentée n'a pas de date d'expiration."
 #. module: pos_nm_currency_exchange
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.res_config_view_form_inherit_exchange
 msgid ""
-"The licence and the identification thresholds of the office apply to this "
+"The license and the identification thresholds of the office apply to this "
 "counter."
 msgstr ""
 "La licence et les seuils d'identification du bureau s'appliquent à ce "
@@ -4727,10 +4767,10 @@ msgstr ""
 #: model:ir.model.fields,help:pos_nm_currency_exchange.field_pos_nm_exchange__value_out
 msgid ""
 "Value of the notes handed back at the sell rate of the counter (the rate of "
-"Odoo less the exchange sell margin, or the lower fixed rate)."
+"Odoo divided by 1 + the exchange sell margin, or the lower fixed rate)."
 msgstr ""
-"Valeur des billets rendus au taux de vente du guichet (le taux d'Odoo moins "
-"la marge de vente de change, ou le plus bas des taux fixes)."
+"Valeur des billets rendus au taux de vente du guichet (le taux d'Odoo divisé"
+" par 1 + la marge de vente de change, ou le plus bas des taux fixes)."
 
 #. module: pos_nm_currency_exchange
 #. odoo-javascript
@@ -4798,6 +4838,7 @@ msgstr "Vue"
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "We buy"
 msgstr "Nous achetons"
@@ -4817,6 +4858,7 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "We sell"
 msgstr "Nous vendons"
@@ -4847,11 +4889,21 @@ msgid "You pay"
 msgstr "Vous payez"
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "You pay for"
+msgstr "Vous payez pour"
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "You receive"
 msgstr "Vous recevez"
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "You receive for"
+msgstr "Vous recevez pour"
 
 #. module: pos_nm_currency_exchange
 #. odoo-python

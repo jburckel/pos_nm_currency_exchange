@@ -28,47 +28,65 @@ class NmExchangeRateBoard(http.Controller):
             return None
         return office.with_company(office.company_id)
 
-    def _nm_render(self, board, refresh, data_url, display=False):
+    def _nm_lang(self, company, lang=None):
+        """Language of the board: ``lang`` when it is installed (a screen
+        set with ?lang=fr_FR), else the language of the company."""
+        installed = dict(request.env['res.lang'].sudo().get_installed())
+        if lang and lang in installed:
+            return lang
+        company_lang = company.partner_id.lang
+        return company_lang if company_lang in installed else 'en_US'
+
+    def _nm_render(self, board, refresh, data_url, lang, display=False):
+        request.update_context(lang=lang)
         return request.render('pos_nm_currency_exchange.rate_board_page', {
             'board': board,
             'refresh': max(10, refresh or 60),
-            'data_url': data_url,
+            'data_url': data_url + f'&lang={lang}',
             'display': display,
+            'html_lang': lang.replace('_', '-'),
         })
 
     @http.route('/pos_nm_exchange/board/<int:config_id>', type='http', auth='public', website=False,
                 sitemap=False)
-    def config_board(self, config_id, access_token=None, display=None, **kw):
+    def config_board(self, config_id, access_token=None, display=None, lang=None, **kw):
         config = self._nm_config(config_id, access_token)
         if not config:
             return request.not_found()
+        lang = self._nm_lang(config.company_id, lang)
         refresh = config.nm_exchange_office_id.board_refresh or 60
         return self._nm_render(
-            config._nm_rate_board(), refresh,
-            f'/pos_nm_exchange/board/{config.id}/data?access_token={config.access_token}', bool(display))
+            config.with_context(lang=lang)._nm_rate_board(), refresh,
+            f'/pos_nm_exchange/board/{config.id}/data?access_token={config.access_token}', lang, bool(display))
 
     @http.route('/pos_nm_exchange/board/<int:config_id>/data', type='http', auth='public', website=False,
                 sitemap=False)
-    def config_board_data(self, config_id, access_token=None, **kw):
+    def config_board_data(self, config_id, access_token=None, lang=None, **kw):
         config = self._nm_config(config_id, access_token)
         if not config:
             return request.not_found()
-        return request.make_json_response(config._nm_rate_board(), headers={'Cache-Control': 'no-store'})
+        lang = self._nm_lang(config.company_id, lang)
+        return request.make_json_response(
+            config.with_context(lang=lang)._nm_rate_board(), headers={'Cache-Control': 'no-store'})
 
     @http.route('/pos_nm_exchange/office_board/<int:office_id>', type='http', auth='public', website=False,
                 sitemap=False)
-    def office_board(self, office_id, access_token=None, display=None, **kw):
+    def office_board(self, office_id, access_token=None, display=None, lang=None, **kw):
         office = self._nm_office(office_id, access_token)
         if not office or not office._nm_reference_config():
             return request.not_found()
+        lang = self._nm_lang(office.company_id, lang)
         return self._nm_render(
-            office._nm_rate_board(), office.board_refresh,
-            f'/pos_nm_exchange/office_board/{office.id}/data?access_token={office.board_token}', bool(display))
+            office.with_context(lang=lang)._nm_rate_board(), office.board_refresh,
+            f'/pos_nm_exchange/office_board/{office.id}/data?access_token={office.board_token}', lang,
+            bool(display))
 
     @http.route('/pos_nm_exchange/office_board/<int:office_id>/data', type='http', auth='public', website=False,
                 sitemap=False)
-    def office_board_data(self, office_id, access_token=None, **kw):
+    def office_board_data(self, office_id, access_token=None, lang=None, **kw):
         office = self._nm_office(office_id, access_token)
         if not office or not office._nm_reference_config():
             return request.not_found()
-        return request.make_json_response(office._nm_rate_board(), headers={'Cache-Control': 'no-store'})
+        lang = self._nm_lang(office.company_id, lang)
+        return request.make_json_response(
+            office.with_context(lang=lang)._nm_rate_board(), headers={'Cache-Control': 'no-store'})

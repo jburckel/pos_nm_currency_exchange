@@ -6,10 +6,10 @@
 POS Currency Exchange
 =====================
 
-A currency exchange counter inside the Odoo Point of Sale: the customer
-brings notes in one currency and leaves with another, without buying a
-product. Built on POS Multi-Currency Cash, which already controls the
-drawer of every currency, its cash rates and coins and notes.
+A currency exchange counter inside the Odoo 20 Point of Sale: the
+customer brings notes in one currency and leaves with another, without
+buying a product. Built on POS Multi-Currency Cash, which already
+controls the drawer of every currency, its cash rates and coins and notes.
 
 Features
 --------
@@ -25,26 +25,34 @@ Features
   stays in the commission
 * Drawer of the currency handed back checked before every operation
 * Exchange receipt with the header and footer of the point of sale and the
-  exchange licence number; reprint from the register, PDF and e-mail from
+  exchange license number; reprint from the register, PDF and email from
   the back office
 * Rate board of the counter: on the register, printed on the receipt
   printer or in PDF
 * Customer identification: thresholds, linked operations over a period,
   identity document recorded on the operation
-* Cancellation of an operation by a manager while its session is open: two
-  opposite lines, drawers and commission account back to their state;
-  operations cannot be edited or deleted, references are gapless
+* Cancellation of an operation by a POS Administrator while its session is
+  open and the drawer still holds the notes received: two opposite lines,
+  drawers and commission account back to their state; operations cannot be
+  deleted nor edited (only their note, by a POS Administrator), references
+  are gapless
 * Two lines on the cash journal of the session, in the currency of each
   side, with the commission on a dedicated income account: the operations
   appear in the closing control, the Currency Position report and the Sales
   Details report
-* Exchange offices: several counters sharing a licence, identification
+* Exchange offices: several counters sharing a license, identification
   rules and the same rates, applied from a reference counter
 * Compliance: origin of funds and review thresholds, politically exposed
   person, review by the compliance officer; inalterable register (hash
   chain, integrity check) and closings of the register per period
 * Rate board on a screen facing the customers (TV, tablet or the customer
   display of Odoo), refreshed by itself
+* Notes tracked by denomination: notes received and handed back counted
+  per coin and note, note moves, Note Stock report and expected quantities
+  in the closing popup
+* Note transfers between the counters of an office, through a notes in
+  transit account, with gapless references and a transfer slip; drawers of
+  every counter on the office
 * Operations listed per point of sale, session and cashier, with a pivot of
   the commissions and rate margins; exchange register exported to Excel or
   printed in PDF for a period
@@ -53,10 +61,12 @@ Requirements
 ------------
 * Point of Sale (point_of_sale)
 * POS Multi-Currency Cash (pos_nm_multicurrencies) 20.0.2.1.0 or later,
-  included in the price shown on the Odoo Apps Store (already bought it?
-  Contact us at odoo@natimai.solutions before buying this module)
+  included in the price shown on the Odoo Apps Store: 178 EUR in total,
+  59 EUR for this module plus 119 EUR for POS Multi-Currency Cash (already
+  bought it? Contact us at odoo@natimai.solutions before buying this
+  module)
     """,
-    "version": "20.0.3.0.0",
+    "version": "20.0.4.0.0",
     "category": "Sales/Point of Sale",
     "author": "Natimai Solutions",
     "website": "https://www.natimai.solutions",
@@ -111,6 +121,13 @@ Requirements
         "static/description/screenshot_exchange_sale_details.png",
         "static/description/screenshot_exchange_register.png",
         "static/description/screenshot_exchange_settings.png",
+        "static/description/screenshot_exchange_office.png",
+        "static/description/screenshot_exchange_drawers.png",
+        "static/description/screenshot_rate_board_display.png",
+        "static/description/screenshot_exchange_notes.png",
+        "static/description/screenshot_note_stock.png",
+        "static/description/screenshot_note_transfer.png",
+        "static/description/screenshot_exchange_compliance.png",
     ],
     "price": 59.00,
     "currency": "EUR",

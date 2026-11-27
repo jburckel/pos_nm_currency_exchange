@@ -27,22 +27,40 @@ module adds the operation without a sale:
 * both drawers move: the notes received enter the drawer of their currency
   and the notes handed back leave the other one, on the cash journal of the
   session, with the commission posted on a dedicated income account;
-* a manager can cancel a mistaken operation while the session is open;
+* a POS Administrator can cancel a mistaken operation while the session is
+  open and the drawer still holds the notes received;
 * the operations appear in the closing control, in the *Currency Position*
   report and in the *Sales Details* report, in a list with a pivot of the
   commissions and rate margins, and in an exchange register that can be
   exported or printed for a period;
 * the rate board of the counter can be shown and printed at the register,
-  or printed in PDF.
+  or printed in PDF;
+* several counters of one licensed place of business can form an
+  **exchange office**: they share its license, its identification rules
+  and the same rates, and the office shows the drawers of every counter;
+* above thresholds you set, the customer declares the origin of the funds,
+  and the operation is flagged *To Review* for the compliance officer;
+* every operation is chained into an inalterable register (hash chain),
+  which can be checked and closed per period;
+* the rate board can be shown full screen on a screen facing the
+  customers, or on the customer display of Odoo, and reloads the rates by
+  itself;
+* the foreign coins and notes received and handed back can be counted by
+  denomination, with the stock of each drawer, and notes can be sent from
+  one counter of an office to another.
+
+All of this is optional: a single counter without exchange office works as
+before.
 
 Requirements
 ============
 
 * The **Point of Sale** application (``point_of_sale``), Odoo 20.
 * **POS Multi-Currency Cash** (``pos_nm_multicurrencies``) **20.0.2.1.0 or
-  later**, included in the price shown on the Odoo Apps Store (already
-  bought it? Contact us at odoo@natimai.solutions before buying this
-  module), with at least one foreign currency on the
+  later**, included in the price shown on the Odoo Apps Store: 178 EUR in
+  total, 59 EUR for this module plus 119 EUR for POS Multi-Currency Cash
+  (already bought it? Contact us at odoo@natimai.solutions before buying
+  this module), with at least one foreign currency on the
   cash payment method of the point of sale (see its guide: *Accept a
   currency in cash*). An older version of POS Multi-Currency Cash does not
   work with
@@ -52,6 +70,8 @@ Requirements
   a display error: the counted and posted amounts were right).
 * An **income account for the commissions** (type *Income* or *Other
   Income*).
+* To transfer notes between the counters of an exchange office: a
+  **notes in transit account** (type *Current Assets*).
 
 Configuration
 =============
@@ -59,15 +79,18 @@ Configuration
 Enable the counter
 ------------------
 
-Go to *Point of Sale -> Configuration -> Settings*, select your point of
+Go to *Point of Sale → Configuration → Settings*, select your point of
 sale and look at the **Currency Exchange** section:
 
 * **Currency Exchange** (enabled by default): shows the entries of the
   counter in the menu of the register.
 * **Commission account**: income account receiving the commissions. Only
   income accounts can be chosen. It is required to record an operation.
-* **Exchange licence number**: licence or registration number of your
+* **Exchange license number**: license or registration number of your
   exchange activity, printed on the receipts and the rate board when set.
+* **Exchange office**: the exchange office of this counter (see *Exchange
+  office and counters*). With an office, the license and the
+  identification thresholds below are hidden: those of the office apply.
 * **Customer required above**: value of an operation, in the currency of
   the point of sale, above which the customer must be identified.
 * **Customer required for every operation**: every operation names its
@@ -75,8 +98,19 @@ sale and look at the **Currency Exchange** section:
 * **Identity document required above**: value above which the identity
   document of the customer is recorded on the operation.
 * **Linked operations period (days)**: when above 0, the value compared to
-  the two thresholds is the operation plus the operations of the same
+  the thresholds is the operation plus the operations of the same
   customer over that many days (see *Customer Identification*).
+* **Origin of funds required above**: value above which the customer
+  declares the origin of the funds (see *Compliance thresholds*).
+* **Review above**: value above which the operation is flagged *To Review*
+  for the compliance officer. It is never refused.
+* **Track the notes by denomination**: the foreign notes received and
+  handed back are counted by coin and note (see *Notes by denomination*).
+* **Rate board on the customer display**: the customer display of Odoo
+  shows the rate board while no order is in progress.
+* **Rate board address**: address of the full-screen rate board of this
+  counter, for a screen facing the customers (see *Rate board on a
+  screen*).
 * **Print Exchange Rates**: prints the rate board of the point of sale in
   PDF.
 
@@ -85,7 +119,7 @@ Thresholds at 0 are never applied.
 Commissions and sell margin per currency
 ----------------------------------------
 
-Go to *Point of Sale -> Configuration -> Cash Currencies* and open the line
+Go to *Point of Sale → Configuration → Cash Currencies* and open the line
 of the currency. The *Currency Exchange* group holds four values, the
 amounts being in the currency of the point of sale:
 
@@ -120,13 +154,13 @@ the currency of the point of sale, like in POS Multi-Currency Cash:
 
 Example, point of sale in USD, rate of Odoo 2 EUR for 1 USD, Cash Rate
 Margin and Exchange Sell Margin of 10 %: the counter buys euros at
-2.20 EUR for 1 USD (100 EUR received are worth $ 45.45) and sells them at
-1.82 EUR for 1 USD (100 EUR handed back are worth $ 55.00), before the
-commission.
+2 × 1.10 = 2.20 EUR for 1 USD (100 EUR received are worth $ 45.45) and
+sells them at 2 / 1.10 = 1.8182 EUR for 1 USD (100 EUR handed back are
+worth $ 55.00), before the commission.
 
 The difference with the rates of Odoo is the **Rate Margin** of the
-operation (see *Accounting Notes*). On upgrade from a version before
-20.0.2.0.0, the Exchange Sell Margin of each currency is set to its Cash
+operation (see *Accounting Notes*). On upgrade from 20.0.1.x, the
+Exchange Sell Margin of each currency is set to its Cash
 Rate Margin: check it.
 
 Coins and notes
@@ -149,8 +183,126 @@ Receipt
 The exchange receipt prints the logo, the **Header** and **Footer** of the
 point of sale (*Settings*, section *Bills & Receipts*, *Custom Header &
 Footer*), the
-exchange licence number and the company details. Write there the legal
-notices your activity must show to the customer.
+exchange license number and the company details. Write there the legal
+notices your activity must show to the customer. With the notes counted by
+denomination, the receipt lists the notes under the amounts.
+
+Exchange office and counters
+----------------------------
+
+An exchange office is one licensed place of business with one or more
+counters (points of sale). It is optional: a counter outside any office
+keeps its own settings.
+
+Go to *Point of Sale → Configuration → Exchange Offices* and press
+**New**. Give the office a name, then fill in:
+
+* group *Office*: the **Address** (printed on the exchange register and
+  the rate board), the **Exchange License Number**, the **Compliance
+  Officer** (he receives an activity for every operation flagged *To
+  Review*) and the **Notes in Transit Account** (see *Notes in transit
+  account*);
+* group *Identification*: **Customer Required for Every Operation**,
+  **Customer Required Above**, **Identity Document Required Above**,
+  **Origin of Funds Required Above**, **Review Above** and **Linked
+  Operations Period** (days). They work like the settings of the same name
+  of a point of sale, in the currency of the company.
+
+The license and the rules of the office replace those of its counters. To
+add a counter, set its **Exchange office** in the *Currency Exchange*
+section of the settings of the point of sale, or add it in the
+**Counters** tab of the office. The counters of an office must use the
+currency of its company.
+
+The smart buttons of the office open its **Counters**, its
+**Operations** and its note **Transfers**.
+
+Same rates at every counter
+---------------------------
+
+In the **Counters** tab of the office, choose the **Reference Counter**:
+the counter whose rates the others copy, and whose rates the rate board of
+the office shows. Then, with two counters or more:
+
+* **Apply Rates to the Counters** copies, for every currency of the
+  reference counter, the cash rate (rate mode, margin, fixed rates), the
+  roundings of the coins and notes, the **Exchange Sell Margin (%)** and
+  the commissions to the other counters. The changes of the rates, the
+  margins and the commissions are logged in the chatter of the currency
+  (not those of the roundings). A counter that does not take the currency in
+  cash is skipped and named in a warning;
+* **Rate Differences** lists what still differs from the reference
+  counter.
+
+Apply the rates again after each change of the reference counter.
+
+Compliance thresholds
+---------------------
+
+Two thresholds help you follow the anti-money laundering rules of your
+country. They are set on the exchange office, or in the settings of a
+point of sale outside any office, in the currency of the point of sale; at
+0 they are never applied. The linked operations of the customer count,
+like for the other thresholds.
+
+* **Origin of funds required above**: the operation needs a customer, and
+  the customer declares the origin of the funds. *Other* needs details.
+* **Review above**: the operation is flagged *To Review*. It is never
+  refused at the counter. An activity goes to the **Compliance Officer**
+  of the office.
+
+An operation whose customer declares being a politically exposed person is
+flagged *To Review* too. Choose a POS Administrator as compliance officer:
+only POS Administrators can review the operations.
+
+Rate board on a screen
+----------------------
+
+Each counter has a public rate board page for a TV, a tablet or any
+screen facing the customers. Its address is the **Rate board address** in
+the *Currency Exchange* section of the settings of the point of sale. It
+holds the access token of the point of sale, the one of its customer
+display: share it only with the screens of the counter.
+
+An exchange office has its own page, in the **Rate Board** tab of the
+office (POS Administrators): the **Rate Board Address** shows the rates of
+the reference counter under the name, address and license of the office.
+**Board Refresh (seconds)** sets how often the page reloads the rates (60
+by default, 10 at least), also for the pages of its counters. **New
+Address** gives the office page a new address: the screens showing the old
+one stop receiving the rates (they keep the last rates with "Connection
+lost: last rates shown", and show nothing once the page is reloaded).
+
+To show the board on the customer display of Odoo, tick **Rate board on
+the customer display** in the settings of the point of sale.
+
+Notes by denomination
+---------------------
+
+POS Multi-Currency Cash already counts the coins and notes of each
+foreign currency at opening and closing. This module can follow them
+during the session too:
+
+1. Go to *Point of Sale → Configuration → Coins/Bills* and check that the
+   coins and notes of each foreign currency exist, with their
+   **Currency** set (see the guide of POS Multi-Currency Cash).
+2. In the settings of the point of sale, tick **Track the notes by
+   denomination**.
+
+The option applies to the foreign cash currencies that have coins and notes
+at this point of sale. The currency of the point of sale is not tracked:
+it has no count by denomination. Count the opening by coins and notes, so
+that the stock of the drawer starts right.
+
+Notes in transit account
+------------------------
+
+Notes sent from one counter of an office to another pass through the
+**Notes in Transit Account** of the office: a current assets account
+(type *Current Assets*). Create one in your chart of accounts if needed,
+for instance "Notes in transit", and set it on the office. Its balance is
+the value of the notes sent and not received yet. Without it, notes
+cannot be transferred.
 
 Who can do what
 ---------------
@@ -159,10 +311,22 @@ Who can do what
   their receipts and show the rate board. They can read the operations but
   cannot change them.
 * **POS Administrators** (*Point of Sale* access *Administrator*) also see
-  the menus *Point of Sale -> Orders -> Currency Exchanges* and *Point of
-  Sale -> Reporting -> Exchange Register*, the identity documents of the
+  the menus *Point of Sale → Orders → Currency Exchanges* and *Point of
+  Sale → Reporting → Exchange Register*, the identity documents of the
   customers, can edit the note of an operation and cancel an operation.
-* Nobody can delete an operation or one of its statement lines.
+* At an office with another enabled counter, POS users also send and
+  receive notes at the register (*Send Notes*, *Receive Notes*), and they
+  see the *Note Stock* of their drawer when the notes are tracked.
+* POS Administrators also manage the exchange offices (*Point of Sale →
+  Configuration → Exchange Offices*, with the **Drawers** and **Rate
+  Board** tabs), the note transfers (*Point of Sale → Orders → Note
+  Transfers*), and see *Point of Sale → Reporting → Note Stock*, *Note
+  Moves* and *Exchange Register Closings*.
+* Only POS Administrators see the declarations of the customer and review
+  the operations (**Compliance**, **Compliance Note**), check the
+  integrity of the register and close it.
+* Nobody can delete an operation or one of its statement lines, a note
+  move, a register closing or a note transfer once sent.
 * With several companies, each user sees the operations of the companies
   he is allowed in.
 * With the Employees module (``pos_hr``), the cashier of an operation is
@@ -220,6 +384,115 @@ When the counter cannot work at this point of sale, the **Currency
 Exchange** entry shows the reason instead of the popup: no foreign currency
 on the cash payment method, or no commission account.
 
+Declarations of the customer
+----------------------------
+
+Above the **Origin of funds required above** or the **Review above**
+threshold, once the customer is picked, the popup shows **Declarations of
+the customer**:
+
+* **Origin of the funds**: Salary or pension, Savings, Business income,
+  Sale of an asset, Inheritance or gift, Other. Required above the origin
+  of funds threshold; for *Other*, type the **Details of the origin of the
+  funds**;
+* **Purpose of the operation**: Travel, Business, Studies, Family support,
+  Other;
+* **Politically exposed person (or a relative or close associate of
+  one)**: tick it when the customer declares it. The operation is then
+  flagged *To Review*.
+
+Above the review threshold only, the declarations are asked but not
+required. They are frozen on the operation with the address of the
+customer. The cashier is never blocked by a review: the compliance officer
+checks the operation later (see *To Review*).
+
+Counting the notes
+------------------
+
+With **Track the notes by denomination**, the popup widens and shows a
+grid for each tracked foreign currency of the operation:
+
+* **Notes received**: type the **Quantity** of each coin and note the
+  customer gives. The **Total** must equal the amount received;
+* **Notes handed back**: the quantities are proposed from the stock of the
+  drawer, the largest notes first. **In the drawer** gives the stock of
+  each coin and note. Change the quantities if you hand back other notes:
+  the **Total** must equal the amount handed back.
+
+A red message shows when a total does not match, and **Confirm** stays
+disabled. When the drawer is short of some notes, an orange message names
+them: "The drawer is short of ...: check the notes before handing them
+back." It is only a warning, because the cash sales in a foreign currency
+move the drawer without denominations: the stock can be behind the real
+drawer. When the amount handed back cannot be made up with the coins and
+notes of the currency, the popup shows it as an error.
+
+Note Stock
+----------
+
+The **Note Stock** entry of the register menu (shown when the notes are
+tracked) gives, for each tracked currency and each coin and note, the
+**Opening** count, the notes moved by the **Exchanges** and the transfers,
+and the stock **In the drawer**. When the opening was not counted by
+coins and notes, the popup says so: the stock then counts the exchanges
+only.
+
+At closing, the counting popup of each tracked currency shows the
+*expected* quantity of each coin and note next to the count, when the
+opening was counted by coins and notes (or the drawer was empty at
+opening).
+
+Sending and receiving notes
+---------------------------
+
+A counter of an exchange office with another enabled counter has two more
+entries in the register menu.
+
+**Send Notes**:
+
+1. pick the counter in **Send to**. When no register is open there, the
+   popup warns that the notes stay in transit until they are received;
+2. pick the currency and type the **Amount sent**. With tracked notes,
+   the **Notes sent** grid proposes the notes from the stock of the drawer;
+   their **Total** must equal the amount;
+3. add a note if useful, then **Confirm**. The cash drawer opens and a
+   transfer slip is printed: put it with the notes.
+
+The drawer must hold the amount. The transfer gets its reference
+(``TRF/YYYY/NNNNN``) and the notes leave the drawer: a cash out on the
+session, on the notes in transit account of the office.
+
+**Receive Notes** lists the notes in transit to this counter: reference,
+date sent, sending counter, amount and notes. Count the notes, then press
+**Receive**: the notes enter the drawer (a cash in of the same value) and
+a slip is printed. When the sending counter did not count the notes by
+denomination and this counter tracks them, **Receive** opens the **Notes
+received** grid, prefilled with the largest notes first: correct it to the
+notes really received, then press **Confirm Receipt**. **Refresh** reloads the
+list.
+
+The amount received is the amount sent. A difference shows in the closing
+count of the receiving drawer.
+
+The rate board on a screen
+--------------------------
+
+Open the **Rate board address** of the counter, or the **Rate Board
+Address** of the office (button **Open Rate Board** on the office), in the
+browser of the screen and put it full screen. The page shows the
+currencies with **We buy**, **We sell**, **You receive for** and **You pay
+for** the typical amount, the commission of each currency, the license,
+the date and the time. It reloads the rates by itself. When the
+connection is lost, it keeps the last rates on screen with the message
+"Connection lost: last rates shown".
+
+The board speaks the language of the company (the language of its
+contact). For another language installed in the database, add it to the
+address: ``&lang=fr_FR`` for French, ``&lang=de_DE`` for German, and so on.
+
+With **Rate board on the customer display**, the customer display of Odoo
+shows the board of the counter while no order is in progress.
+
 The coin warning
 ----------------
 
@@ -244,6 +517,9 @@ The register refuses an operation, with a message, when:
 * the same currency is picked on both sides;
 * the customer, or a valid identity document, is required and missing, or
   the document has expired;
+* the origin of the funds is required and not declared;
+* with tracked notes, the notes received or handed back do not add up to
+  the amounts;
 * the quote changed between the popup and the server (rate, margin or
   commission changed meanwhile): nothing is recorded, the popup shows the
   new quote at once with a warning; check it with the customer, then
@@ -287,7 +563,7 @@ opposite operation would charge the commission again and round the notes
 again, and a cash move would leave the commission on the commission
 account.
 
-A POS Administrator opens the operation (*Point of Sale -> Orders ->
+A POS Administrator opens the operation (*Point of Sale → Orders →
 Currency Exchanges*) and presses **Cancel Operation**, then confirms. This
 is possible while the session of the operation is open and when the drawer
 still holds the notes received (the customer gets them back). Two statement
@@ -298,7 +574,11 @@ the commission account return to their state before the operation.
 The operation turns **Cancelled**, with the date and the user, a message is
 posted on the session and on the operation, and it no longer counts in the
 commissions, the closing summary and the reports. Its receipt, reprinted,
-is marked *CANCELLED*.
+is marked *CANCELLED*. With tracked notes, the stock of the drawer is
+restored: the notes received leave it and the notes handed back return to
+it (note moves *Cancellation*). The cancellation gets its own hash in the
+register (**Cancellation Hash**), and an operation of a closed register
+period cannot be cancelled.
 
 Once the session is closed, an operation cannot be cancelled any more.
 Correct it then with an opposite operation (the commission and the rounding
@@ -336,7 +616,7 @@ documents against any register.
   applies.
 * Above **Customer required above**, the operation needs a customer.
 * Above **Identity document required above**, it needs a customer and a
-  valid identity document: type (Passport, Identity Card, Driving Licence,
+  valid identity document: type (Passport, Identity Card, Driving License,
   Residence Permit, Other), number, issuing country, expiry date (or
   **No expiry date** for a document without one), nationality and date of
   birth. An expired document is refused.
@@ -363,7 +643,7 @@ Reviewing the operations
 Currency Exchanges
 ------------------
 
-*Point of Sale -> Orders -> Currency Exchanges* (POS Administrators) lists
+*Point of Sale → Orders → Currency Exchanges* (POS Administrators) lists
 the operations with their reference, date, point of sale, cashier,
 customer, the notes received and handed back, the commission, the rate
 margin and the status. It opens with the filter **Done**; the filter
@@ -371,7 +651,8 @@ margin and the status. It opens with the filter **Done**; the filter
 Customer*, *Purchase of foreign currency*, *Sale of foreign currency*,
 *Cross exchange*; group by point of sale, session, cashier, operation type,
 status, currency or date. The pivot gives the commissions, rate margins and
-values received per day, status and currency.
+values received per day, status and currency received; regroup it per
+point of sale, session or cashier as needed.
 
 The operation type is seen from the shop: *Purchase of foreign currency*
 when it receives foreign notes, *Sale of foreign currency* when it hands
@@ -381,18 +662,47 @@ The form of an operation shows its amounts, the **Rate Applied**
 ("1 USD = 119.33 XPF"), the commission, the rate margin, the identity
 document and the chatter. Its buttons:
 
-* **Send by E-mail** (when the operation has a customer): sends the
+* **Send by Email** (when the operation has a customer): sends the
   receipt in PDF with the template *Currency Exchange: Send Receipt*;
 * **Print**: the receipt in PDF (*Exchange Receipt*);
 * **Cancel Operation** (see above);
 * **Statement Lines**: the two lines of the operation, and the two lines
   of its cancellation.
 
-Only the **Note** can be edited, by a POS Administrator; its changes are
-logged in the chatter.
+Only the **Note**, **Compliance** and **Compliance Note** can be edited,
+by a POS Administrator (see *To Review*); the changes of the **Note** and
+of **Compliance** are logged in the chatter.
 
 The session form has a button with the total of the commissions and
 "Exchanges: N", the number of operations done; it opens them.
+
+At an exchange office, the operation also shows its **Exchange Office**
+and its **License**, and the list can be grouped by **Exchange Office**.
+With tracked notes, the button **Note Moves** opens the coins and notes of
+the operation.
+
+To Review
+---------
+
+The filter **To Review** of *Currency Exchanges* gives the operations
+flagged for the compliance officer: above the review threshold, or with a
+politically exposed person declared. The compliance officer of the office
+also gets an activity "Review the exchange operation ...".
+
+The group **Declarations and Compliance** of the operation (POS
+Administrators) shows the **Origin of Funds**, the **Origin of Funds
+Details**, the **Purpose**, **Politically Exposed Person**, the **Review
+Reason**, and the two fields of the review:
+
+* **Compliance**: None, To Review, Reviewed or Reported. Set *Reviewed*
+  once checked, or *Reported* when you reported the operation to the
+  authorities;
+* **Compliance Note**: what you checked or decided.
+
+These two fields and the **Note** are the only ones a POS Administrator
+can change; the changes of **Compliance** and of the **Note** are logged
+in the chatter. The group **Identity
+Document** now also shows the **Customer Address** of the operation.
 
 Sales Details
 -------------
@@ -401,8 +711,8 @@ The *Sales Details* report ends with a *Currency Exchange* table: every
 operation with its session, amounts, commission and rate margin, then the
 totals, one line per currency of the points of sale, and the list of the
 cancelled operations, which are not counted. Printed from a session, it
-covers the operations of the session; run from *Point of Sale ->
-Reporting -> Sales Details* for a period, it covers the operations dated
+covers the operations of the session; run from *Point of Sale →
+Reporting → Sales Details* for a period, it covers the operations dated
 in that period on the selected points of sale (all of them when none is
 selected), open sessions included. The *Currency Position* report of POS
 Multi-Currency Cash reflects the notes moved.
@@ -410,7 +720,7 @@ Multi-Currency Cash reflects the notes moved.
 Exchange Register
 -----------------
 
-*Point of Sale -> Reporting -> Exchange Register* (POS Administrators)
+*Point of Sale → Reporting → Exchange Register* (POS Administrators)
 lists every operation in the order of its reference, the cancelled ones
 included (greyed, with their status), with the cashier, the operation
 type, the amounts, the rate, the commission, the rate margin, the customer
@@ -424,12 +734,124 @@ currency: number of operations, received, handed back, balance,
 commissions and rate margins. The cancelled operations are listed but not
 counted in the totals.
 
+The list also shows the **Origin of Funds** and the **Compliance** of each
+operation; the **Exchange Office**, the **License**, the **Customer
+Address**, the **Purpose**, **Politically Exposed Person** and the
+**Register Hash** can be added from the optional columns. In the wizard,
+pick an **Exchange Office** to print the register of its counters only.
+The PDF then shows the office, its address and its license; it also gives,
+for each operation, the address, nationality and date of birth of the
+customer, the declarations, the compliance status and the hash.
+
+Register integrity
+------------------
+
+Every operation is hashed (SHA-256) when it is recorded, with the hash of
+the previous operation of the company: the operations form a chain. A
+cancellation gets its own hash, chained to the hash of the operation. The
+form of the operation shows them in the group **Register**: **Register
+Hash**, **Previous Hash** and **Cancellation Hash**. Odoo refuses any
+change of the hashed fields of an operation (amounts, rate, customer,
+identity document, origin of funds), even by the administrator: only the
+**Note** and the compliance review can still be changed.
+
+To check the chain, press **Print Register**, then **Check Integrity**.
+The check recomputes the hashes of every operation of the company, in
+order:
+
+* "N operations checked: the register is intact (last: ...)" when every
+  hash matches. Operations without hash, recorded before the chain
+  started, are counted apart;
+* else "Integrity check failed at ...", with the first operation that
+  does not match and the reason: hash missing, chain broken, the
+  operation was altered, or the cancellation was altered.
+
+The hash chain shows that an operation was changed or removed directly in
+the database. It does not stop such a change, and it cannot show that the
+last operations were removed: compare with the **Hash of the Last
+Operation** of the last register closing, or with a printed register.
+
+Register closings
+-----------------
+
+Close the register of a period once it is over, for instance every month:
+
+1. *Point of Sale → Reporting → Exchange Register*, **Print Register**;
+2. set **From** and **To**, and the **Exchange Office** to close the
+   register of one office (leave it empty, with no point of sale, for the
+   whole company);
+3. press **Close Period** and confirm. The closing cannot be undone.
+
+The register is closed only when the period is over, the sessions of its
+operations are closed, it does not overlap another closing of the same
+office or of the whole company (for a closing of the whole company: no
+closing of one of its offices either), and the integrity check passes. The closing gets
+a reference without gap (``EXR/YYYY/NNNN``) and freezes the number of
+**Operations** and **Cancelled** ones, the **First Reference** and the
+**Last Reference**, the **Commissions**, the **Rate Margins**, the result
+of the **Integrity** check and the **Hash of the Last Operation**. The PDF
+register of the period is attached: **Download Register**.
+
+The closings are listed in *Point of Sale → Reporting → Exchange Register
+Closings*. They cannot be changed or deleted, and an operation of a closed
+period can no longer be cancelled.
+
+Note Stock and Note Moves
+-------------------------
+
+*Point of Sale → Reporting → Note Stock* (POS Administrators) gives, per
+session, currency and **Denomination**, the **Opening** count, the
+coins and notes put **In** and taken **Out** by the operations and the
+transfers, the **Stock**, the **Closing** count and the **Difference**
+(closing less stock, when both counts were made by coins and notes). A
+negative difference is red, a positive one orange. The filter
+**Differences** keeps the lines that do not match; a pivot view gives the
+stock per currency and denomination.
+
+*Point of Sale → Reporting → Note Moves* lists every coin and note moved:
+by an exchange, a cancellation or a transfer, with its session, operation
+or transfer, **Denomination** and **Quantity**. The moves are never edited
+nor deleted.
+
+Note Transfers
+--------------
+
+*Point of Sale → Orders → Note Transfers* (POS Administrators) lists the
+transfers with their reference, office, **From Counter**, **To Counter**,
+amount, value, dates and status: Draft, In Transit, Received or Transfer
+Cancelled. The filter **In Transit** gives the notes sent and not received
+yet.
+
+A POS Administrator can also make a transfer from the back office:
+**New**, pick the office, the counters, the currency and the amount, then
+**Send**. The sending counter needs an open session. When it tracks the
+notes, the notes proposed from its stock are sent; when its stock cannot
+make up the amount exactly, sending is refused ("Enter the notes sent by
+denomination"): send from the register then to choose the notes. **Receive** puts the notes in the drawer of the receiving
+counter, in its open session.
+
+**Cancel** a transfer in transit while the session that sent it is open:
+the notes go back to the sending drawer (a cash in on that session). A
+received transfer cannot be cancelled: transfer the notes back. Once sent,
+only the **Note** of a transfer can be changed. The buttons **Cash Moves**
+and **Note Moves** open its statement lines and its coins and notes.
+
+The drawers of an office
+------------------------
+
+The **Drawers** tab of the exchange office (POS Administrators) shows, for
+each counter with an open session, the **Expected Cash** of every currency
+(opening, sales, cash moves, exchanges and transfers), the **Operations
+Today** and the **Commissions Today**, with the totals. Below, **Notes in
+Transit** gives, per currency, the transfers sent and not received yet,
+their amount and value, and the **Total in transit**.
+
 Rate board in PDF
 -----------------
 
 The rate board described above is also printed in PDF (*Exchange Rates*)
 with **Print Exchange Rates** in the settings, or from the *Print* menu of
-the point of sale records (list view of *Point of Sale -> Dashboard*).
+the point of sale records (list view of *Point of Sale → Dashboard*).
 
 Accounting Notes
 ================
@@ -455,6 +877,32 @@ Accounting Notes
   same counterpart account: the commission is reversed.
 * The operations and their statement lines cannot be deleted; the
   references (``EXC/YYYY/NNNNN``) have no gap.
+* A note transfer is two statement lines too: a cash out on the session of
+  the sending counter when the notes are sent, and a cash in of the same
+  value on the session of the receiving counter when they are received,
+  both with the **Notes in Transit Account** of the office as counterpart.
+  The value is the amount at the rate of Odoo of the day, in the currency
+  of the company. The balance of the account is the value of the notes in
+  transit; it is back to zero once every transfer is received or
+  cancelled.
+
+Upgrading to 20.0.4.0.0
+=======================
+
+* POS Multi-Currency Cash 20.0.2.1.0 or later is still required.
+* The upgrade copies the exchange license number of each point of sale on
+  its existing operations, then chains the existing operations into the
+  register hash, in the order of their creation, company by company. Run
+  **Check Integrity** once after the upgrade.
+* Nothing changes for a counter outside any exchange office: its settings
+  stay as they are. The new thresholds (**Origin of funds required above**,
+  **Review above**) start at 0, never applied, and **Track the notes by
+  denomination** is not ticked.
+* To use the offices, create them, add their counters, then set the
+  **Notes in Transit Account** of each office before sending notes
+  between its counters.
+* Close the sessions, or reload every register, after the upgrade, so that
+  the registers load the new menu entries.
 
 Upgrading from 20.0.1.x
 =======================
@@ -486,8 +934,15 @@ Known Limitations
 * The counter works online: the quote and the recording are server calls.
 * One operation involves two currencies; a customer changing several
   currencies at once makes several operations.
-* An operation can only be cancelled while its session is open.
-* The rate board is not shown on the customer display.
+* An operation can only be cancelled while its session is open, and not
+  in a closed register period.
+* The notes are tracked by denomination for the foreign currencies only:
+  the currency of the point of sale has no count by coins and notes.
+* The note stock follows the exchange operations and the transfers only:
+  the cash sales and cash moves in a foreign currency change the drawer
+  without denominations. The next count corrects it.
+* A received note transfer cannot be cancelled: transfer the notes back.
+* The integrity check covers the register of the whole company.
 
 Troubleshooting
 ===============
@@ -568,6 +1023,40 @@ Delete is missing on the operations
 
 The operations cannot be deleted, so that the register stays complete:
 cancel the operation instead.
+
+Send Notes and Receive Notes are missing
+----------------------------------------
+
+The counter must belong to an exchange office with at least one other
+counter where **Currency Exchange** is enabled. Then reload the register.
+
+"Set the Notes in Transit Account"
+----------------------------------
+
+Set the **Notes in Transit Account** of the exchange office (a current
+assets account) before transferring notes.
+
+The notes do not add up
+-----------------------
+
+With tracked notes, the **Total** of each grid must equal the amount of
+the operation or of the transfer. Correct the quantities.
+
+"The drawer is short of ..."
+----------------------------
+
+The stock of the drawer, as counted at opening and moved by the
+operations, holds fewer of these notes. Check the notes actually handed
+back or sent. It does not block the operation.
+
+The register cannot be closed
+-----------------------------
+
+The period must be over, the sessions of its operations closed, and the
+integrity check passed. It must not overlap a closing of the same office
+or of the whole company; a closing of the whole company must not overlap
+any closing of an office. To close the whole company, leave **Exchange Office**
+and **Points of Sale** empty.
 
 The cashier cannot find Currency Exchanges or Exchange Register
 ---------------------------------------------------------------

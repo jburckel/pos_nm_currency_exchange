@@ -36,7 +36,7 @@ RULE_FIELDS = {
 
 class PosNmExchangeOffice(models.Model):
     """Exchange office: the counters (points of sale) of one licensed
-    place of business. They share the licence, the identification and
+    place of business. They share the license, the identification and
     review rules and, with Apply to the Counters, the rates and
     commissions of the reference counter."""
     _name = 'pos.nm.exchange.office'
@@ -53,8 +53,8 @@ class PosNmExchangeOffice(models.Model):
         'res.partner', string='Address', check_company=True,
         help='Address of the office, printed on the exchange register and the rate board.')
     licence = fields.Char(
-        string='Exchange Licence Number', tracking=True,
-        help='Licence or registration number of the office, printed on the receipts, the rate board and the '
+        string='Exchange License Number', tracking=True,
+        help='License or registration number of the office, printed on the receipts, the rate board and the '
              'exchange register of its counters.')
     compliance_user_id = fields.Many2one(
         'res.users', string='Compliance Officer', tracking=True,
@@ -378,7 +378,7 @@ class PosNmExchangeOffice(models.Model):
 
     def _nm_rate_board(self):
         """Rate board of the office: the board of its reference counter,
-        under the name, address and licence of the office."""
+        under the name, address and license of the office."""
         self.ensure_one()
         config = self._nm_reference_config()
         if not config:

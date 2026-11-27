@@ -5,7 +5,7 @@ from odoo import fields, models
 ID_DOCUMENT_TYPES = [
     ('passport', 'Passport'),
     ('id_card', 'Identity Card'),
-    ('driving_licence', 'Driving Licence'),
+    ('driving_licence', 'Driving License'),
     ('residence_permit', 'Residence Permit'),
     ('other', 'Other'),
 ]

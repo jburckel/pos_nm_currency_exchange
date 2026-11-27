@@ -44,6 +44,17 @@ LAYOUT = {
     "screenshot_exchange_cancelled.png": {"crop": 620},
     # Rate board in PDF, full width.
     "screenshot_exchange_rates_pdf.png": {"ratio": 2.6},
+    # Exchange office (20.0.4.0.0): the office form keeps the top of the
+    # screen; the Drawers page alone; the full-screen rate board of the
+    # office (1280 x 720) is not listed: copied as it is.
+    "screenshot_exchange_office.png": {"crop": 1030},
+    "screenshot_exchange_drawers.png": {"ratio": 1.6},
+    # Exchange popup with the notes by denomination beside the note stock.
+    "screenshot_exchange_notes.png": {"ratio": 0.85},
+    "screenshot_note_stock.png": {"ratio": 0.85},
+    # Send Notes beside the operation flagged To Review.
+    "screenshot_note_transfer.png": {"ratio": 0.8},
+    "screenshot_exchange_compliance.png": {"ratio": 0.8},
 }
 
 
