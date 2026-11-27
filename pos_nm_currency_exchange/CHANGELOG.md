@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Version 20.0.3.0.0 in progress: the exchange office vertical (see
-[`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)). Lots 1
-to 5 are done. Upgrade with
-`-u pos_nm_currency_exchange`: the migration freezes the license on the
-existing operations and chains them into the register hash, in order.
+## [20.0.4.0.0] - 2026-11-27
+
+The exchange office vertical (see
+[`docs/PLAN_EXCHANGE_OFFICE.md`](../docs/PLAN_EXCHANGE_OFFICE.md)): exchange
+offices, compliance register, rate board for the customers, note stock by
+denomination and note transfers between counters. Requires
+`pos_nm_multicurrencies` 20.0.2.1.0 or later, as 20.0.2.0.0. Upgrade with
+`-u pos_nm_currency_exchange`: the migration (`20.0.3.0.0`, the version of
+the development builds of this release, which it also upgrades) freezes the
+license on the existing operations and chains them into the register hash,
+in order. Then set the *Notes in Transit Account* of each exchange office
+before sending notes between its counters.
 
 ### Added
 - **Exchange Offices** (*Point of Sale → Configuration*): the counters

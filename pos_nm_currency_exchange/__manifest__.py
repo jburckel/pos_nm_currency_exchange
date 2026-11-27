@@ -66,7 +66,7 @@ Requirements
   bought it? Contact us at odoo@natimai.solutions before buying this
   module)
     """,
-    "version": "20.0.3.0.0",
+    "version": "20.0.4.0.0",
     "category": "Sales/Point of Sale",
     "author": "Natimai Solutions",
     "website": "https://www.natimai.solutions",
