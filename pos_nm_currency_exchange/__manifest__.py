@@ -70,6 +70,7 @@ Requirements
     "category": "Sales/Point of Sale",
     "author": "Natimai Solutions",
     "website": "https://www.natimai.solutions",
+    "live_test_url": "https://demo.natimai.solutions/try/pos_nm_currency_exchange/20.0",
     "license": "OPL-1",
     "support": "odoo@natimai.solutions",
     "application": False,
