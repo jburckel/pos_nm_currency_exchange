@@ -261,3 +261,20 @@ class TestExchangeRateBoardPage(HttpCase):
         self.assertEqual(response.status_code, 404)
         config.nm_exchange_board_on_display = True
         self.assertIn('/pos_nm_exchange/board/', config._get_customer_display_data()['nm_rate_board_url'])
+
+    def test_board_language(self):
+        """The board speaks the language of the company, or the one given
+        with ?lang= when it is installed; its refresh keeps that language."""
+        self.env['res.lang']._activate_lang('fr_FR')
+        self.env['ir.module.module']._load_module_terms(['pos_nm_currency_exchange'], ['fr_FR'], overwrite=True)
+        config = self.env['pos.config'].search([], limit=1)
+        config.nm_exchange_enabled = True
+        url = f'/pos_nm_exchange/board/{config.id}?access_token={config.access_token}'
+        response = self.url_open(url + '&lang=fr_FR')
+        self.assertIn('lang="fr-FR"', response.text)
+        self.assertIn('Nous achetons', response.text)
+        self.assertIn('lang=fr_FR', response.text)  # the refresh keeps the language
+        response = self.url_open(url + '&lang=xx_XX')  # not installed: the company's
+        self.assertIn('We buy', response.text)
+        config.company_id.partner_id.lang = 'fr_FR'
+        self.assertIn('Nous achetons', self.url_open(url).text)

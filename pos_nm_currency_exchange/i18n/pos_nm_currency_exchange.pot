@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 22:04+0000\n"
-"PO-Revision-Date: 2026-11-26 22:04+0000\n"
+"POT-Creation-Date: 2026-11-27 00:47+0000\n"
+"PO-Revision-Date: 2026-11-27 00:47+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -247,6 +247,11 @@ msgid "'Exchange Rates %s' % object.name"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid ", commission included in the amounts."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 msgid "- License No."
@@ -351,6 +356,13 @@ msgid ""
 "    </p>\n"
 "</div>\n"
 "            "
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid ""
+"<span class=\"nm-board-offline\" id=\"nm-board-offline\" "
+"hidden=\"hidden\">Connection lost: last rates shown</span>"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -1054,6 +1066,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_note_move__currency_id
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_note_stock__currency_id
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.exchange_office_drawers
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_register
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.view_pos_nm_exchange_transfer_search
@@ -1943,6 +1956,7 @@ msgstr ""
 
 #. module: pos_nm_currency_exchange
 #: model:ir.model.fields,field_description:pos_nm_currency_exchange.field_pos_nm_exchange__licence
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 msgid "License"
 msgstr ""
 
@@ -2884,6 +2898,11 @@ msgstr ""
 msgid ""
 "Rates before the commission; the amounts include it and are rounded to the "
 "notes and coins."
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "Rates of"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
@@ -4347,6 +4366,7 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "We buy"
 msgstr ""
@@ -4363,6 +4383,7 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.pos_exchange_rates_receipt
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "We sell"
 msgstr ""
@@ -4392,10 +4413,20 @@ msgid "You pay"
 msgstr ""
 
 #. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "You pay for"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
 #. odoo-javascript
 #: code:addons/pos_nm_currency_exchange/static/src/app/exchange_rates_popup/exchange_rates_popup.xml:0
 #: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.report_exchange_rates
 msgid "You receive"
+msgstr ""
+
+#. module: pos_nm_currency_exchange
+#: model_terms:ir.ui.view,arch_db:pos_nm_currency_exchange.rate_board_html
+msgid "You receive for"
 msgstr ""
 
 #. module: pos_nm_currency_exchange

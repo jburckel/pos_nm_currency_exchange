@@ -59,6 +59,8 @@ before sending notes between its counters.
   the last rates on screen when the connection is lost. *Rate Board on the
   Customer Display*: the customer display of Odoo shows it while no order
   is in progress.
+  The board speaks the language of the company, or the one added to its
+  address (`&lang=fr_FR`); its texts are translated.
 - **Track the Notes by Denomination** (setting of the point of sale): for
   the foreign cash currencies with coins and notes, the exchange popup asks
   the notes received and handed back by denomination, which must add up to

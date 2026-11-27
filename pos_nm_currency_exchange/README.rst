@@ -38,6 +38,21 @@ Features
   the commission on a dedicated income account
 * **Closing control** (cash moves of each currency and a Currency Exchange
   block), **Currency Position and Sales Details** show the operations
+* **Exchange offices**: several counters sharing a license,
+  identification rules and the same rates, applied from a reference
+  counter
+* **Compliance**: origin of funds and review thresholds, politically
+  exposed person, review by the compliance officer; **inalterable
+  register** (hash chain, integrity check) and **closings** of the register
+  per period
+* **Rate board on a screen** facing the customers (TV, tablet or the
+  customer display of Odoo), refreshed by itself
+* **Notes tracked by denomination**: notes received and handed back counted
+  per coin and note, note moves, Note Stock report and expected quantities
+  in the closing popup
+* **Note transfers** between the counters of an office, through a notes in
+  transit account, with gapless references and a transfer slip; drawers of
+  every counter on the office
 * **Operations listed** per point of sale, session and cashier, with a pivot
   of the commissions and rate margins, and an **exchange register** exported
   to Excel or printed in PDF for a period
@@ -52,6 +67,10 @@ Configuration
    license number and the identification rules.
 3. *Point of Sale → Configuration → Cash Currencies*: set the sell margin
    and the commission (percentage, fixed part, minimum) of every currency.
+4. Optional, with several counters: *Point of Sale → Configuration →
+   Exchange Offices*, create the office with its license, rules and
+   *Notes in Transit Account*, add its counters and press *Apply Rates to
+   the Counters*.
 
 See the guide in ``doc/`` (PDF in ``static/description/``).
 
@@ -69,11 +88,19 @@ Models
 
 * ``pos.nm.exchange``: the operations
 * ``pos.nm.exchange.register.wizard``: period of the printed exchange
-  register
+  register, integrity check and closing of a period
+* ``pos.nm.exchange.office``: exchange offices, their counters, rules,
+  rate board and drawers
+* ``pos.nm.exchange.register.closing``: closings of the exchange register
+* ``pos.nm.note.move`` and ``pos.nm.note.stock``: coins and notes moved by
+  denomination, and the note stock per session
+* ``pos.nm.exchange.transfer``: note transfers between the counters of an
+  office
 * ``pos.nm.currency.setting`` (extended): sell margin and commissions per
   currency
 * ``pos.config`` (extended): counter enabled, commission account, license
-  number, identification rules, rate board
+  number, identification rules, exchange office, notes by denomination,
+  rate board
 * ``pos.session`` (extended): operations of the session, closing data
 * ``res.partner`` (extended): identity document of the customer
 * ``account.bank.statement.line`` (extended): the lines of an operation

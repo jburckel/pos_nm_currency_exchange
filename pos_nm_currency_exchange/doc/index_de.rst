@@ -37,7 +37,26 @@ Fremdwährung zurück; dieses Modul fügt den Vorgang ohne Verkauf hinzu:
   Wechselregister, das für einen Zeitraum exportiert oder gedruckt werden
   kann;
 * die Kurstafel des Schalters kann an der Kasse angezeigt und gedruckt
-  oder als PDF gedruckt werden.
+  oder als PDF gedruckt werden;
+* mehrere Schalter eines lizenzierten Geschäftssitzes können eine
+  **Wechselstube** bilden: Sie teilen ihre Lizenz, ihre
+  Identifikationsregeln und dieselben Kurse, und die Wechselstube zeigt
+  die Schubladen jedes Schalters;
+* über von Ihnen festgelegten Schwellen erklärt der Kunde die Herkunft der
+  Mittel, und der Vorgang wird für den Compliance-Beauftragten als *Zu
+  prüfen* markiert;
+* jeder Vorgang wird in ein unveränderbares Register verkettet
+  (Hash-Kette), das je Zeitraum geprüft und abgeschlossen werden kann;
+* die Kurstafel kann im Vollbild auf einem den Kunden zugewandten
+  Bildschirm oder auf dem Kundendisplay von Odoo angezeigt werden und lädt
+  die Kurse von selbst neu;
+* die erhaltenen und ausgezahlten fremden Münzen und Scheine können nach
+  Stückelung gezählt werden, mit dem Bestand jeder Schublade, und Scheine
+  können von einem Schalter einer Wechselstube an einen anderen gesendet
+  werden.
+
+All dies ist optional: Ein einzelner Schalter ohne Wechselstube arbeitet
+wie bisher.
 
 Voraussetzungen
 ===============
@@ -58,6 +77,8 @@ Voraussetzungen
   gezählten und gebuchten Beträge waren richtig).
 * Ein **Ertragskonto für die Provisionen** (Typ *Einkommen* oder
   *Sonstige betriebliche Erträge*).
+* Um Scheine zwischen den Schaltern einer Wechselstube zu übertragen: ein
+  **Konto für Geld im Transit** (Typ *Umlaufvermögen*).
 
 Konfiguration
 =============
@@ -76,6 +97,10 @@ Ihre Kasse und suchen Sie den Abschnitt **Geldwechsel**:
 * **Wechsellizenznummer**: Lizenz- oder Registrierungsnummer Ihrer
   Geldwechseltätigkeit, auf den Belegen und der Kurstafel gedruckt, wenn
   angegeben.
+* **Wechselstube**: die Wechselstube dieses Schalters (siehe
+  *Wechselstube und Schalter*). Mit einer Wechselstube sind die Lizenz und
+  die folgenden Identifikationsschwellen ausgeblendet: Es gelten die der
+  Wechselstube.
 * **Kunde erforderlich ab**: Wert eines Vorgangs in der Währung der Kasse,
   ab dem der Kunde erfasst werden muss.
 * **Kunde für jeden Vorgang erforderlich**: Jeder Vorgang nennt seinen
@@ -83,8 +108,21 @@ Ihre Kasse und suchen Sie den Abschnitt **Geldwechsel**:
 * **Ausweisdokument erforderlich ab**: Wert, ab dem das Ausweisdokument
   des Kunden auf dem Vorgang erfasst wird.
 * **Zeitraum der verbundenen Vorgänge (Tage)**: Wenn größer als 0, ist der
-  mit den beiden Schwellen verglichene Wert der Vorgang plus die Vorgänge
+  mit den Schwellen verglichene Wert der Vorgang plus die Vorgänge
   desselben Kunden in so vielen Tagen (siehe *Kundenidentifikation*).
+* **Herkunft der Mittel erforderlich ab**: Wert, ab dem der Kunde die
+  Herkunft der Mittel erklärt (siehe *Compliance-Schwellen*).
+* **Prüfung ab**: Wert, ab dem der Vorgang für den
+  Compliance-Beauftragten als *Zu prüfen* markiert wird. Er wird nie
+  abgelehnt.
+* **Scheine nach Stückelung verfolgen**: Die erhaltenen und ausgezahlten
+  fremden Scheine werden nach Münze und Schein gezählt (siehe *Scheine
+  nach Stückelung*).
+* **Kurstafel auf dem Kundendisplay**: Das Kundendisplay von Odoo zeigt
+  die Kurstafel, solange kein Auftrag läuft.
+* **Adresse der Kurstafel**: Adresse der Vollbild-Kurstafel dieses
+  Schalters für einen den Kunden zugewandten Bildschirm (siehe *Kurstafel
+  auf einem Bildschirm*).
 * **Wechselkurse drucken**: druckt die Kurstafel der Kasse als PDF.
 
 Schwellen auf 0 werden nie angewendet.
@@ -160,7 +198,133 @@ Der Wechselbeleg druckt das Logo, die **Kopfzeile** und die **Fußzeile**
 der Kasse (*Einstellungen*, Abschnitt *Rechnungen & Quittungen*,
 *Benutzerdefinierte Kopf- & Fußzeile*), die Wechsellizenznummer und die
 Angaben des Unternehmens. Tragen Sie dort die rechtlichen Hinweise ein,
-die Ihre Tätigkeit dem Kunden zeigen muss.
+die Ihre Tätigkeit dem Kunden zeigen muss. Werden die Scheine nach
+Stückelung gezählt, listet der Beleg die Scheine unter den Beträgen auf.
+
+Wechselstube und Schalter
+-------------------------
+
+Eine Wechselstube ist ein lizenzierter Geschäftssitz mit einem oder
+mehreren Schaltern (Kassen). Sie ist optional: Ein Schalter außerhalb
+jeder Wechselstube behält seine eigenen Einstellungen.
+
+Gehen Sie zu *Kassensystem → Konfiguration → Wechselstuben* und drücken
+Sie **Neu**. Geben Sie der Wechselstube einen Namen und füllen Sie dann
+aus:
+
+* Gruppe *Wechselstube*: die **Adresse** (auf dem Wechselregister und der
+  Kurstafel gedruckt), die **Wechsellizenznummer**, den
+  **Compliance-Beauftragten** (er erhält eine Aktivität für jeden als *Zu
+  prüfen* markierten Vorgang) und das **Konto für Geld im Transit**
+  (siehe *Konto für Geld im Transit*);
+* Gruppe *Identifikation*: **Kunde für jeden Vorgang erforderlich**,
+  **Kunde erforderlich ab**, **Ausweisdokument erforderlich ab**,
+  **Herkunft der Mittel erforderlich ab**, **Prüfung ab** und **Zeitraum
+  der verbundenen Vorgänge** (Tage). Sie wirken wie die gleichnamigen
+  Einstellungen einer Kasse, in der Währung des Unternehmens.
+
+Die Lizenz und die Regeln der Wechselstube ersetzen die ihrer Schalter.
+Um einen Schalter hinzuzufügen, legen Sie seine **Wechselstube** im
+Abschnitt *Geldwechsel* der Einstellungen der Kasse fest oder fügen Sie
+ihn im Reiter **Schalter** der Wechselstube hinzu. Die Schalter einer
+Wechselstube müssen die Währung ihres Unternehmens verwenden.
+
+Die intelligenten Schaltflächen der Wechselstube öffnen ihre
+**Schalter**, ihre **Vorgänge** und ihre Scheine-**Transfers**.
+
+Dieselben Kurse an jedem Schalter
+---------------------------------
+
+Wählen Sie im Reiter **Schalter** der Wechselstube den
+**Referenzschalter**: den Schalter, dessen Kurse die anderen übernehmen
+und dessen Kurse die Kurstafel der Wechselstube zeigt. Dann, ab zwei
+Schaltern:
+
+* **Kurse auf die Schalter anwenden** kopiert für jede Währung des
+  Referenzschalters den Kassenkurs (Kursmodus, Marge, feste Kurse), die
+  Rundungen der Münzen und Scheine, die **Wechsel-Verkaufsmarge (%)** und
+  die Provisionen auf die anderen Schalter. Die Änderungen der Kurse, der
+  Margen und der Provisionen werden im Chatter der Währung protokolliert
+  (nicht die der Rundungen). Ein Schalter, der die Währung nicht in bar
+  annimmt, wird übersprungen und in einem Hinweis genannt;
+* **Kursabweichungen** listet, was noch vom Referenzschalter abweicht.
+
+Wenden Sie die Kurse nach jeder Änderung am Referenzschalter erneut an.
+
+Compliance-Schwellen
+--------------------
+
+Zwei Schwellen helfen Ihnen, die Geldwäschevorschriften Ihres Landes zu
+befolgen. Sie werden in der Wechselstube festgelegt oder, für eine Kasse
+außerhalb jeder Wechselstube, in den Einstellungen der Kasse, in der
+Währung der Kasse; auf 0 werden sie nie angewendet. Die verbundenen
+Vorgänge des Kunden zählen wie bei den anderen Schwellen.
+
+* **Herkunft der Mittel erforderlich ab**: Der Vorgang erfordert einen
+  Kunden, und der Kunde erklärt die Herkunft der Mittel. *Andere*
+  erfordert Einzelheiten.
+* **Prüfung ab**: Der Vorgang wird als *Zu prüfen* markiert. Er wird am
+  Schalter nie abgelehnt. Eine Aktivität geht an den
+  **Compliance-Beauftragten** der Wechselstube.
+
+Ein Vorgang, dessen Kunde erklärt, eine politisch exponierte Person zu
+sein, wird ebenfalls als *Zu prüfen* markiert. Wählen Sie einen
+Kassenadministrator als Compliance-Beauftragten: Nur
+Kassenadministratoren können die Vorgänge prüfen.
+
+Kurstafel auf einem Bildschirm
+------------------------------
+
+Jeder Schalter hat eine öffentliche Kurstafel-Seite für einen Fernseher,
+ein Tablet oder einen beliebigen den Kunden zugewandten Bildschirm. Ihre
+Adresse ist die **Adresse der Kurstafel** im Abschnitt *Geldwechsel* der
+Einstellungen der Kasse. Sie enthält das Zugriffstoken der Kasse, das
+ihres Kundendisplays: Teilen Sie sie nur mit den Bildschirmen des
+Schalters.
+
+Eine Wechselstube hat ihre eigene Seite, im Reiter **Kurstafel** der
+Wechselstube (Kassenadministratoren): Die **Adresse der Kurstafel** zeigt
+die Kurse des Referenzschalters unter dem Namen, der Adresse und der
+Lizenz der Wechselstube. **Aktualisierung der Tafel (Sekunden)** legt
+fest, wie oft die Seite die Kurse neu lädt (standardmäßig 60, mindestens
+10), auch für die Seiten ihrer Schalter. **Neue Adresse** gibt der Seite
+der Wechselstube eine neue Adresse: Die Bildschirme mit der alten Adresse
+erhalten die Kurse nicht mehr (sie behalten die letzten Kurse mit
+„Verbindung unterbrochen: letzte Kurse angezeigt“ und zeigen nach dem Neuladen der Seite
+nichts mehr an).
+
+Um die Tafel auf dem Kundendisplay von Odoo anzuzeigen, aktivieren Sie
+**Kurstafel auf dem Kundendisplay** in den Einstellungen der Kasse.
+
+Scheine nach Stückelung
+-----------------------
+
+POS Multi-Currency Cash zählt die Münzen und Scheine jeder Fremdwährung
+bereits beim Öffnen und Schließen. Dieses Modul kann sie auch während der
+Sitzung verfolgen:
+
+1. Gehen Sie zu *Kassensystem → Konfiguration → Münzen/Scheine* und
+   prüfen Sie, ob die Münzen und Scheine jeder Fremdwährung vorhanden
+   sind, mit gesetzter **Währung** (siehe die Anleitung von POS
+   Multi-Currency Cash).
+2. Aktivieren Sie in den Einstellungen der Kasse **Scheine nach
+   Stückelung verfolgen**.
+
+Die Option gilt für die fremden Bargeldwährungen, die an dieser Kasse
+Münzen und Scheine haben. Die Währung der Kasse wird nicht verfolgt: Sie
+hat keine Zählung nach Stückelung. Zählen Sie den Anfangsbestand nach
+Münzen und Scheinen, damit der Bestand der Schublade richtig beginnt.
+
+Konto für Geld im Transit
+-------------------------
+
+Scheine, die von einem Schalter einer Wechselstube an einen anderen
+gesendet werden, laufen über das **Konto für Geld im Transit** der
+Wechselstube: ein Konto des Umlaufvermögens (Typ *Umlaufvermögen*).
+Legen Sie bei Bedarf eines in Ihrem Kontenplan an, zum Beispiel „Geld im
+Transit“, und setzen Sie es in der Wechselstube. Sein Saldo ist der Wert
+der gesendeten und noch nicht empfangenen Scheine. Ohne dieses Konto
+können keine Scheine übertragen werden.
 
 Wer darf was
 ------------
@@ -173,7 +337,22 @@ Wer darf was
   *Kassensystem → Berichtswesen → Wechselregister* und die
   Ausweisdokumente der Kunden, können die Notiz eines Vorgangs bearbeiten
   und einen Vorgang stornieren.
-* Niemand kann einen Vorgang oder eine seiner Kontoauszugszeilen löschen.
+* An einer Wechselstube mit einem weiteren aktivierten Schalter senden
+  und empfangen Kassenbenutzer außerdem Scheine an der Kasse (*Scheine
+  senden*, *Scheine empfangen*), und sie sehen den *Notenbestand* ihrer
+  Schublade, wenn die Scheine verfolgt werden.
+* Kassenadministratoren verwalten außerdem die Wechselstuben
+  (*Kassensystem → Konfiguration → Wechselstuben*, mit den Reitern
+  **Schubladen** und **Kurstafel**) und die Notentransfers (*Kassensystem
+  → Aufträge → Notentransfers*) und sehen *Kassensystem → Berichtswesen →
+  Notenbestand*, *Notenbewegungen* und *Abschlüsse des
+  Wechselregisters*.
+* Nur Kassenadministratoren sehen die Erklärungen des Kunden und prüfen
+  die Vorgänge (**Compliance**, **Compliance-Notiz**), prüfen die
+  Integrität des Registers und schließen es ab.
+* Niemand kann einen Vorgang oder eine seiner Kontoauszugszeilen, eine
+  Notenbewegung, einen Registerabschluss oder einen gesendeten
+  Notentransfer löschen.
 * Bei mehreren Unternehmen sieht jeder Benutzer die Vorgänge der
   Unternehmen, auf die er Zugriff hat.
 * Mit dem Modul Mitarbeiter (``pos_hr``) ist der Kassierer eines Vorgangs
@@ -237,6 +416,129 @@ Wenn der Schalter an dieser Kasse nicht arbeiten kann, zeigt der Eintrag
 **Geldwechsel** den Grund statt des Fensters: keine Fremdwährung auf der
 Bargeld-Zahlungsmethode oder kein Provisionskonto.
 
+Erklärungen des Kunden
+----------------------
+
+Über der Schwelle **Herkunft der Mittel erforderlich ab** oder **Prüfung
+ab** zeigt das Fenster, sobald der Kunde gewählt ist, **Erklärungen des
+Kunden**:
+
+* **Herkunft der Mittel**: Gehalt oder Rente, Ersparnisse,
+  Geschäftseinkünfte, Verkauf eines Vermögenswerts, Erbschaft oder
+  Schenkung, Andere. Erforderlich über der Schwelle der Herkunft der
+  Mittel; bei *Andere* geben Sie die **Einzelheiten zur Herkunft der
+  Mittel** ein;
+* **Zweck des Vorgangs**: Reise, Geschäftstätigkeit, Studium,
+  Familienunterstützung, Andere;
+* **Politisch exponierte Person (oder ein Familienmitglied oder eine ihr
+  nahestehende Person)**: Kreuzen Sie es an, wenn der Kunde dies erklärt.
+  Der Vorgang wird dann als *Zu prüfen* markiert.
+
+Nur über der Prüfungsschwelle werden die Erklärungen abgefragt, sind aber
+nicht erforderlich. Sie werden mit der Adresse des Kunden im Vorgang
+festgeschrieben. Der Kassierer wird nie durch eine Prüfung blockiert: Der
+Compliance-Beauftragte prüft den Vorgang später (siehe *Zu prüfen*).
+
+Die Scheine zählen
+------------------
+
+Mit **Scheine nach Stückelung verfolgen** wird das Fenster breiter und
+zeigt ein Raster für jede verfolgte Fremdwährung des Vorgangs:
+
+* **Erhaltene Scheine**: Geben Sie die **Menge** jeder Münze und jedes
+  Scheins ein, die der Kunde übergibt. Die **Summe** muss dem erhaltenen
+  Betrag entsprechen;
+* **Ausgezahlte Scheine**: Die Mengen werden aus dem Bestand der
+  Schublade vorgeschlagen, die größten Scheine zuerst. **In der
+  Schublade** gibt den Bestand jeder Münze und jedes Scheins an. Ändern
+  Sie die Mengen, wenn Sie andere Scheine auszahlen: Die **Summe** muss
+  dem ausgezahlten Betrag entsprechen.
+
+Eine rote Meldung erscheint, wenn eine Summe nicht übereinstimmt, und
+**Bestätigen** bleibt deaktiviert. Fehlen der Schublade einige Scheine,
+nennt eine orangefarbene Meldung sie: „In der Schublade fehlen ...:
+Prüfen Sie die Scheine, bevor Sie sie auszahlen.“ Es ist nur ein Hinweis,
+da die Barverkäufe in einer Fremdwährung die Schublade ohne Stückelung
+bewegen: Der Bestand kann hinter der tatsächlichen Schublade
+zurückliegen. Kann der ausgezahlte Betrag nicht mit den Münzen und
+Scheinen der Währung zusammengesetzt werden, zeigt das Fenster dies als
+Fehler.
+
+Notenbestand
+------------
+
+Der Eintrag **Notenbestand** im Menü der Kasse (angezeigt, wenn die
+Scheine verfolgt werden) gibt für jede verfolgte Währung und jede Münze
+und jeden Schein die Zählung bei **Eröffnung**, die durch die
+**Wechselvorgänge** und die Transfers bewegten Scheine und den Bestand
+**In der Schublade** an. Wurde die Eröffnung nicht nach Münzen und
+Scheinen gezählt, meldet das Fenster dies: Der Bestand zählt dann nur
+die Wechsel.
+
+Beim Schließen zeigt das Zählfenster jeder verfolgten Währung neben der
+Zählung die erwartete Menge jeder Münze und jedes Scheins (*erwartet*),
+wenn die Eröffnung nach Münzen und Scheinen gezählt wurde (oder die
+Schublade bei der Eröffnung leer war).
+
+Scheine senden und empfangen
+----------------------------
+
+Ein Schalter einer Wechselstube mit einem weiteren aktivierten Schalter
+hat zwei weitere Einträge im Menü der Kasse.
+
+**Scheine senden**:
+
+1. wählen Sie den Schalter in **Senden an**. Ist dort keine Kasse
+   geöffnet, warnt das Fenster, dass die Scheine im Transit bleiben, bis
+   sie empfangen werden;
+2. wählen Sie die Währung und geben Sie den Betrag in **Gesendeter Betrag**
+   ein. Bei
+   verfolgten Scheinen schlägt das Raster **Gesendete Scheine** die
+   Scheine aus dem Bestand der Schublade vor; ihre **Summe** muss dem
+   Betrag entsprechen;
+3. fügen Sie bei Bedarf eine Notiz hinzu und tippen Sie auf
+   **Bestätigen**. Die Kassenschublade öffnet sich und ein Transferbeleg
+   wird gedruckt: Legen Sie ihn zu den Scheinen.
+
+Die Schublade muss den Betrag enthalten. Der Transfer erhält seine
+Referenz (``TRF/JJJJ/NNNNN``), und die Scheine verlassen die Schublade:
+eine Auszahlung in der Sitzung, auf dem Konto für Geld im Transit der
+Wechselstube.
+
+**Scheine empfangen** listet die Scheine im Transit zu diesem Schalter:
+Referenz, Sendedatum, sendender Schalter, Betrag und Scheine. Zählen Sie
+die Scheine und tippen Sie dann auf **Empfangen**: Die Scheine gehen in
+die Schublade ein (eine Einzahlung desselben Werts), und ein Beleg wird
+gedruckt. Hat der sendende Schalter die Scheine nicht nach Stückelung
+gezählt und verfolgt dieser Schalter sie, öffnet **Empfangen** das Raster
+**Erhaltene Scheine**, vorausgefüllt mit den größten Scheinen zuerst:
+Korrigieren Sie es auf die tatsächlich erhaltenen Scheine und tippen Sie
+dann auf **Empfang bestätigen**. **Aktualisieren** lädt die Liste neu.
+
+Der empfangene Betrag ist der gesendete Betrag. Eine Differenz zeigt sich
+in der Abschlusszählung der empfangenden Schublade.
+
+Die Kurstafel auf einem Bildschirm
+----------------------------------
+
+Öffnen Sie die **Adresse der Kurstafel** des Schalters oder die
+**Adresse der Kurstafel** der Wechselstube (Schaltfläche **Kurstafel
+öffnen** in der Wechselstube) im Browser des Bildschirms und schalten Sie
+auf Vollbild. Die Seite zeigt die Währungen mit **Wir kaufen**,
+**Wir verkaufen**, **Sie erhalten für** und **Sie zahlen für** den
+typischen Betrag, die Provision jeder Währung, die Lizenz, das Datum und
+die Uhrzeit. Sie lädt die Kurse von selbst neu. Bricht die
+Verbindung ab, behält sie die letzten Kurse auf dem Bildschirm mit der
+Meldung „Verbindung unterbrochen: letzte Kurse angezeigt“.
+
+Die Tafel erscheint in der Sprache des Unternehmens (der Sprache seines
+Kontakts). Für eine andere in der Datenbank installierte Sprache ergänzen
+Sie die Adresse: ``&lang=de_DE`` für Deutsch, ``&lang=en_US`` für
+Englisch usw.
+
+Mit **Kurstafel auf dem Kundendisplay** zeigt das Kundendisplay von Odoo
+die Tafel des Schalters, solange kein Auftrag läuft.
+
 Der Münzhinweis
 ---------------
 
@@ -262,6 +564,9 @@ Die Kasse lehnt einen Vorgang mit einer Meldung ab, wenn:
 * auf beiden Seiten dieselbe Währung gewählt ist;
 * der Kunde oder ein gültiges Ausweisdokument erforderlich ist und fehlt,
   oder das Dokument abgelaufen ist;
+* die Herkunft der Mittel erforderlich ist und nicht erklärt wurde;
+* bei verfolgten Scheinen die erhaltenen oder ausgezahlten Scheine nicht
+  die Beträge ergeben;
 * sich das Angebot zwischen Fenster und Server geändert hat (Kurs, Marge
   oder Provision inzwischen geändert): Es wird nichts gebucht, das Fenster
   zeigt sofort das neue Angebot mit einem Hinweis; prüfen Sie es mit dem
@@ -320,7 +625,13 @@ ihren Zustand vor dem Vorgang zurück.
 Der Vorgang wird **Storniert**, mit Datum und Benutzer, eine Nachricht
 wird in der Sitzung und im Vorgang veröffentlicht, und er zählt nicht mehr
 in den Provisionen, der Abschlusszusammenfassung und den Berichten. Sein
-nachgedruckter Beleg ist mit *STORNIERT* gekennzeichnet.
+nachgedruckter Beleg ist mit *STORNIERT* gekennzeichnet. Bei verfolgten
+Scheinen wird der Bestand der Schublade wiederhergestellt: Die erhaltenen
+Scheine verlassen ihn und die ausgezahlten Scheine kehren zurück
+(Scheinbewegungen *Stornierung*).
+Die Stornierung erhält ihren eigenen Hash im Register (**Hash der
+Stornierung**), und ein Vorgang eines abgeschlossenen Registerzeitraums
+kann nicht storniert werden.
 
 Nach dem Schließen der Sitzung kann ein Vorgang nicht mehr storniert
 werden. Korrigieren Sie ihn dann mit einem Gegenvorgang (Provision und
@@ -414,11 +725,43 @@ Ausweisdokument und den Chatter. Seine Schaltflächen:
 * **Kontoauszugszeilen**: die zwei Zeilen des Vorgangs und die zwei
   Zeilen seiner Stornierung.
 
-Nur die **Notiz** kann bearbeitet werden, von einem Kassenadministrator;
-ihre Änderungen werden im Chatter protokolliert.
+Nur die **Notiz**, **Compliance** und die **Compliance-Notiz** können
+bearbeitet werden, von einem Kassenadministrator (siehe *Zu prüfen*); die
+Änderungen der **Notiz** und von **Compliance** werden im Chatter
+protokolliert.
 
 Das Sitzungsformular hat eine Schaltfläche mit der Summe der Provisionen
 und „Vorgänge: N“, der Anzahl der erledigten Vorgänge; sie öffnet diese.
+
+An einer Wechselstube zeigt der Vorgang außerdem seine **Wechselstube**
+und seine **Lizenz**, und die Liste kann nach **Wechselstube** gruppiert
+werden. Bei verfolgten Scheinen öffnet die Schaltfläche
+**Notenbewegungen** die Münzen und Scheine des Vorgangs.
+
+Zu prüfen
+---------
+
+Der Filter **Zu prüfen** von *Geldwechsel* zeigt die für den
+Compliance-Beauftragten markierten Vorgänge: über der Prüfungsschwelle
+oder mit einer erklärten politisch exponierten Person. Der
+Compliance-Beauftragte der Wechselstube erhält außerdem eine Aktivität
+„Den Wechselvorgang ... prüfen“.
+
+Die Gruppe **Erklärungen und Compliance** des Vorgangs
+(Kassenadministratoren) zeigt die **Herkunft der Mittel**, die
+**Einzelheiten zur Herkunft der Mittel**, den **Zweck**, **Politisch
+exponierte Person**, den **Prüfungsgrund** und die zwei Felder der
+Prüfung:
+
+* **Compliance**: Keine, Zu prüfen, Geprüft oder Gemeldet. Setzen Sie
+  *Geprüft*, sobald geprüft, oder *Gemeldet*, wenn Sie den Vorgang den
+  Behörden gemeldet haben;
+* **Compliance-Notiz**: was Sie geprüft oder entschieden haben.
+
+Diese zwei Felder und die **Notiz** sind die einzigen, die ein
+Kassenadministrator ändern kann; die Änderungen von **Compliance** und
+der **Notiz** werden im Chatter protokolliert. Die Gruppe
+**Ausweisdokument** zeigt nun auch die **Kundenadresse** des Vorgangs.
 
 Verkaufsdetails
 ---------------
@@ -451,6 +794,136 @@ leer) und druckt das Register als PDF (A4 quer) mit den Summen je Währung:
 Anzahl der Vorgänge, erhalten, ausgezahlt, Saldo, Provisionen und
 Kursmargen. Die stornierten Vorgänge sind aufgeführt, aber nicht in den
 Summen gezählt.
+
+Die Liste zeigt außerdem die **Herkunft der Mittel** und die
+**Compliance** jedes Vorgangs; die **Wechselstube**, die **Lizenz**, die
+**Kundenadresse**, der **Zweck**, **Politisch exponierte Person** und der
+**Register-Hash** können über die optionalen Spalten hinzugefügt werden.
+Wählen Sie im Assistenten eine **Wechselstube**, um nur das Register
+ihrer Schalter zu drucken. Das PDF zeigt dann die Wechselstube, ihre
+Adresse und ihre Lizenz; außerdem gibt es für jeden Vorgang die Adresse,
+die Staatsangehörigkeit und das Geburtsdatum des Kunden, die
+Erklärungen, den Compliance-Status und den Hash an.
+
+Integrität des Registers
+------------------------
+
+Jeder Vorgang wird beim Erfassen gehasht (SHA-256), mit dem Hash des
+vorherigen Vorgangs des Unternehmens: Die Vorgänge bilden eine Kette.
+Eine Stornierung erhält ihren eigenen Hash, verkettet mit dem Hash des
+Vorgangs. Das Formular des Vorgangs zeigt sie in der Gruppe
+**Register**: **Register-Hash**, **Vorheriger Hash** und **Hash der
+Stornierung**. Odoo verweigert jede Änderung der gehashten Felder eines
+Vorgangs (Beträge, Kurs, Kunde, Ausweisdokument, Herkunft der Mittel,
+politisch exponierte Person), auch durch den Administrator; nur die
+**Notiz**, **Compliance** und die **Compliance-Notiz** bleiben änderbar.
+
+Um die Kette zu prüfen, drücken Sie **Register drucken** und dann
+**Integrität prüfen**. Die Prüfung berechnet die Hashes aller Vorgänge
+des Unternehmens der Reihe nach neu:
+
+* „N Vorgänge geprüft: Das Register ist intakt (letzter: ...).“, wenn
+  jeder Hash übereinstimmt. Vorgänge ohne Hash, die vor dem Beginn der
+  Kette erfasst wurden, werden gesondert gezählt;
+* sonst „Integritätsprüfung bei ... fehlgeschlagen“, mit dem ersten
+  Vorgang, der nicht übereinstimmt, und dem Grund: Hash fehlt, Kette
+  unterbrochen, der Vorgang wurde verändert oder die Stornierung wurde
+  verändert.
+
+Die Hash-Kette zeigt, dass ein Vorgang direkt in der Datenbank geändert
+oder entfernt wurde. Sie verhindert eine solche Änderung nicht, und sie
+kann nicht zeigen, dass die letzten Vorgänge entfernt wurden: Vergleichen
+Sie mit dem **Hash des letzten Vorgangs** des letzten Registerabschlusses
+oder mit einem gedruckten Register.
+
+Registerabschlüsse
+------------------
+
+Schließen Sie das Register eines Zeitraums ab, sobald er vorbei ist, zum
+Beispiel jeden Monat:
+
+1. *Kassensystem → Berichtswesen → Wechselregister*, **Register
+   drucken**;
+2. legen Sie **Von** und **Bis** fest sowie die **Wechselstube**, um das
+   Register einer Wechselstube abzuschließen (leer lassen, ohne Kasse,
+   für das ganze Unternehmen);
+3. drücken Sie **Zeitraum abschließen** und bestätigen Sie. Der Abschluss
+   kann nicht rückgängig gemacht werden.
+
+Das Register wird nur abgeschlossen, wenn der Zeitraum vorbei ist, die
+Sitzungen seiner Vorgänge geschlossen sind, er sich nicht mit einem
+anderen Abschluss derselben Wechselstube oder des ganzen Unternehmens
+überschneidet (bei einem Abschluss des ganzen Unternehmens auch mit keinem
+Abschluss einer seiner Wechselstuben) und die Integritätsprüfung bestanden ist. Der Abschluss
+erhält eine lückenlose Referenz (``EXR/JJJJ/NNNN``) und schreibt die
+Anzahl der **Vorgänge** und der stornierten (**Storniert**), die **Erste
+Referenz** und die **Letzte Referenz**, die **Provisionen**, die
+**Kursmargen**, das Ergebnis der Prüfung (**Integrität**) und den **Hash
+des letzten Vorgangs** fest. Das PDF-Register des Zeitraums wird
+angehängt: **Register herunterladen**.
+
+Die Abschlüsse sind unter *Kassensystem → Berichtswesen → Abschlüsse des
+Wechselregisters* aufgeführt. Sie können nicht geändert oder gelöscht
+werden, und ein Vorgang eines abgeschlossenen Zeitraums kann nicht mehr
+storniert werden.
+
+Notenbestand und Notenbewegungen
+--------------------------------
+
+*Kassensystem → Berichtswesen → Notenbestand* (Kassenadministratoren)
+gibt je Sitzung, Währung und **Stückelung** die Zählung bei
+**Eröffnung**, die durch die Vorgänge und die Transfers eingelegten
+(**Eingänge**) und entnommenen (**Ausgänge**) Münzen und Scheine, den
+**Bestand**, die Zählung beim **Abschluss** und die **Differenz** an
+(Abschluss abzüglich Bestand, wenn beide Zählungen nach Münzen und
+Scheinen erfolgten). Eine negative Differenz ist rot, eine positive
+orange. Der Filter **Differenzen** behält die Zeilen, die nicht
+übereinstimmen; eine Pivot-Ansicht gibt den Bestand je Währung und
+Stückelung an.
+
+*Kassensystem → Berichtswesen → Notenbewegungen* listet jede bewegte
+Münze und jeden bewegten Schein: durch einen Geldwechsel, eine
+Stornierung oder einen Transfer, mit Sitzung, Vorgang oder Transfer,
+**Stückelung** und **Menge**. Die Bewegungen werden nie bearbeitet oder
+gelöscht.
+
+Notentransfers
+--------------
+
+*Kassensystem → Aufträge → Notentransfers* (Kassenadministratoren)
+listet die Transfers mit Referenz, Wechselstube, **Sendender Schalter**,
+**Empfangender Schalter**, Betrag, Wert, Daten und Status: Entwurf, Im
+Transit, Erhalten oder Transfer storniert. Der Filter **Im Transit**
+zeigt die gesendeten und noch nicht empfangenen Scheine.
+
+Ein Kassenadministrator kann einen Transfer auch im Backend anlegen:
+**Neu**, Wechselstube, Schalter, Währung und Betrag wählen, dann
+**Senden**. Der sendende Schalter benötigt eine geöffnete Sitzung.
+Verfolgt er die Scheine, werden die aus seinem Bestand vorgeschlagenen
+Scheine gesendet; kann sein Bestand den Betrag nicht genau ergeben, wird
+das Senden verweigert („Geben Sie die gesendeten Scheine nach Stückelung
+ein“): Senden Sie dann von der Kasse aus, um die Scheine zu wählen.
+**Empfangen** legt die Scheine in die Schublade des empfangenden
+Schalters, in seiner geöffneten Sitzung.
+
+**Stornieren** Sie einen Transfer im Transit, solange die Sitzung, die
+ihn gesendet hat, geöffnet ist: Die Scheine gehen in die sendende
+Schublade zurück (eine Einzahlung in dieser Sitzung). Ein empfangener
+Transfer kann nicht storniert werden: Übertragen Sie die Scheine zurück.
+Nach dem Senden kann nur die **Notiz** eines Transfers geändert werden.
+Die Schaltflächen **Bargeldbewegungen** und **Notenbewegungen** öffnen
+seine Kontoauszugszeilen und seine Münzen und Scheine.
+
+Die Schubladen einer Wechselstube
+---------------------------------
+
+Der Reiter **Schubladen** der Wechselstube (Kassenadministratoren) zeigt
+für jeden Schalter mit geöffneter Sitzung in der Spalte **Erwartetes
+Bargeld** den erwarteten Bestand jeder Währung (Anfangsbestand, Verkäufe, Bargeldbewegungen, Geldwechsel und
+Transfers), die **Vorgänge heute** und die **Provisionen heute**, mit den
+Summen. Darunter gibt **Geld im Transit** je Währung die gesendeten und
+noch nicht empfangenen Transfers, ihren Betrag und Wert sowie die
+**Summe im Transit** an.
 
 Kurstafel als PDF
 -----------------
@@ -486,6 +959,35 @@ Buchhalterische Hinweise
   storniert.
 * Die Vorgänge und ihre Kontoauszugszeilen können nicht gelöscht werden;
   die Referenzen (``EXC/JJJJ/NNNNN``) sind lückenlos.
+* Ein Notentransfer besteht ebenfalls aus zwei Kontoauszugszeilen: eine
+  Auszahlung in der Sitzung des sendenden Schalters beim Senden der
+  Scheine und eine Einzahlung desselben Werts in der Sitzung des
+  empfangenden Schalters bei ihrem Empfang, beide mit dem **Konto für
+  Geld im Transit** der Wechselstube als Gegenkonto. Der Wert ist der
+  Betrag zum Odoo-Tageskurs, in der Währung des Unternehmens. Der Saldo
+  des Kontos ist der Wert der Scheine im Transit; er ist wieder null,
+  sobald jeder Transfer empfangen oder storniert ist.
+
+Aktualisierung auf 20.0.4.0.0
+=============================
+
+* POS Multi-Currency Cash 20.0.2.1.0 oder neuer ist weiterhin
+  erforderlich.
+* Die Aktualisierung kopiert die Wechsellizenznummer jeder Kasse auf ihre
+  bestehenden Vorgänge und verkettet dann die bestehenden Vorgänge im
+  Register-Hash, in der Reihenfolge ihrer Erstellung, Unternehmen für
+  Unternehmen. Führen Sie nach der Aktualisierung einmal **Integrität
+  prüfen** aus.
+* Für einen Schalter außerhalb jeder Wechselstube ändert sich nichts:
+  Seine Einstellungen bleiben, wie sie sind. Die neuen Schwellen
+  (**Herkunft der Mittel erforderlich ab**, **Prüfung ab**) beginnen bei
+  0, nie angewendet, und **Scheine nach Stückelung verfolgen** ist nicht
+  aktiviert.
+* Um die Wechselstuben zu nutzen, legen Sie sie an, fügen Sie ihre
+  Schalter hinzu und setzen Sie dann das **Konto für Geld im Transit**
+  jeder Wechselstube, bevor Sie Scheine zwischen ihren Schaltern senden.
+* Schließen Sie nach der Aktualisierung die Sitzungen oder laden Sie jede
+  Kasse neu, damit die Kassen die neuen Menüeinträge laden.
 
 Aktualisierung von 20.0.1.x
 ===========================
@@ -521,8 +1023,16 @@ Bekannte Einschränkungen
 * Ein Vorgang betrifft zwei Währungen; ein Kunde, der mehrere Währungen
   auf einmal wechselt, ergibt mehrere Vorgänge.
 * Ein Vorgang kann nur storniert werden, solange seine Sitzung geöffnet
-  ist.
-* Die Kurstafel wird nicht auf dem Kundendisplay angezeigt.
+  ist, und nicht in einem abgeschlossenen Registerzeitraum.
+* Die Scheine werden nur für die Fremdwährungen nach Stückelung
+  verfolgt: Die Währung der Kasse hat keine Zählung nach Münzen und
+  Scheinen.
+* Der Notenbestand folgt nur den Wechselvorgängen und den Transfers: Die
+  Barverkäufe und Bargeldbewegungen in einer Fremdwährung ändern die
+  Schublade ohne Stückelung. Die nächste Zählung korrigiert ihn.
+* Ein empfangener Notentransfer kann nicht storniert werden: Übertragen
+  Sie die Scheine zurück.
+* Die Integritätsprüfung umfasst das Register des ganzen Unternehmens.
 
 Fehlerbehebung
 ==============
@@ -606,6 +1116,44 @@ Löschen fehlt bei den Vorgängen
 
 Die Vorgänge können nicht gelöscht werden, damit das Register vollständig
 bleibt: Stornieren Sie den Vorgang stattdessen.
+
+Scheine senden und Scheine empfangen fehlen
+-------------------------------------------
+
+Der Schalter muss zu einer Wechselstube mit mindestens einem weiteren
+Schalter gehören, an dem **Geldwechsel** aktiviert ist. Laden Sie dann
+die Kasse neu.
+
+„Legen Sie das Konto für Geld im Transit der Wechselstube ... fest“
+-------------------------------------------------------------------
+
+Legen Sie das **Konto für Geld im Transit** der Wechselstube (ein Konto
+des Umlaufvermögens) fest, bevor Sie Scheine übertragen.
+
+Die Scheine ergeben den Betrag nicht
+------------------------------------
+
+Bei verfolgten Scheinen muss die **Summe** jedes Rasters dem Betrag des
+Vorgangs oder des Transfers entsprechen. Korrigieren Sie die Mengen.
+
+„In der Schublade fehlen ...“
+-----------------------------
+
+Der Bestand der Schublade, wie bei der Eröffnung gezählt und durch die
+Vorgänge bewegt, enthält weniger dieser Scheine. Prüfen Sie die
+tatsächlich ausgezahlten oder gesendeten Scheine. Der Vorgang wird nicht
+blockiert.
+
+Das Register kann nicht abgeschlossen werden
+--------------------------------------------
+
+Der Zeitraum muss vorbei sein, die Sitzungen seiner Vorgänge geschlossen
+und die Integritätsprüfung bestanden. Er darf sich nicht mit einem
+Abschluss derselben Wechselstube oder des ganzen Unternehmens
+überschneiden; ein Abschluss des ganzen Unternehmens darf sich mit keinem
+Abschluss einer Wechselstube überschneiden. Um
+das ganze Unternehmen abzuschließen, lassen Sie **Wechselstube** und
+**Kassen** leer.
 
 Der Kassierer findet Geldwechsel oder Wechselregister nicht
 -----------------------------------------------------------
