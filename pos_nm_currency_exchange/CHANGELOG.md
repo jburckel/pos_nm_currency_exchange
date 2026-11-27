@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The SQL of the note stock report (`pos.nm.note.move`) is a raw string: its
+  regular expressions (`\s`, `\.`) no longer raise "SyntaxWarning: invalid
+  escape sequence" at every start of Odoo (Python 3.12). The query sent to
+  PostgreSQL is unchanged.
+
 ## [20.0.4.0.0] - 2026-11-27
 
 The exchange office vertical (see
