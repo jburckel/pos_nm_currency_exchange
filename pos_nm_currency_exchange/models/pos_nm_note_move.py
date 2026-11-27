@@ -85,7 +85,7 @@ class PosNmNoteStock(models.Model):
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
-        self.env.cr.execute(SQL("""
+        self.env.cr.execute(SQL(r"""
             CREATE OR REPLACE VIEW %s AS (
                 WITH counts AS (
                     SELECT detail.session_id, detail.currency_id, ROUND(item.key::numeric, 4) AS value,
